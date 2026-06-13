@@ -134,5 +134,3 @@ cbt0.github.io/
    - `style.css` ➔ `css/style.css`
    - `app.js` ➔ `js/app.js`
    - `gas_questions.json` ➔ `data/gas/gas_questions.json`
-
-
