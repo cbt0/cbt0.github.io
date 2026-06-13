@@ -134,3 +134,66 @@ cbt0.github.io/
    - `style.css` ➔ `css/style.css`
    - `app.js` ➔ `js/app.js`
    - `gas_questions.json` ➔ `data/gas/gas_questions.json`
+
+> 인증문제 생기는것 같다
+
+▸ Thought Process
+  Identifying Authentication Problem
+  인증 문제가 발생하는 이유는 macOS 키체인에 기존  ntt65  계정의 정보가 대표로 저장되어 있어서, 새로 만든  cbt0  저장소로 push할 때 깃허브가 권한을 거부(403 Forbidden)하기
+  때문입니다.
+
+  이 문제를 해결하는 가장 확실한 3가지 방법을 정리해 드립니다. 상황에 맞춰 편한 방법을 선택해 주세요.
+  ──────
+  ### 방법 1. [가장 추천]  cbt0  저장소에  ntt65  계정을 "협업자(Collaborator)"로 초대하기
+
+  동일한 컴퓨터에서 여러 계정을 관리하는 가장 쉽고 빠른 방법입니다.
+
+  1. 웹 브라우저에서  cbt0  계정으로 깃허브에 로그인합니다.
+  2.  cbt0.github.io  리포지토리로 이동한 뒤  Settings  ➔  Collaborators  메뉴로 들어갑니다.
+  3.  Add people  버튼을 누르고 기존 계정인 ** ntt65 **를 입력하여 협업자로 초대합니다.
+  4.  ntt65  계정의 이메일 혹은 깃허브 알림 창으로 이동하여 **초대 수락(Accept Invitation)**을 누릅니다.
+  5. 이제 컴퓨터 설정을 전혀 바꾸지 않고 기존  ntt65  인증 정보 그대로  git push 를 하실 수 있습니다!
+  ──────
+  ### 방법 2. HTTPS 방식에서 원격 URL에 사용자명 명시하여 인증 분리하기
+
+  (이전 안내해 드린 방식입니다. 깃허브는 2021년부터 패스워드 대신 개인 토큰(PAT) 입력을 필수로 요구합니다.)
+
+  1. 터미널에서 아래 주소 변경 명령어를 입력합니다:
+    git remote set-url origin https://cbt0@github.com/cbt0/cbt0.github.io
+
+  2. push를 실행합니다:
+    git push origin main
+
+  3. 이때 비밀번호(Password)를 입력하라고 나오면, 깃허브 일반 비밀번호가 아닌 ** cbt0  계정에서 발급받은 Personal Access Token (PAT)**을 복사해서 붙여넣어야 합니다.
+      • 토큰 발급 경로: cbt0 계정 로그인 ➔ 우측 상단 프로필 ➔ Settings ➔ Developer settings ➔ Personal access tokens ➔ Tokens (classic) ➔ Generate new token (repo 권한 체크)
+
+  ──────
+  ### 방법 3. SSH 키를 계정별로 별도 생성하여 사용하기 (고급)
+
+  계정 전환을 터미널 설정 파일 수준에서 완벽하게 분리하는 개발자 표준 방식입니다.
+
+  1.  cbt0  전용 SSH 키 생성:
+    ssh-keygen -t ed25519 -C "cbt0의_이메일@example.com" -f ~/.ssh/id_ed25519_cbt0
+  (비밀번호 질문이 나오면 엔터를 쳐서 넘어가시면 됩니다)
+  2. 공개키 확인 및 깃허브 등록:
+  아래 명령어로 출력된 공개키 텍스트 전체를 복사하여,  cbt0  깃허브 계정의 Settings ➔ SSH and GPG keys ➔ New SSH Key에 등록합니다.
+    cat ~/.ssh/id_ed25519_cbt0.pub
+
+  3. SSH 설정 파일 ( ~/.ssh/config ) 생성 또는 수정:
+   nano ~/.ssh/config  명령 등을 이용해 아래 내용을 작성합니다:
+    # 기존 ntt65 계정
+    Host github.com-ntt65
+        HostName github.com
+        User git
+        IdentityFile ~/.ssh/id_ed25519  # 기존에 쓰시던 SSH 키 파일명
+
+    # 새로운 cbt0 계정
+    Host github.com-cbt0
+        HostName github.com
+        User git
+        IdentityFile ~/.ssh/id_ed25519_cbt0
+
+  4. 리포지토리의 원격 주소를 SSH 가상 호스트로 변경:
+    git remote set-url origin git@github.com-cbt0:cbt0/cbt0.github.io.git
+
+  5. 이제 별도 패스워드나 토큰 입력 없이  git push origin main 을 실행하면  cbt0  계정의 SSH 키로 즉시 인증이 완료됩니다.
