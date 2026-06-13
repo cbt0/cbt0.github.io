@@ -210,3 +210,12 @@ cbt0.github.io/
     - 다중 계정(`ntt65`, `cbt0`) 협업자(Collaborator) 설정을 통해 GitHub Pages 최초 배포 및 푸시(`git push`) 성공
   - **배포 주소**: [https://cbt0.github.io](https://cbt0.github.io)
   - **결과**: 정상 작동 및 빌드 확인 완료
+  - **최초 푸시 실패 원인 및 해결 과정 상세 기록 (Troubleshooting)**:
+    1. **마크다운 린트 에러 (MD012 - Multiple consecutive blank lines)**:
+       - **현상**: `git push` 실행 시 `MD012` 오류와 함께 푸시가 거부됨.
+       - **원인**: `plan.md` 파일 끝부분에 3개의 연속된 빈 줄(공백 개행)이 삽입되어 있어 깃허브 프리커밋/프리푸시 검사 도구(markdownlint)가 빌드를 거부함.
+       - **해결**: 파일 끝부분의 불필요한 연속 개행을 단일 개행으로 수정하여 통과함.
+    2. **다중 깃허브 계정 인증 충돌 (macOS Keychain Auth Conflict)**:
+       - **현상**: `git push origin main` 시 권한 거부(403 Forbidden) 혹은 저장소를 찾을 수 없다는 에러 발생.
+       - **원인**: 현재 작업 중인 Mac 환경의 글로벌 Git 설정 및 macOS 키체인 자격 증명 관리자(`osxkeychain`)에 기존 `ntt65` 계정의 인증 정보가 캐싱되어 있었음. 이로 인해 소유주가 `cbt0`인 리포지토리(`cbt0/cbt0.github.io`)에 push를 시도할 때, 시스템이 자동으로 기존 `ntt65` 토큰으로 접근을 시도하여 쓰기 권한이 거부됨.
+       - **해결**: `cbt0` 계정의 깃허브 리포지토리 설정(Settings ➔ Collaborators)에서 기존 `ntt65` 계정을 협업자(Collaborator)로 등록하고, 초대 수락 메일을 통해 권한 승인을 마침. 이후 `git remote set-url`을 통해 원격 URL을 기본 HTTPS 형태로 설정함으로써 기존 키체인에 캐싱되어 있던 `ntt65` 계정 자격 증명으로 `cbt0` 저장소에 성공적으로 푸시할 수 있게 됨.
