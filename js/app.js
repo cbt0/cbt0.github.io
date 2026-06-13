@@ -261,7 +261,7 @@ function toggleTheme() {
 // Load JSON Database
 async function loadGasQuestions() {
     try {
-        const response = await fetch('gas_questions.json');
+        const response = await fetch('data/gas/gas_questions.json');
         if (!response.ok) {
             throw new Error('데이터베이스를 불러올 수 없습니다.');
         }
