@@ -98,3 +98,41 @@
 현재 가스기능사 18개 회차(1,080문제) 전체 크기가 약 1.1MB 정도로, 현대 브라우저의 대역폭과 성능에서는 단일 파일로 로드하는 것이 **가장 매끄러운 퀴즈 풀이 사용자 경험(UX) 및 추가 기능 구현 편의성**을 제공하므로 현재의 단일 파일 구조가 유리합니다.
 단, 향후 **에너지기능사, 에너지기능장 등 타 과목의 모든 회차가 실제로 입고되어 데이터가 수십 MB 단위로 비대해질 경우**, 초기 로드 오버헤드가 크게 증가하므로 **"과목별/회차별 분리 구조"**로 전환하는 것이 유지보수와 성능 측면에서 필수적입니다.
 
+---
+
+## 8. 권장 폴더 구조 설계 (Folder Structure Design)
+
+프로젝트가 확장될 때 코드 가독성 및 자원 관리 효율을 극대화하기 위해 다음과 같이 폴더 구조를 재설계하고 파일을 재배치합니다.
+
+```
+cbt0.github.io/
+├── index.html            # 메인 엔트리 (SPA 라우터 및 HTML5 구조)
+├── plan.md               # 프로젝트 개발 계획 및 설계서
+├── .gitignore            # Git 예외 관리 설정
+├── css/                  # 스타일시트 디렉토리
+│   └── style.css         # 메인 UI/UX 및 테마 스타일
+├── js/                   # 자바스크립트 로직 디렉토리
+│   └── app.js            # 메인 앱 제어 및 SPA 라우팅 로직
+└── data/                 # 데이터 디렉토리
+    ├── gas/              # 가스 분야 기출 데이터
+    │   └── gas_questions.json  # 가스기능사 기출 데이터 (통합본)
+    ├── energy/           # 에너지 분야 기출 데이터 (향후 탑재 예정)
+    │   ├── craftsman.json      # 에너지기능사 기출
+    │   ├── industrial.json     # 에너지관리산업기사 기출
+    │   └── master.json         # 에너지관리기능장 기출
+    └── air/              # 공조 분야 기출 데이터 (향후 탑재 예정)
+        └── conditioning.json   # 공조냉동기계기능사 기출
+```
+
+### 재배치 시 수정 사항:
+1. **`index.html`**:
+   - `<link rel="stylesheet" href="style.css">` ➔ `<link rel="stylesheet" href="css/style.css">`
+   - `<script src="app.js"></script>` ➔ `<script src="js/app.js"></script>`
+2. **`app.js`**:
+   - `fetch('gas_questions.json')` ➔ `fetch('data/gas/gas_questions.json')`
+3. **물리적 파일 이동**:
+   - `style.css` ➔ `css/style.css`
+   - `app.js` ➔ `js/app.js`
+   - `gas_questions.json` ➔ `data/gas/gas_questions.json`
+
+
