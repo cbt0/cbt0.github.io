@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity CBT - 최강 CBT 스타일 문제풀이</title>
+    <meta name="description" content="에너지기능사, 에너지산업관리기사, 에너지기능장, 가스기능사, 공조기능사 기출문제 무료 CBT 풀이 사이트. 실시간 채점 및 자동 힌트 제공.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Premium Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="logo" id="logo-btn">
+                <i class="fa-solid fa-graduation-cap logo-icon"></i>
+                <span class="logo-text">ANTIGRAVITY <span class="logo-sub">CBT</span></span>
+            </div>
+            
+            <nav class="main-nav">
+                <button class="nav-item active" data-subject="home" id="nav-home">
+                    <i class="fa-solid fa-house"></i> 소개말
+                </button>
+                <button class="nav-item" data-subject="gas" id="nav-gas">
+                    <i class="fa-solid fa-fire"></i> 가스기능사
+                </button>
+                <button class="nav-item" data-subject="energy_craftsman" id="nav-energy-c">
+                    <i class="fa-solid fa-bolt"></i> 에너지기능사
+                </button>
+                <button class="nav-item" data-subject="energy_industrial" id="nav-energy-i">
+                    <i class="fa-solid fa-gears"></i> 에너지산업관리기사
+                </button>
+                <button class="nav-item" data-subject="energy_master" id="nav-energy-m">
+                    <i class="fa-solid fa-award"></i> 에너지기능장
+                </button>
+                <button class="nav-item" data-subject="air_conditioning" id="nav-air">
+                    <i class="fa-solid fa-wind"></i> 공조기능사
+                </button>
+            </nav>
+            
+            <div class="header-actions">
+                <button id="theme-toggle" class="icon-btn" aria-label="테마 변경">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="app-content">
+        <!-- 1. Home / Introduction Screen -->
+        <section id="home-screen" class="view-section active-view">
+            <div class="hero-section">
+                <h1 class="hero-title">합격을 위한 최단 경로,<br><span class="gradient-text">Antigravity CBT</span></h1>
+                <p class="hero-subtitle">실시간 채점, 자동 힌트, 오답 노트를 통해 쉽고 빠르게 기출문제를 마스터하세요.</p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary btn-large" id="start-learning-btn">
+                        학습 시작하기 <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper purple">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="stats-total-solved">0</span>
+                        <span class="stat-label">푼 문제 수</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper green">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="stats-correct-rate">0%</span>
+                        <span class="stat-label">평균 정답률</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper blue">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="stats-passed-exams">0</span>
+                        <span class="stat-label">합격한 회차</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subject Cards Grid -->
+            <div class="features-section">
+                <h2 class="section-title">학습 과목 선택</h2>
+                <div class="subject-grid">
+                    <div class="subject-card" data-subject="gas">
+                        <div class="subject-badge real">실제 기출</div>
+                        <i class="fa-solid fa-fire subject-icon gas-icon"></i>
+                        <h3>가스기능사</h3>
+                        <p>2017년 ~ 2025년 최신 CBT 기출 복원문제 완벽 탑재 (18회차 / 1,080문제)</p>
+                        <span class="subject-action">풀러 가기 <i class="fa-solid fa-chevron-right"></i></span>
+                    </div>
+                    
+                    <div class="subject-card" data-subject="energy_craftsman">
+                        <div class="subject-badge mock">샘플 탑재</div>
+                        <i class="fa-solid fa-bolt subject-icon energy-icon"></i>
+                        <h3>에너지기능사</h3>
+                        <p>보일러 및 에너지 설비 운전 기출문제 (기초 샘플 풀이 가능, 추가 데이터 준비 중)</p>
+                        <span class="subject-action">풀러 가기 <i class="fa-solid fa-chevron-right"></i></span>
+                    </div>
+
+                    <div class="subject-card" data-subject="energy_industrial">
+                        <div class="subject-badge mock">샘플 탑재</div>
+                        <i class="fa-solid fa-gears subject-icon energy-i-icon"></i>
+                        <h3>에너지관리산업기사</h3>
+                        <p>에너지관리 고난도 기출문제 (기초 샘플 풀이 가능, 추가 데이터 준비 중)</p>
+                        <span class="subject-action">풀러 가기 <i class="fa-solid fa-chevron-right"></i></span>
+                    </div>
+
+                    <div class="subject-card" data-subject="energy_master">
+                        <div class="subject-badge mock">샘플 탑재</div>
+                        <i class="fa-solid fa-award subject-icon master-icon"></i>
+                        <h3>에너지관리기능장</h3>
+                        <p>최고 권위의 에너지 관리 자격 기출문제 (기초 샘플 풀이 가능, 추가 데이터 준비 중)</p>
+                        <span class="subject-action">풀러 가기 <i class="fa-solid fa-chevron-right"></i></span>
+                    </div>
+
+                    <div class="subject-card" data-subject="air_conditioning">
+                        <div class="subject-badge mock">샘플 탑재</div>
+                        <i class="fa-solid fa-wind subject-icon air-icon"></i>
+                        <h3>공조냉동기계기능사</h3>
+                        <p>공조 및 냉동설비 제어 기출문제 (기초 샘플 풀이 가능, 추가 데이터 준비 중)</p>
+                        <span class="subject-action">풀러 가기 <i class="fa-solid fa-chevron-right"></i></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Rounds Selection Screen -->
+        <section id="rounds-screen" class="view-section">
+            <div class="back-nav">
+                <button class="back-btn" id="rounds-back-btn">
+                    <i class="fa-solid fa-arrow-left"></i> 홈으로 돌아가기
+                </button>
+            </div>
+            <div class="rounds-header">
+                <h2 id="rounds-title" class="rounds-subject-title">가스기능사</h2>
+                <p class="rounds-subtitle">풀어볼 기출문제의 회차를 선택해 주세요.</p>
+            </div>
+            
+            <div class="rounds-grid" id="rounds-list">
+                <!-- Dynamically generated rounds card list -->
+            </div>
+        </section>
+
+        <!-- 3. Quiz Solving Screen -->
+        <section id="quiz-screen" class="view-section">
+            <div class="quiz-container">
+                <!-- Left Pane: Navigation grid (1~60) -->
+                <aside class="quiz-sidebar">
+                    <div class="sidebar-header">
+                        <span class="sidebar-title">답안 마킹 현황</span>
+                        <span class="sidebar-progress" id="quiz-progress-text">0 / 60</span>
+                    </div>
+                    
+                    <div class="marking-grid" id="marking-sheet">
+                        <!-- Dynamically generated marking buttons 1 to 60 -->
+                    </div>
+                    
+                    <div class="sidebar-footer">
+                        <button class="btn btn-danger btn-full" id="quiz-submit-btn">
+                            <i class="fa-solid fa-paper-plane"></i> 시험 제출하기
+                        </button>
+                    </div>
+                </aside>
+
+                <!-- Right Pane: Main Question display -->
+                <article class="quiz-main">
+                    <div class="quiz-header">
+                        <div class="quiz-meta">
+                            <span class="subject-tag" id="quiz-subject-name">가스기능사</span>
+                            <span class="round-tag" id="quiz-round-name">2017년 1회</span>
+                        </div>
+                        <div class="quiz-timer">
+                            <i class="fa-regular fa-clock"></i> <span id="timer-text">00:00</span>
+                        </div>
+                    </div>
+
+                    <!-- Active Question Card -->
+                    <div class="question-card" id="active-question-card">
+                        <div class="question-title-wrapper">
+                            <span class="question-num-badge" id="question-num">Q. 01</span>
+                            <h3 class="question-text" id="question-text">
+                                질문 텍스트가 여기에 표시됩니다.
+                            </h3>
+                        </div>
+
+                        <!-- Choices List -->
+                        <div class="choices-list" id="choices-container">
+                            <button class="choice-item" data-choice="1">
+                                <span class="choice-num">①</span>
+                                <span class="choice-text">보기 1 내용</span>
+                                <span class="choice-status-icon"><i class="fa-solid fa-circle"></i></span>
+                            </button>
+                            <button class="choice-item" data-choice="2">
+                                <span class="choice-num">②</span>
+                                <span class="choice-text">보기 2 내용</span>
+                                <span class="choice-status-icon"><i class="fa-solid fa-circle"></i></span>
+                            </button>
+                            <button class="choice-item" data-choice="3">
+                                <span class="choice-num">③</span>
+                                <span class="choice-text">보기 3 내용</span>
+                                <span class="choice-status-icon"><i class="fa-solid fa-circle"></i></span>
+                            </button>
+                            <button class="choice-item" data-choice="4">
+                                <span class="choice-num">④</span>
+                                <span class="choice-text">보기 4 내용</span>
+                                <span class="choice-status-icon"><i class="fa-solid fa-circle"></i></span>
+                            </button>
+                        </div>
+
+                        <!-- Interactive Action Buttons -->
+                        <div class="question-actions">
+                            <button class="btn btn-outline" id="prev-question-btn">
+                                <i class="fa-solid fa-chevron-left"></i> 이전 문제
+                            </button>
+                            <button class="btn btn-warning" id="hint-toggle-btn">
+                                <i class="fa-regular fa-lightbulb"></i> 힌트/해설 보기
+                            </button>
+                            <button class="btn btn-outline" id="next-question-btn">
+                                다음 문제 <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+
+                        <!-- Auto-opening Explanation Panel -->
+                        <div class="explanation-panel collapsed" id="explanation-box">
+                            <div class="explanation-header">
+                                <i class="fa-solid fa-circle-info"></i> 힌트 및 해설
+                            </div>
+                            <div class="explanation-content" id="explanation-text">
+                                해설 정보가 이곳에 노출됩니다.
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <!-- 4. Premium Result Modal Overlay -->
+    <div class="modal-overlay" id="result-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <i class="fa-solid fa-graduation-cap modal-header-icon"></i>
+                <h2>시험 결과 리포트</h2>
+            </div>
+            
+            <div class="modal-body">
+                <div class="score-circle-wrapper">
+                    <!-- SVG Circular Progress Bar -->
+                    <svg class="score-ring" width="160" height="160">
+                        <circle class="score-ring-bg" cx="80" cy="80" r="70" stroke-width="12" fill="transparent"></circle>
+                        <circle class="score-ring-bar" id="score-ring-bar" cx="80" cy="80" r="70" stroke-width="12" fill="transparent" stroke-dasharray="440" stroke-dashoffset="440"></circle>
+                    </svg>
+                    <div class="score-display">
+                        <span class="score-number" id="result-score">45 / 60</span>
+                        <span class="score-percentage" id="result-percent">75%</span>
+                    </div>
+                </div>
+
+                <div class="result-status-badge pass" id="result-status-badge">
+                    합격 (PASS)
+                </div>
+
+                <div class="result-details">
+                    <div class="detail-item">
+                        <span class="detail-label">소요 시간</span>
+                        <span class="detail-value" id="result-time-spent">12분 34초</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">맞은 문제</span>
+                        <span class="detail-value text-green" id="result-correct-count">45문제</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">틀린 문제</span>
+                        <span class="detail-value text-red" id="result-wrong-count">15문제</span>
+                    </div>
+                </div>
+                
+                <p class="result-msg" id="result-msg-text">
+                    축하합니다! 기준 점수(60점)를 초과하여 합격권에 도달하셨습니다.
+                </p>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="result-review-btn">오답 확인하기</button>
+                <button class="btn btn-primary" id="result-close-btn">완료</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
