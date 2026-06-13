@@ -197,3 +197,16 @@ cbt0.github.io/
     git remote set-url origin git@github.com-cbt0:cbt0/cbt0.github.io.git
 
   5. 이제 별도 패스워드나 토큰 입력 없이  git push origin main 을 실행하면  cbt0  계정의 SSH 키로 즉시 인증이 완료됩니다.
+
+---
+
+## 9. 프로젝트 배포 히스토리 (Deployment History)
+
+- **2026년 6월 13일 (최초 배포 성공)**
+  - **작업 내용**:
+    - 가스기능사 기출 복원문제 18회차(1,080문제) 파싱 및 JSON 데이터 탑재 (`data/gas/gas_questions.json`)
+    - 최강 CBT 스타일의 반응형 웹 사이트 구현 (SPA 구조, 실시간 채점 및 힌트 자동 활성화 기능)
+    - 코드 유지보수성과 확장성을 위해 권장 폴더 구조(`css/`, `js/`, `data/`)로 마이그레이션 완료
+    - 다중 계정(`ntt65`, `cbt0`) 협업자(Collaborator) 설정을 통해 GitHub Pages 최초 배포 및 푸시(`git push`) 성공
+  - **배포 주소**: [https://cbt0.github.io](https://cbt0.github.io)
+  - **결과**: 정상 작동 및 빌드 확인 완료
