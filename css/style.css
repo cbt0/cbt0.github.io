@@ -823,11 +823,11 @@ body {
     background: var(--bg-tertiary);
     border: 1px solid var(--glass-border);
     border-radius: var(--border-radius-md);
-    padding: 18px 24px;
+    padding: 12px 12px;
     color: var(--text-primary);
     cursor: pointer;
     font-family: inherit;
-    font-size: 18px;
+    font-size: 20px;
     text-align: left;
     display: flex;
     align-items: center;
@@ -900,7 +900,7 @@ body {
     justify-content: space-between;
     align-items: center;
     border-top: 1px solid var(--glass-border);
-    padding-top: 24px;
+    padding-top: 20px;
     margin-bottom: 20px;
 }
 
@@ -1249,7 +1249,7 @@ body {
     }
     
     .question-card {
-        padding: 20px 16px; /* 좌우 마진 극소화 */
+        padding: 16px 16px; /* 좌우 마진 극소화 */
         border-radius: var(--border-radius-md);
     }
     
@@ -1259,7 +1259,7 @@ body {
     }
     
     .question-num-badge {
-        padding: 6px 12px;
+        padding: 6px 6px;
         font-size: 16px;
     }
     
