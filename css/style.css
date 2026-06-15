@@ -179,6 +179,10 @@ body {
     border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
+.nav-item.hidden {
+    display: none !important;
+}
+
 .header-actions {
     display: flex;
     align-items: center;
@@ -629,10 +633,9 @@ body {
 
 /* 3. Quiz Layout */
 .quiz-container {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 24px;
-    align-items: start;
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 /* Sidebar Marking Sheet */
@@ -640,14 +643,13 @@ body {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: var(--border-radius-lg);
-    padding: 24px;
-    display: flex;
+    padding: 30px;
+    box-shadow: var(--shadow-sm);
+    display: none; /* hidden by default */
     flex-direction: column;
     gap: 20px;
-    position: sticky;
-    top: 94px; /* sticky relative to header height */
-    max-height: calc(100vh - 120px);
-    box-shadow: var(--shadow-sm);
+    max-width: 600px;
+    margin: 20px auto;
 }
 
 .sidebar-header {
@@ -733,9 +735,18 @@ body {
 
 /* Quiz Main Panel */
 .quiz-main {
-    display: flex;
+    display: none; /* hidden by default */
     flex-direction: column;
     gap: 20px;
+}
+
+/* Toggle states from JS */
+.show-quiz-main .quiz-main {
+    display: flex;
+}
+
+.show-quiz-sidebar .quiz-sidebar {
+    display: flex;
 }
 
 .quiz-header {
@@ -1174,32 +1185,18 @@ body {
 
 /* Responsive Grid Adapters & Mobile-First Optimization */
 @media (max-width: 992px) {
-    .quiz-container {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-    
-    /* Mobile Tab Switch Logic */
+    /* Mobile Tab Switch Logic overrides */
     .quiz-sidebar {
-        display: none;
         position: static;
         max-height: none;
         width: 100%;
         box-shadow: none;
+        margin: 0;
+        padding: 24px 16px;
     }
     
     .quiz-main {
-        display: none;
         width: 100%;
-    }
-    
-    /* Toggle states from JS */
-    .show-quiz-main .quiz-main {
-        display: flex;
-    }
-    
-    .show-quiz-sidebar .quiz-sidebar {
-        display: flex;
     }
     
     .marking-grid {
