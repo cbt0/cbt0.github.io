@@ -736,19 +736,16 @@ function renderRoundsList(subject) {
         const progressKey = `cbt_progress_${state.currentUser ? state.currentUser + '_' : ''}${subject}_${round.year}_${round.round}`;
         const progress = JSON.parse(localStorage.getItem(progressKey)) || { score: 0, total: 0, completed: false };
         
-        let progressBadge = '';
-        let progressBarWidth = '0%';
+        let completedText = '';
         if (progress.completed) {
-            progressBadge = `<span class="round-badge complete">풀이완료 (${progress.score}/${progress.total})</span>`;
-            progressBarWidth = '100%';
+            completedText = `<span class="round-complete-status">풀이완료 (${progress.score}/${progress.total})</span>`;
         }
         
         card.innerHTML = `
-            ${progressBadge}
-            <div class="round-title">${round.year ? `${round.year}년 ` : ''}${round.round}</div>
-            <div class="round-desc">${round.questions.length} 문제 출제</div>
-            <div class="round-progress-bar-wrapper">
-                <div class="round-progress-bar" style="width: ${progressBarWidth}"></div>
+            <div class="round-info-line">
+                <span class="round-title">${round.year ? `${round.year}년 ` : ''}${round.round}</span>
+                <span class="round-desc">(${round.questions.length}문제)</span>
+                ${completedText}
             </div>
         `;
         
