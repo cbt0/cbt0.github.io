@@ -1453,7 +1453,7 @@ body {
 
 .user-dashboard-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 24px;
     margin-top: 24px;
 }
@@ -1580,4 +1580,138 @@ body {
     font-size: 14px;
     margin: auto;
 }
+
+/* Leaderboard Ranking Section */
+.ranking-container {
+    margin-top: 12px;
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: 250px;
+    padding-right: 4px;
+}
+
+.ranking-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ranking-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.ranking-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.ranking-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-radius: var(--border-radius-md);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--glass-border);
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+}
+
+.ranking-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(99, 102, 241, 0.3);
+    transform: translateX(4px);
+}
+
+.ranking-item.current-user {
+    background: rgba(99, 102, 241, 0.08);
+    border-color: var(--primary);
+}
+
+.ranking-user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.rank-badge {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-light);
+}
+
+.rank-1 {
+    background: linear-gradient(135deg, #f1c40f, #f39c12);
+    color: #0f172a !important;
+    box-shadow: 0 0 10px rgba(241, 196, 15, 0.3);
+}
+
+.rank-2 {
+    background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+    color: #0f172a !important;
+}
+
+.rank-3 {
+    background: linear-gradient(135deg, #e67e22, #d35400);
+    color: #ffffff !important;
+}
+
+.rank-user-name {
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+.rank-score {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 14px;
+}
+
+/* Sub Tab Navigation in Grading Dashboard */
+.sub-tab-container {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0 24px 0;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 8px;
+}
+
+.sub-tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 15px;
+    font-weight: 500;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-radius: var(--border-radius-sm);
+    transition: all 0.2s ease;
+}
+
+.sub-tab-btn:hover {
+    color: var(--text-light);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.sub-tab-btn.active {
+    color: var(--primary);
+    background: rgba(99, 102, 241, 0.1);
+    font-weight: 600;
+}
+
+.subtab-content {
+    display: none;
+}
+
+.subtab-content.active {
+    display: block;
+}
+
+
 
