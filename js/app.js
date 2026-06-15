@@ -221,7 +221,7 @@ const subjectDetails = {
     home: { name: '소개말', isReal: false },
     gas: { name: '가스기능사', isReal: true },
     energy_craftsman: { name: '에너지기능사', isReal: false },
-    energy_industrial: { name: '에너지산업관리기사', isReal: false },
+    energy_industrial: { name: '에너지관리산업기사', isReal: true },
     energy_master: { name: '에너지관리기능장', isReal: true },
     air_conditioning: { name: '공조기능사', isReal: false }
 };
@@ -286,6 +286,20 @@ async function loadQuestions() {
     } catch (error) {
         console.error('에너지관리기능장 기출문제 파일 로드 에러:', error);
         state.exams.energy_master = [];
+    }
+
+    // Energy Industrial Gisa Questions
+    try {
+        const response = await fetch('data/energy_sanupgisa/energy_sanupgisa_questions.json');
+        if (response.ok) {
+            state.exams.energy_industrial = await response.json();
+            console.log('에너지관리산업기사 데이터 로드 완료:', state.exams.energy_industrial.length, '회차');
+        } else {
+            state.exams.energy_industrial = [];
+        }
+    } catch (error) {
+        console.error('에너지관리산업기사 기출문제 파일 로드 에러:', error);
+        state.exams.energy_industrial = [];
     }
 }
 
@@ -443,6 +457,8 @@ function renderRoundsList(subject) {
         roundsData = state.exams.gas || [];
     } else if (subject === 'energy_master') {
         roundsData = state.exams.energy_master || [];
+    } else if (subject === 'energy_industrial') {
+        roundsData = state.exams.energy_industrial || [];
     } else {
         roundsData = mockExams[subject] || [];
     }
