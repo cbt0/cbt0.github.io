@@ -247,6 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
     checkLoginState();
     loadQuestions();
     registerEventListeners();
+    router(); // Run initial routing based on page load hash state
 });
 
 // Check User Login State
@@ -616,30 +617,19 @@ function registerEventListeners() {
         dom.resultModal.classList.remove('active');
         navigateTo(state.activeSubject);
     });
+
+    // Hash Routing Listeners
+    window.addEventListener('hashchange', router);
+    window.addEventListener('load', router);
 }
 
 // SPA Navigation Control
 function navigateTo(subject) {
-    // Stop timers and reset active round if we leave quiz screen flow
-    if (subject !== 'quiz' && subject !== 'grading') {
-        clearInterval(state.timerInterval);
-        state.activeRound = null;
-        state.quizMode = 'solving';
-    }
-    
-    // Show corresponding screens under "home" tab flow
-    if (subject === 'home') {
-        state.activeSubject = 'home';
-        showView('home');
-        checkLoginState();
+    if (subject === 'home' || !subject) {
+        window.location.hash = '#home';
     } else {
-        // Show Round Selector
-        state.activeSubject = subject;
-        showView('rounds');
-        renderRoundsList(subject);
+        window.location.hash = `#rounds/${subject}`;
     }
-    
-    switchTabStyles('home');
 }
 
 function switchTabStyles(tabName) {
@@ -652,38 +642,14 @@ function switchTabStyles(tabName) {
 }
 
 function switchTab(tabName) {
-    // Check if test is active when trying to view quiz
-    if (tabName === 'quiz' && !state.activeRound) {
-        alert('진행 중인 시험이 없습니다. 홈 화면에서 시험을 시작해 주세요.');
-        switchTab('home');
-        return;
-    }
-    
-    switchTabStyles(tabName);
-    
     if (tabName === 'home') {
         if (state.activeSubject && state.activeSubject !== 'home') {
-            showView('rounds');
+            window.location.hash = `#rounds/${state.activeSubject}`;
         } else {
-            showView('home');
+            window.location.hash = '#home';
         }
-    } else if (tabName === 'quiz') {
-        showView('quiz');
-        const quizScreen = document.getElementById('quiz-screen');
-        quizScreen.classList.add('show-quiz-main');
-        quizScreen.classList.remove('show-quiz-sidebar');
-    } else if (tabName === 'grading') {
-        if (state.activeRound) {
-            showView('quiz');
-            const quizScreen = document.getElementById('quiz-screen');
-            quizScreen.classList.add('show-quiz-sidebar');
-            quizScreen.classList.remove('show-quiz-main');
-        } else {
-            showView('grading');
-            renderGradingDashboard();
-        }
-    } else if (tabName === 'settings') {
-        showView('settings');
+    } else {
+        window.location.hash = `#${tabName}`;
     }
 }
 
@@ -697,6 +663,73 @@ function showView(viewName) {
     });
     // Smooth scroll to top on view change
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// SPA Hash Router Implementation
+function router() {
+    const hash = window.location.hash || '#home';
+    
+    // Login Session Protection: Intercept unauthenticated hash changes
+    const isLoggedIn = !!state.currentUser;
+    if (!isLoggedIn && hash !== '#home') {
+        window.location.hash = '#home';
+        return;
+    }
+    
+    // Stop timers and reset active round if we leave quiz flow
+    // (We allow '#settings' temporarily without clearing the quiz state)
+    if (hash !== '#quiz' && hash !== '#grading' && hash !== '#settings') {
+        if (state.timerInterval) {
+            clearInterval(state.timerInterval);
+        }
+        state.activeRound = null;
+        state.quizMode = 'solving';
+    }
+    
+    if (hash === '#home') {
+        state.activeSubject = 'home';
+        switchTabStyles('home');
+        showView('home');
+        checkLoginState();
+    } else if (hash.startsWith('#rounds/')) {
+        const subject = hash.replace('#rounds/', '');
+        state.activeSubject = subject;
+        switchTabStyles('home');
+        showView('rounds');
+        renderRoundsList(subject);
+    } else if (hash === '#quiz') {
+        if (!state.activeRound) {
+            alert('진행 중인 시험이 없습니다. 홈 화면에서 시험을 시작해 주세요.');
+            window.location.hash = '#home';
+            return;
+        }
+        switchTabStyles('quiz');
+        showView('quiz');
+        const quizScreen = document.getElementById('quiz-screen');
+        if (quizScreen) {
+            quizScreen.classList.add('show-quiz-main');
+            quizScreen.classList.remove('show-quiz-sidebar');
+        }
+    } else if (hash === '#grading') {
+        switchTabStyles('grading');
+        if (state.activeRound) {
+            showView('quiz');
+            const quizScreen = document.getElementById('quiz-screen');
+            if (quizScreen) {
+                quizScreen.classList.add('show-quiz-sidebar');
+                quizScreen.classList.remove('show-quiz-main');
+            }
+        } else {
+            showView('grading');
+            renderGradingDashboard();
+        }
+    } else if (hash === '#settings') {
+        switchTabStyles('settings');
+        showView('settings');
+    } else {
+        // Fallback for unknown hashes
+        window.location.hash = '#home';
+    }
 }
 
 // Render available rounds grid
