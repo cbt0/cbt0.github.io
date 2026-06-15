@@ -426,13 +426,12 @@ body {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: var(--border-radius-lg);
-    padding: 24px;
+    padding: 14px 20px;
     cursor: pointer;
     position: relative;
     overflow: hidden;
     display: flex;
-    flex-direction: column;
-    gap: 12px;
+    align-items: center;
     box-shadow: var(--shadow-sm);
     transition: all var(--transition-normal);
 }
@@ -497,6 +496,25 @@ body {
     display: flex;
     align-items: center;
     gap: 14px;
+    width: 100%;
+}
+
+.subject-rounds {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    margin-left: auto;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    transition: all 0.2s ease;
+}
+
+.subject-card:hover .subject-rounds {
+    color: var(--primary);
+    border-color: rgba(99, 102, 241, 0.3);
+    background: rgba(99, 102, 241, 0.05);
 }
 
 .gas-icon { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
@@ -509,16 +527,6 @@ body {
     font-size: 18px;
     font-weight: 700;
     margin: 0;
-}
-
-.subject-card p {
-    color: var(--text-secondary);
-    font-size: 13px;
-    line-height: 1.5;
-    margin: 0;
-    flex-grow: 1;
-}
-    gap: 12px;
 }
 
 /* 2. Rounds Selection Screen */
