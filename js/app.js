@@ -232,7 +232,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadDashboardStats();
     loadGasQuestions();
     registerEventListeners();
-    updateNavVisibility();
 });
 
 // Theme Control (Dark/Light Mode)
@@ -364,22 +363,7 @@ function navigateTo(subject) {
         renderRoundsList(subject);
     }
     
-    // Update navigation items visibility and active styling
-    updateNavVisibility();
     switchTabStyles('home');
-}
-
-function updateNavVisibility() {
-    if (!state.activeRound) {
-        dom.nav.quiz.classList.add('hidden');
-        dom.nav.grading.classList.add('hidden');
-    } else if (state.quizMode === 'solving') {
-        dom.nav.quiz.classList.remove('hidden');
-        dom.nav.grading.classList.add('hidden');
-    } else if (state.quizMode === 'review') {
-        dom.nav.quiz.classList.remove('hidden');
-        dom.nav.grading.classList.remove('hidden');
-    }
 }
 
 function switchTabStyles(tabName) {
@@ -396,13 +380,6 @@ function switchTab(tabName) {
     if ((tabName === 'quiz' || tabName === 'grading') && !state.activeRound) {
         alert('진행 중인 시험이 없습니다. 홈 화면에서 시험을 시작해 주세요.');
         switchTab('home');
-        return;
-    }
-    
-    // Apply special restriction: Grading tab is hidden during solving mode
-    if (tabName === 'grading' && state.quizMode === 'solving') {
-        alert('문제 풀이 중에는 답안 마킹 현황(채점) 탭에 접근할 수 없습니다. 시험을 제출한 후 오답 확인 시 제공됩니다.');
-        switchTab('quiz');
         return;
     }
     
@@ -531,7 +508,6 @@ function startQuiz(round) {
     }, 1000);
     
     // Show screen and switch tab to quiz
-    updateNavVisibility();
     switchTab('quiz');
 }
 
@@ -761,7 +737,6 @@ function submitExam() {
 function enterReviewMode() {
     state.quizMode = 'review';
     state.activeQuestionIndex = 0;
-    updateNavVisibility();
     renderMarkingSheet();
     renderActiveQuestion();
 }
