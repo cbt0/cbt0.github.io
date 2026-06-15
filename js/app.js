@@ -222,7 +222,7 @@ const subjectDetails = {
     gas: { name: '가스기능사', isReal: true },
     energy_craftsman: { name: '에너지기능사', isReal: false },
     energy_industrial: { name: '에너지산업관리기사', isReal: false },
-    energy_master: { name: '에너지기능장', isReal: false },
+    energy_master: { name: '에너지관리기능장', isReal: true },
     air_conditioning: { name: '공조기능사', isReal: false }
 };
 
@@ -230,7 +230,7 @@ const subjectDetails = {
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     loadDashboardStats();
-    loadGasQuestions();
+    loadQuestions();
     registerEventListeners();
 });
 
@@ -258,20 +258,34 @@ function toggleTheme() {
     updateThemeIcon(newTheme);
 }
 
-// Load JSON Database
-async function loadGasQuestions() {
+// Load JSON Databases
+async function loadQuestions() {
+    // Gas Questions
     try {
         const response = await fetch('data/gas/gas_questions.json');
-        if (!response.ok) {
-            throw new Error('데이터베이스를 불러올 수 없습니다.');
+        if (response.ok) {
+            state.exams.gas = await response.json();
+            console.log('가스기능사 데이터 로드 완료:', state.exams.gas.length, '회차');
+        } else {
+            state.exams.gas = [];
         }
-        state.exams.gas = await response.json();
-        console.log('가스기능사 데이터 로드 완료:', state.exams.gas.length, '회차');
     } catch (error) {
-        console.error('기출문제 파일 로드 에러:', error);
-        // Fallback or empty alert. Since we are on GitHub Pages/Server, it will fetch.
-        // Let's create an empty array in state to prevent crashes
+        console.error('가스기능사 기출문제 파일 로드 에러:', error);
         state.exams.gas = [];
+    }
+
+    // Energy Master Questions
+    try {
+        const response = await fetch('data/energy_ginungjang/energy_ginungjang_questions.json');
+        if (response.ok) {
+            state.exams.energy_master = await response.json();
+            console.log('에너지관리기능장 데이터 로드 완료:', state.exams.energy_master.length, '회차');
+        } else {
+            state.exams.energy_master = [];
+        }
+    } catch (error) {
+        console.error('에너지관리기능장 기출문제 파일 로드 에러:', error);
+        state.exams.energy_master = [];
     }
 }
 
@@ -427,6 +441,8 @@ function renderRoundsList(subject) {
     let roundsData = [];
     if (subject === 'gas') {
         roundsData = state.exams.gas || [];
+    } else if (subject === 'energy_master') {
+        roundsData = state.exams.energy_master || [];
     } else {
         roundsData = mockExams[subject] || [];
     }
@@ -460,7 +476,7 @@ function renderRoundsList(subject) {
         
         card.innerHTML = `
             ${progressBadge}
-            <div class="round-title">${round.year}년 ${round.round}</div>
+            <div class="round-title">${round.year ? `${round.year}년 ` : ''}${round.round}</div>
             <div class="round-desc">${round.questions.length} 문제 출제</div>
             <div class="round-progress-bar-wrapper">
                 <div class="round-progress-bar" style="width: ${progressBarWidth}"></div>
@@ -486,7 +502,7 @@ function startQuiz(round) {
     
     // Set Header titles
     dom.quizSubjectName.innerText = round.subject;
-    dom.quizRoundName.innerText = `${round.year}년 ${round.round}`;
+    dom.quizRoundName.innerText = round.year ? `${round.year}년 ${round.round}` : round.round;
     
     // Clear elements styling
     dom.explanationBox.classList.add('collapsed');
