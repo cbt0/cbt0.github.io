@@ -13,7 +13,8 @@ const state = {
     quizMode: 'solving',    // 'solving' (active test), 'review' (checking answers after submission)
     timerInterval: null,
     timeSpentSeconds: 0,
-    currentQuestions: []    // Active question list (usually 60)
+    currentQuestions: [],   // Active question list (usually 60)
+    currentUser: null       // Logged in user ID
 };
 
 // Mock Exam Database for other subjects
@@ -158,6 +159,7 @@ const dom = {
         home: document.getElementById('home-screen'),
         rounds: document.getElementById('rounds-screen'),
         quiz: document.getElementById('quiz-screen'),
+        grading: document.getElementById('grading-screen'),
         settings: document.getElementById('settings-screen')
     },
     nav: {
@@ -169,6 +171,19 @@ const dom = {
     logo: document.getElementById('logo-btn'),
     themeToggle: document.getElementById('theme-toggle'),
     startLearningBtn: document.getElementById('start-learning-btn'),
+    
+    // Login / Welcome widget elements
+    loginFormContainer: document.getElementById('login-form-container'),
+    welcomeContainer: document.getElementById('welcome-container'),
+    welcomeUsername: document.getElementById('welcome-username'),
+    loginId: document.getElementById('login-id'),
+    loginPw: document.getElementById('login-pw'),
+    logoutBtn: document.getElementById('logout-btn'),
+    subjectSelectionSection: document.getElementById('subject-selection-section'),
+    
+    // Grading dashboard elements
+    userActivityLogs: document.getElementById('user-activity-logs'),
+    lastSolvedInfo: document.getElementById('last-solved-info'),
     
     // Stats elements
     stats: {
@@ -229,10 +244,205 @@ const subjectDetails = {
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
-    loadDashboardStats();
+    checkLoginState();
     loadQuestions();
     registerEventListeners();
 });
+
+// Check User Login State
+function checkLoginState() {
+    const savedUser = localStorage.getItem('cbt_current_user');
+    if (savedUser) {
+        state.currentUser = savedUser;
+        dom.loginFormContainer.classList.add('hidden');
+        dom.welcomeContainer.classList.remove('hidden');
+        dom.welcomeUsername.innerText = savedUser;
+        dom.subjectSelectionSection.classList.remove('hidden');
+    } else {
+        state.currentUser = null;
+        dom.loginFormContainer.classList.remove('hidden');
+        dom.welcomeContainer.classList.add('hidden');
+        dom.subjectSelectionSection.classList.add('hidden');
+    }
+}
+
+// Perform Login
+function login() {
+    const username = dom.loginId.value.trim();
+    const password = dom.loginPw.value;
+
+    if (!username) {
+        alert('아이디를 입력해 주세요.');
+        dom.loginId.focus();
+        return;
+    }
+
+    if (password !== 'dongbu') {
+        alert('비밀번호가 맞지 않습니다. (비밀번호: dongbu)');
+        dom.loginPw.focus();
+        return;
+    }
+
+    // Login success
+    localStorage.setItem('cbt_current_user', username);
+    state.currentUser = username;
+    
+    // UI transition
+    dom.loginFormContainer.classList.add('hidden');
+    dom.welcomeContainer.classList.remove('hidden');
+    dom.welcomeUsername.innerText = username;
+    dom.subjectSelectionSection.classList.remove('hidden');
+    
+    logUserActivity('로그인 성공');
+    
+    // Smooth scroll to subject list
+    setTimeout(() => {
+        dom.subjectSelectionSection.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+}
+
+// Perform Logout
+function logout() {
+    if (state.currentUser) {
+        logUserActivity('로그아웃');
+    }
+    localStorage.removeItem('cbt_current_user');
+    state.currentUser = null;
+    dom.loginId.value = '';
+    dom.loginPw.value = '';
+    checkLoginState();
+    navigateTo('home');
+}
+
+// Log User Activity
+function logUserActivity(msg) {
+    if (!state.currentUser) return;
+    const logsKey = `cbt_${state.currentUser}_logs`;
+    const logs = JSON.parse(localStorage.getItem(logsKey)) || [];
+    const now = new Date();
+    const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+    
+    logs.unshift({
+        time: timeStr,
+        message: msg
+    });
+    
+    if (logs.length > 50) logs.pop();
+    localStorage.setItem(logsKey, JSON.stringify(logs));
+}
+
+// Render Grading Dashboard
+function renderGradingDashboard() {
+    if (!state.currentUser) {
+        dom.userActivityLogs.innerHTML = '<p class="no-data-msg">로그인이 필요한 서비스입니다.</p>';
+        dom.lastSolvedInfo.innerHTML = '<p class="no-data-msg">로그인이 필요한 서비스입니다.</p>';
+        dom.stats.totalSolved.innerText = '0';
+        dom.stats.correctRate.innerText = '0%';
+        dom.stats.passedExams.innerText = '0';
+        return;
+    }
+
+    // Load stats
+    const statsKey = `cbt_${state.currentUser}_global_stats`;
+    const stats = JSON.parse(localStorage.getItem(statsKey)) || {
+        totalSolved: 0,
+        totalExamsAttempted: 0,
+        passedExamsCount: 0,
+        averageSum: 0
+    };
+    
+    const averageRate = stats.totalExamsAttempted > 0 
+        ? Math.round(stats.averageSum / stats.totalExamsAttempted) 
+        : 0;
+        
+    dom.stats.totalSolved.innerText = stats.totalSolved.toLocaleString();
+    dom.stats.correctRate.innerText = `${averageRate}%`;
+    dom.stats.passedExams.innerText = stats.passedExamsCount.toLocaleString();
+
+    // Load Last Solved Info
+    const lastSolvedKey = `cbt_${state.currentUser}_last_solved`;
+    const lastSolved = JSON.parse(localStorage.getItem(lastSolvedKey));
+    if (lastSolved) {
+        dom.lastSolvedInfo.innerHTML = `
+            <div class="last-solved-item">
+                <div class="last-solved-title">${lastSolved.subjectName}</div>
+                <div class="last-solved-meta">
+                    ${lastSolved.year ? lastSolved.year + '년 ' : ''}${lastSolved.round} / ${lastSolved.questionNum}번 문제 풀이 중
+                    <br><span style="font-size: 11px; color: var(--text-muted);">최근 학습 시간: ${lastSolved.time}</span>
+                </div>
+                <div class="last-solved-actions">
+                    <button class="btn btn-primary btn-sm" id="btn-resume-solving">이어 풀기 <i class="fa-solid fa-play"></i></button>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('btn-resume-solving').addEventListener('click', () => {
+            resumeLastSolved(lastSolved);
+        });
+    } else {
+        dom.lastSolvedInfo.innerHTML = '<p class="no-data-msg">최근 학습한 이력이 없습니다.</p>';
+    }
+
+    // Load Activity Logs
+    const logsKey = `cbt_${state.currentUser}_logs`;
+    const logs = JSON.parse(localStorage.getItem(logsKey)) || [];
+    if (logs.length > 0) {
+        dom.userActivityLogs.innerHTML = logs.map(log => `
+            <div class="log-item">
+                <div class="log-header">
+                    <span class="log-time">${log.time}</span>
+                </div>
+                <span class="log-message">${log.message}</span>
+            </div>
+        `).join('');
+    } else {
+        dom.userActivityLogs.innerHTML = '<p class="no-data-msg">활동 로그가 없습니다.</p>';
+    }
+}
+
+// Resume Last Solved Question
+function resumeLastSolved(lastSolved) {
+    let roundsData = [];
+    if (lastSolved.subject === 'gas') {
+        roundsData = state.exams.gas || [];
+    } else if (lastSolved.subject === 'energy_master') {
+        roundsData = state.exams.energy_master || [];
+    } else if (lastSolved.subject === 'energy_industrial') {
+        roundsData = state.exams.energy_industrial || [];
+    }
+    
+    const matchedRound = roundsData.find(r => r.year === lastSolved.year && r.round === lastSolved.round);
+    if (matchedRound) {
+        state.activeSubject = lastSolved.subject;
+        state.activeRound = matchedRound;
+        state.currentQuestions = matchedRound.questions;
+        state.activeQuestionIndex = lastSolved.questionIndex;
+        state.userAnswers = {};
+        state.quizMode = 'solving';
+        state.timeSpentSeconds = 0;
+        
+        dom.quizSubjectName.innerText = matchedRound.subject;
+        dom.quizRoundName.innerText = matchedRound.year ? `${matchedRound.year}년 ${matchedRound.round}` : matchedRound.round;
+        
+        dom.explanationBox.classList.add('collapsed');
+        renderMarkingSheet();
+        renderActiveQuestion();
+        
+        // Start timer
+        clearInterval(state.timerInterval);
+        state.timerInterval = setInterval(() => {
+            state.timeSpentSeconds++;
+            const mins = String(Math.floor(state.timeSpentSeconds / 60)).padStart(2, '0');
+            const secs = String(state.timeSpentSeconds % 60).padStart(2, '0');
+            dom.timerText.innerText = `${mins}:${secs}`;
+        }, 1000);
+        
+        logUserActivity(`${matchedRound.subject} ${matchedRound.round} ${lastSolved.questionNum}번부터 이어 풀기 시작`);
+        switchTab('quiz');
+    } else {
+        alert('해당 시험 데이터를 로드할 수 없습니다.');
+    }
+}
 
 // Theme Control (Dark/Light Mode)
 function initTheme() {
@@ -323,8 +533,26 @@ function registerEventListeners() {
     
     // Start Learning Button on Dashboard
     dom.startLearningBtn.addEventListener('click', () => {
-        navigateTo('gas'); // Default to main subject
+        if (!state.currentUser) {
+            login();
+        } else {
+            dom.subjectSelectionSection.scrollIntoView({ behavior: 'smooth' });
+        }
     });
+    
+    // Logout Button
+    if (dom.logoutBtn) {
+        dom.logoutBtn.addEventListener('click', logout);
+    }
+    
+    // Password Enter Key
+    if (dom.loginPw) {
+        dom.loginPw.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+    }
     
     // Subject cards on Dashboard
     document.querySelectorAll('.subject-card').forEach(card => {
@@ -383,7 +611,7 @@ function navigateTo(subject) {
     if (subject === 'home') {
         state.activeSubject = 'home';
         showView('home');
-        loadDashboardStats();
+        checkLoginState();
     } else {
         // Show Round Selector
         state.activeSubject = subject;
@@ -404,8 +632,8 @@ function switchTabStyles(tabName) {
 }
 
 function switchTab(tabName) {
-    // Check if test is active when trying to view quiz or grading
-    if ((tabName === 'quiz' || tabName === 'grading') && !state.activeRound) {
+    // Check if test is active when trying to view quiz
+    if (tabName === 'quiz' && !state.activeRound) {
         alert('진행 중인 시험이 없습니다. 홈 화면에서 시험을 시작해 주세요.');
         switchTab('home');
         return;
@@ -425,10 +653,15 @@ function switchTab(tabName) {
         quizScreen.classList.add('show-quiz-main');
         quizScreen.classList.remove('show-quiz-sidebar');
     } else if (tabName === 'grading') {
-        showView('quiz');
-        const quizScreen = document.getElementById('quiz-screen');
-        quizScreen.classList.add('show-quiz-sidebar');
-        quizScreen.classList.remove('show-quiz-main');
+        if (state.activeRound) {
+            showView('quiz');
+            const quizScreen = document.getElementById('quiz-screen');
+            quizScreen.classList.add('show-quiz-sidebar');
+            quizScreen.classList.remove('show-quiz-main');
+        } else {
+            showView('grading');
+            renderGradingDashboard();
+        }
     } else if (tabName === 'settings') {
         showView('settings');
     }
@@ -480,7 +713,7 @@ function renderRoundsList(subject) {
         card.className = 'round-card';
         
         // Load stats from localStorage
-        const progressKey = `cbt_progress_${subject}_${round.year}_${round.round}`;
+        const progressKey = `cbt_progress_${state.currentUser ? state.currentUser + '_' : ''}${subject}_${round.year}_${round.round}`;
         const progress = JSON.parse(localStorage.getItem(progressKey)) || { score: 0, total: 0, completed: false };
         
         let progressBadge = '';
@@ -515,6 +748,8 @@ function startQuiz(round) {
     state.userAnswers = {};
     state.quizMode = 'solving';
     state.timeSpentSeconds = 0;
+    
+    logUserActivity(`${round.subject} ${round.round} 시험 시작`);
     
     // Set Header titles
     dom.quizSubjectName.innerText = round.subject;
@@ -604,6 +839,22 @@ function updateMarkingStatus() {
 function renderActiveQuestion() {
     const q = state.currentQuestions[state.activeQuestionIndex];
     if (!q) return;
+    
+    // Save last solved question info for resume
+    if (state.currentUser && state.activeRound && state.quizMode === 'solving') {
+        const lastSolvedKey = `cbt_${state.currentUser}_last_solved`;
+        const now = new Date();
+        const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+        localStorage.setItem(lastSolvedKey, JSON.stringify({
+            subject: state.activeSubject,
+            subjectName: subjectDetails[state.activeSubject].name,
+            year: state.activeRound.year,
+            round: state.activeRound.round,
+            questionIndex: state.activeQuestionIndex,
+            questionNum: q.num,
+            time: timeStr
+        }));
+    }
     
     // Question layout (remove "Q. " prefix)
     dom.questionNum.innerText = String(q.num).padStart(2, '0');
@@ -744,12 +995,13 @@ function submitExam() {
     
     // Trigger animation in next frame
     setTimeout(() => {
+        dom.scoreRingBar.style.dashoffset = dashOffset; // using simple property mapping
         dom.scoreRingBar.style.strokeDashoffset = dashOffset;
     }, 100);
     
     // Save progress to LocalStorage
     const roundKey = `${state.activeRound.year}_${state.activeRound.round}`;
-    const progressKey = `cbt_progress_${state.activeSubject}_${roundKey}`;
+    const progressKey = `cbt_progress_${state.currentUser ? state.currentUser + '_' : ''}${state.activeSubject}_${roundKey}`;
     localStorage.setItem(progressKey, JSON.stringify({
         score: correct,
         total: total,
@@ -757,6 +1009,12 @@ function submitExam() {
         percent: scoreVal,
         time: state.timeSpentSeconds
     }));
+    
+    // Clear last solved info upon submission
+    if (state.currentUser) {
+        localStorage.removeItem(`cbt_${state.currentUser}_last_solved`);
+        logUserActivity(`${state.activeRound.subject} ${state.activeRound.round} 제출 - ${scoreVal}점 (${isPass ? '합격' : '불합격'})`);
+    }
     
     // Update dashboard global counters
     saveGlobalStats(scoreVal, total, isPass);
@@ -775,7 +1033,8 @@ function enterReviewMode() {
 
 // LocalStorage User Stats Tracker
 function saveGlobalStats(scoreVal, total, isPass) {
-    const stats = JSON.parse(localStorage.getItem('cbt_global_stats')) || {
+    const statsKey = state.currentUser ? `cbt_${state.currentUser}_global_stats` : 'cbt_global_stats';
+    const stats = JSON.parse(localStorage.getItem(statsKey)) || {
         totalSolved: 0,
         totalExamsAttempted: 0,
         passedExamsCount: 0,
@@ -789,22 +1048,5 @@ function saveGlobalStats(scoreVal, total, isPass) {
     }
     stats.averageSum += scoreVal;
     
-    localStorage.setItem('cbt_global_stats', JSON.stringify(stats));
-}
-
-function loadDashboardStats() {
-    const stats = JSON.parse(localStorage.getItem('cbt_global_stats')) || {
-        totalSolved: 0,
-        totalExamsAttempted: 0,
-        passedExamsCount: 0,
-        averageSum: 0
-    };
-    
-    const averageRate = stats.totalExamsAttempted > 0 
-        ? Math.round(stats.averageSum / stats.totalExamsAttempted) 
-        : 0;
-        
-    dom.stats.totalSolved.innerText = stats.totalSolved.toLocaleString();
-    dom.stats.correctRate.innerText = `${averageRate}%`;
-    dom.stats.passedExams.innerText = stats.passedExamsCount.toLocaleString();
+    localStorage.setItem(statsKey, JSON.stringify(stats));
 }
