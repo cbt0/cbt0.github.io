@@ -70,6 +70,7 @@
 | **2026-06-15 17:23** | `v0.3` | `css/style.css`<br>`index.html`<br>`develop.md` | **데스크톱 OMR 마킹판 완전 숨김 및 v0.3 빌드 배포**<br>- PC 데스크톱 화면에서 OMR 마킹판 프레임(`.quiz-sidebar`)을 완전히 숨기고 문제 풀이(`.quiz-main`)만 1단으로 노출되도록 레이아웃 통일<br>- OMR 마킹판은 모바일/PC 불문하고 오직 '채점' 탭에서만 활성화되도록 단일화<br>- 앱 버전을 `CBT v0.3`으로 버전업 및 캐시 갱신 쿼리(`?v=1.0.4`) 반영 |
 | **2026-06-15 17:25** | `v0.4` | `index.html`<br>`develop.md` | **v0.4 빌드 배포 및 브라우저 캐시 대응**<br>- 깃허브 페이지의 정적 리소스 캐싱 문제를 완전히 해결하기 위한 캐시 무력화 쿼리(`?v=1.0.5`) 갱신 배포<br>- 앱 버전을 `CBT v0.4`로 버전업 |
 | **2026-06-15 17:48** | `v0.5` | `index.html`<br>`develop.md`<br>`css/style.css`<br>`js/app.js`<br>`data/gas/gas_questions.json` | **가스기능사 문제 데이터 복구 및 표 포맷 지원 배포**<br>- docx 원본에서 문제/해설 내의 표(table) 데이터를 HTML `<table>`로 변환하여 JSON DB 재구축<br>- 앱에서 문제 및 해설 렌더링 시 innerHTML을 사용하여 표 구조 완벽 표시<br>- 표 스타일링을 위해 `.nested-table` CSS 규격 설계 반영 |
+| **2026-06-15 17:58** | `v0.6` | `index.html`<br>`develop.md`<br>`js/app.js`<br>`data/energy_ginungjang/energy_ginungjang_questions.json` | **에너지관리기능장 20회차 풀 세트 문제 탑재 및 V0.6 배포**<br>- `energy_ginungjang_01_20.docx` 파일을 기반으로 총 20회차(1,200문제) 기출 복원 데이터를 추출하여 JSON DB 구축<br>- 앱에서 '에너지관리기능장'을 클릭할 때 해당 실전모의고사 1~20회차 리스트가 자동 노출 및 기동되도록 UI 카드 상태 및 js 비동기 로딩 로직 개편<br>- 연도 정보가 빈 기출문제의 라운드 정보 렌더링 예외 처리 |
 
 ---
 
