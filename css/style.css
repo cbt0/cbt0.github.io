@@ -426,13 +426,13 @@ body {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: var(--border-radius-lg);
-    padding: 30px;
+    padding: 24px;
     cursor: pointer;
     position: relative;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
     box-shadow: var(--shadow-sm);
     transition: all var(--transition-normal);
 }
@@ -483,15 +483,20 @@ body {
 }
 
 .subject-icon {
-    font-size: 32px;
-    width: 60px;
-    height: 60px;
-    border-radius: 16px;
+    font-size: 22px;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: var(--shadow-sm);
-    margin-bottom: 5px;
+}
+
+.subject-card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
 }
 
 .gas-icon { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
@@ -501,28 +506,18 @@ body {
 .air-icon { background: rgba(6, 182, 212, 0.15); color: #06b6d4; }
 
 .subject-card h3 {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
+    margin: 0;
 }
 
 .subject-card p {
     color: var(--text-secondary);
-    font-size: 14px;
-    line-height: 1.6;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0;
     flex-grow: 1;
 }
-
-.subject-action {
-    font-weight: 600;
-    font-size: 14px;
-    color: var(--primary);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: gap var(--transition-fast);
-}
-
-.subject-card:hover .subject-action {
     gap: 12px;
 }
 
@@ -574,12 +569,10 @@ body {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: var(--border-radius-md);
-    padding: 20px;
+    padding: 12px 20px;
     cursor: pointer;
-    position: relative;
     display: flex;
-    flex-direction: column;
-    gap: 12px;
+    align-items: center;
     transition: all var(--transition-fast);
 }
 
@@ -589,9 +582,17 @@ body {
     transform: translateY(-2px);
 }
 
+.round-info-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    font-size: 14px;
+}
+
 .round-title {
-    font-weight: 700;
-    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-light);
 }
 
 .round-desc {
@@ -599,36 +600,15 @@ body {
     font-size: 13px;
 }
 
-.round-progress-bar-wrapper {
-    height: 6px;
-    background: var(--bg-tertiary);
-    border-radius: 3px;
-    overflow: hidden;
-    margin-top: 10px;
-}
-
-.round-progress-bar {
-    height: 100%;
-    width: 0%;
-    background: var(--primary);
-    border-radius: 3px;
-    transition: width var(--transition-normal);
-}
-
-.round-badge {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-weight: 600;
-}
-
-.round-badge.complete {
-    background: var(--success-bg);
+.round-complete-status {
     color: var(--success);
-    border: 1px solid var(--success-border);
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: auto;
+    background: rgba(16, 185, 129, 0.08);
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 /* 3. Quiz Layout */
