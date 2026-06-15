@@ -157,15 +157,14 @@ const dom = {
     screens: {
         home: document.getElementById('home-screen'),
         rounds: document.getElementById('rounds-screen'),
-        quiz: document.getElementById('quiz-screen')
+        quiz: document.getElementById('quiz-screen'),
+        settings: document.getElementById('settings-screen')
     },
     nav: {
         home: document.getElementById('nav-home'),
-        gas: document.getElementById('nav-gas'),
-        energyC: document.getElementById('nav-energy-c'),
-        energyI: document.getElementById('nav-energy-i'),
-        energyM: document.getElementById('nav-energy-m'),
-        air: document.getElementById('nav-air')
+        quiz: document.getElementById('nav-quiz'),
+        grading: document.getElementById('nav-grading'),
+        settings: document.getElementById('nav-settings')
     },
     logo: document.getElementById('logo-btn'),
     themeToggle: document.getElementById('theme-toggle'),
@@ -190,6 +189,7 @@ const dom = {
     markingSheet: document.getElementById('marking-sheet'),
     quizProgressText: document.getElementById('quiz-progress-text'),
     quizSubmitBtn: document.getElementById('quiz-submit-btn'),
+    quizTopSubmitBtn: document.getElementById('quiz-top-submit-btn'),
     
     // Active Question elements
     questionNum: document.getElementById('question-num'),
@@ -280,8 +280,8 @@ function registerEventListeners() {
     // Top Navigation
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', (e) => {
-            const subject = e.currentTarget.getAttribute('data-subject');
-            navigateTo(subject);
+            const tab = e.currentTarget.getAttribute('data-tab');
+            switchTab(tab);
         });
     });
     
@@ -289,7 +289,9 @@ function registerEventListeners() {
     dom.logo.addEventListener('click', () => navigateTo('home'));
     
     // Theme Toggle
-    dom.themeToggle.addEventListener('click', toggleTheme);
+    if (dom.themeToggle) {
+        dom.themeToggle.addEventListener('click', toggleTheme);
+    }
     
     // Start Learning Button on Dashboard
     dom.startLearningBtn.addEventListener('click', () => {
@@ -324,6 +326,9 @@ function registerEventListeners() {
     
     // Submit Exam
     dom.quizSubmitBtn.addEventListener('click', submitExam);
+    if (dom.quizTopSubmitBtn) {
+        dom.quizTopSubmitBtn.addEventListener('click', submitExam);
+    }
     
     // Modal buttons
     dom.resultReviewBtn.addEventListener('click', () => {
@@ -344,16 +349,9 @@ function navigateTo(subject) {
         clearInterval(state.timerInterval);
     }
     
-    // Reset active nav style
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-        if (item.getAttribute('data-subject') === subject) {
-            item.classList.add('active');
-        }
-    });
-    
-    // Show corresponding screens
+    // Show corresponding screens under "home" tab flow
     if (subject === 'home') {
+        state.activeSubject = 'home';
         showView('home');
         loadDashboardStats();
     } else {
@@ -361,6 +359,49 @@ function navigateTo(subject) {
         state.activeSubject = subject;
         showView('rounds');
         renderRoundsList(subject);
+    }
+    
+    // Ensure "home" tab is active visually
+    switchTabStyles('home');
+}
+
+function switchTabStyles(tabName) {
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.getAttribute('data-tab') === tabName) {
+            item.classList.add('active');
+        }
+    });
+}
+
+function switchTab(tabName) {
+    // Check if test is active when trying to view quiz or grading
+    if ((tabName === 'quiz' || tabName === 'grading') && !state.activeRound) {
+        alert('진행 중인 시험이 없습니다. 홈 화면에서 시험을 시작해 주세요.');
+        switchTab('home');
+        return;
+    }
+    
+    switchTabStyles(tabName);
+    
+    if (tabName === 'home') {
+        if (state.activeSubject && state.activeSubject !== 'home') {
+            showView('rounds');
+        } else {
+            showView('home');
+        }
+    } else if (tabName === 'quiz') {
+        showView('quiz');
+        const quizScreen = document.getElementById('quiz-screen');
+        quizScreen.classList.add('show-quiz-main');
+        quizScreen.classList.remove('show-quiz-sidebar');
+    } else if (tabName === 'grading') {
+        showView('quiz');
+        const quizScreen = document.getElementById('quiz-screen');
+        quizScreen.classList.add('show-quiz-sidebar');
+        quizScreen.classList.remove('show-quiz-main');
+    } else if (tabName === 'settings') {
+        showView('settings');
     }
 }
 
@@ -465,8 +506,8 @@ function startQuiz(round) {
         dom.timerText.innerText = `${mins}:${secs}`;
     }, 1000);
     
-    // Show screen
-    showView('quiz');
+    // Show screen and switch tab to quiz
+    switchTab('quiz');
 }
 
 // Render Left side markings grid (1~60)
@@ -482,6 +523,7 @@ function renderMarkingSheet() {
         btn.addEventListener('click', () => {
             state.activeQuestionIndex = idx;
             renderActiveQuestion();
+            switchTab('quiz'); // Switch view tab to quiz
         });
         
         dom.markingSheet.appendChild(btn);
@@ -530,21 +572,19 @@ function renderActiveQuestion() {
     const q = state.currentQuestions[state.activeQuestionIndex];
     if (!q) return;
     
-    // Question layout
-    dom.questionNum.innerText = `Q. ${String(q.num).padStart(2, '0')}`;
+    // Question layout (remove "Q. " prefix)
+    dom.questionNum.innerText = String(q.num).padStart(2, '0');
     dom.questionText.innerText = q.question;
     
     // Options text binding
     dom.choices.forEach((btn, idx) => {
         const choiceNum = idx + 1;
         const textSpan = btn.querySelector('.choice-text');
-        const iconSpan = btn.querySelector('.choice-status-icon');
         
         textSpan.innerText = q.options[idx] || '';
         
         // Reset option styles
         btn.className = 'choice-item';
-        iconSpan.innerHTML = '<i class="fa-regular fa-circle"></i>';
         
         // If question was already answered
         const userAnswer = state.userAnswers[state.activeQuestionIndex];
@@ -554,10 +594,8 @@ function renderActiveQuestion() {
             // Apply correct/wrong decoration
             if (choiceNum === correctAnswer) {
                 btn.classList.add('correct');
-                iconSpan.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
             } else if (choiceNum === userAnswer) {
                 btn.classList.add('wrong');
-                iconSpan.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
             }
         }
     });
