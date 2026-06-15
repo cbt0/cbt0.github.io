@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CBT V1.0 - 최강 CBT 스타일 문제풀이</title>
+    <title>CBT V1.1 - 최강 CBT 스타일 문제풀이</title>
     <meta name="description" content="에너지기능사, 에너지산업관리기사, 에너지기능장, 가스기능사, 공조기능사 기출문제 무료 CBT 풀이 사이트. 실시간 채점 및 자동 힌트 제공.">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,7 +12,7 @@
     <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css?v=1.1.1">
+    <link rel="stylesheet" href="css/style.css?v=1.1.2">
 </head>
 <body>
     <!-- Premium Header -->
@@ -20,7 +20,7 @@
         <div class="header-container">
             <div class="logo" id="logo-btn">
                 <i class="fa-solid fa-graduation-cap logo-icon"></i>
-                <span class="logo-text">CBT <span class="logo-sub">V1.0</span></span>
+                <span class="logo-text">CBT <span class="logo-sub">V1.1</span></span>
             </div>
             
             <nav class="main-nav">
@@ -295,53 +295,73 @@
                 <p class="grading-dashboard-subtitle">로그인된 사용자의 실시간 학습 기록 및 정답률 통계입니다.</p>
             </div>
 
-            <!-- Dashboard Stats Grid (Moved here) -->
-            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 24px 0;">
-                <div class="stat-card">
-                    <div class="stat-icon-wrapper purple">
-                        <i class="fa-solid fa-book-open"></i>
+            <!-- Sub Tab Navigation -->
+            <div class="sub-tab-container">
+                <button class="sub-tab-btn active" data-subtab="stats">채점</button>
+                <button class="sub-tab-btn" data-subtab="ranking">순위</button>
+            </div>
+
+            <!-- Tab 1: Stats & Logs -->
+            <div id="subtab-content-stats" class="subtab-content active">
+                <!-- Dashboard Stats Grid (Moved here) -->
+                <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 24px 0;">
+                    <div class="stat-card">
+                        <div class="stat-icon-wrapper purple">
+                            <i class="fa-solid fa-book-open"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stats-total-solved">0</span>
+                            <span class="stat-label">푼 문제 수</span>
+                        </div>
                     </div>
-                    <div class="stat-info">
-                        <span class="stat-value" id="stats-total-solved">0</span>
-                        <span class="stat-label">푼 문제 수</span>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon-wrapper green">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stats-correct-rate">0%</span>
+                            <span class="stat-label">평균 정답률</span>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon-wrapper green">
-                        <i class="fa-solid fa-circle-check"></i>
-                    </div>
-                    <div class="stat-info">
-                        <span class="stat-value" id="stats-correct-rate">0%</span>
-                        <span class="stat-label">평균 정답률</span>
+
+                    <div class="stat-card">
+                        <div class="stat-icon-wrapper blue">
+                            <i class="fa-solid fa-trophy"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stats-passed-exams">0</span>
+                            <span class="stat-label">합격한 회차</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="stat-card">
-                    <div class="stat-icon-wrapper blue">
-                        <i class="fa-solid fa-trophy"></i>
+                <div class="user-dashboard-row">
+                    <!-- Last Solved Exam Card -->
+                    <div class="dashboard-box last-solved-box">
+                        <h3><i class="fa-solid fa-clock-rotate-left"></i> 마지막 풀었던 문제</h3>
+                        <div id="last-solved-info" class="last-solved-content">
+                            <p class="no-data-msg">최근 학습한 이력이 없습니다.</p>
+                        </div>
                     </div>
-                    <div class="stat-info">
-                        <span class="stat-value" id="stats-passed-exams">0</span>
-                        <span class="stat-label">합격한 회차</span>
+
+                    <!-- Activity Logs Card -->
+                    <div class="dashboard-box logs-box">
+                        <h3><i class="fa-solid fa-list-ul"></i> 최근 학습 활동 로그</h3>
+                        <div class="logs-container" id="user-activity-logs">
+                            <p class="no-data-msg">활동 로그가 없습니다.</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="user-dashboard-row">
-                <!-- Last Solved Exam Card -->
-                <div class="dashboard-box last-solved-box">
-                    <h3><i class="fa-solid fa-clock-rotate-left"></i> 마지막 풀었던 문제</h3>
-                    <div id="last-solved-info" class="last-solved-content">
-                        <p class="no-data-msg">최근 학습한 이력이 없습니다.</p>
-                    </div>
-                </div>
-
-                <!-- Activity Logs Card -->
-                <div class="dashboard-box logs-box">
-                    <h3><i class="fa-solid fa-list-ul"></i> 최근 학습 활동 로그</h3>
-                    <div class="logs-container" id="user-activity-logs">
-                        <p class="no-data-msg">활동 로그가 없습니다.</p>
+            <!-- Tab 2: Rankings -->
+            <div id="subtab-content-ranking" class="subtab-content">
+                <!-- User Ranking Leaderboard Card -->
+                <div class="dashboard-box ranking-box" style="margin-top: 16px;">
+                    <h3><i class="fa-solid fa-ranking-star"></i> 사용자 순위 (푼 문제수)</h3>
+                    <div class="ranking-container" id="user-ranking-list">
+                        <p class="no-data-msg">순위 정보가 없습니다.</p>
                     </div>
                 </div>
             </div>
@@ -367,6 +387,6 @@
     </section>
 
     <!-- Custom JavaScript -->
-    <script src="js/app.js?v=1.1.1"></script>
+    <script src="js/app.js?v=1.1.2"></script>
 </body>
 </html>
