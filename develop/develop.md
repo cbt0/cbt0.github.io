@@ -375,3 +375,7 @@ CSS 및 JS 파일이 모바일 탭 라우팅 구조로 대폭 변경되었습니
   │ [!TIP]
   │ Push 완료 후 GitHub Pages 배포 작업(약 1분 소요)이 끝난 뒤, 브라우저에서 **강제 새로고침(Cmd + Shift + R 또는 Ctrl + F5)**을 하시면 정상적으로 CBT V1.7로
   │ 표기되며 변경된 폰트 크기(18px)와 패딩(10px)이 완벽히 적용됩니다.
+
+  -------------------
+##  260616 desk choice font size 변경
+css/style.css>.choice-item font-size
