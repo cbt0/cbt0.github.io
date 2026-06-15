@@ -1318,3 +1318,33 @@ body {
         font-size: 24px;
     }
 }
+
+/* Nested Tables inside Questions/Explanations */
+.nested-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+    white-space: normal;
+}
+
+.nested-table th, 
+.nested-table td {
+    border: 1px solid var(--glass-border);
+    padding: 8px 12px;
+    text-align: center;
+    color: var(--text-primary);
+}
+
+.nested-table tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.nested-table tr:first-child {
+    background: var(--bg-tertiary);
+    font-weight: 600;
+}
