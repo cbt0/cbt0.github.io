@@ -170,7 +170,7 @@ const dom = {
     },
     logo: document.getElementById('logo-btn'),
     themeToggle: document.getElementById('theme-toggle'),
-    startLearningBtn: document.getElementById('start-learning-btn'),
+    loginSubmitBtn: document.getElementById('login-submit-btn'),
     
     // Login / Welcome widget elements
     loginFormContainer: document.getElementById('login-form-container'),
@@ -258,11 +258,13 @@ function checkLoginState() {
         dom.welcomeContainer.classList.remove('hidden');
         dom.welcomeUsername.innerText = savedUser;
         dom.subjectSelectionSection.classList.remove('hidden');
+        if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
     } else {
         state.currentUser = null;
         dom.loginFormContainer.classList.remove('hidden');
         dom.welcomeContainer.classList.add('hidden');
         dom.subjectSelectionSection.classList.add('hidden');
+        if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.remove('hidden');
     }
 }
 
@@ -292,6 +294,7 @@ function login() {
     dom.welcomeContainer.classList.remove('hidden');
     dom.welcomeUsername.innerText = username;
     dom.subjectSelectionSection.classList.remove('hidden');
+    if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
     
     logUserActivity('로그인 성공');
     
@@ -531,14 +534,12 @@ function registerEventListeners() {
         dom.themeToggle.addEventListener('click', toggleTheme);
     }
     
-    // Start Learning Button on Dashboard
-    dom.startLearningBtn.addEventListener('click', () => {
-        if (!state.currentUser) {
+    // Login Button on Dashboard
+    if (dom.loginSubmitBtn) {
+        dom.loginSubmitBtn.addEventListener('click', () => {
             login();
-        } else {
-            dom.subjectSelectionSection.scrollIntoView({ behavior: 'smooth' });
-        }
-    });
+        });
+    }
     
     // Logout Button
     if (dom.logoutBtn) {
