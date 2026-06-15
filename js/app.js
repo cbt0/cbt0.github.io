@@ -575,7 +575,7 @@ function renderActiveQuestion() {
     
     // Question layout (remove "Q. " prefix)
     dom.questionNum.innerText = String(q.num).padStart(2, '0');
-    dom.questionText.innerText = q.question;
+    dom.questionText.innerHTML = q.question;
     
     // Options text binding
     dom.choices.forEach((btn, idx) => {
@@ -602,7 +602,7 @@ function renderActiveQuestion() {
     });
     
     // Hint & Explanation Box
-    dom.explanationText.innerText = q.hint || '이 문제에 대한 별도 해설 정보가 없습니다.';
+    dom.explanationText.innerHTML = q.hint || '이 문제에 대한 별도 해설 정보가 없습니다.';
     
     const userAnswer = state.userAnswers[state.activeQuestionIndex];
     if (userAnswer !== undefined) {
