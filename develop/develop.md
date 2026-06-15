@@ -72,6 +72,7 @@
 | **2026-06-15 17:48** | `v0.5` | `index.html`<br>`develop.md`<br>`css/style.css`<br>`js/app.js`<br>`data/gas/gas_questions.json` | **가스기능사 문제 데이터 복구 및 표 포맷 지원 배포**<br>- docx 원본에서 문제/해설 내의 표(table) 데이터를 HTML `<table>`로 변환하여 JSON DB 재구축<br>- 앱에서 문제 및 해설 렌더링 시 innerHTML을 사용하여 표 구조 완벽 표시<br>- 표 스타일링을 위해 `.nested-table` CSS 규격 설계 반영 |
 | **2026-06-15 17:58** | `v0.6` | `index.html`<br>`develop.md`<br>`js/app.js`<br>`data/energy_ginungjang/energy_ginungjang_questions.json` | **에너지관리기능장 20회차 풀 세트 문제 탑재 및 V0.6 배포**<br>- `energy_ginungjang_01_20.docx` 파일을 기반으로 총 20회차(1,200문제) 기출 복원 데이터를 추출하여 JSON DB 구축<br>- 앱에서 '에너지관리기능장'을 클릭할 때 해당 실전모의고사 1~20회차 리스트가 자동 노출 및 기동되도록 UI 카드 상태 및 js 비동기 로딩 로직 개편<br>- 연도 정보가 빈 기출문제의 라운드 정보 렌더링 예외 처리 |
 | **2026-06-15 18:03** | `v0.7` | `index.html`<br>`develop.md`<br>`js/app.js`<br>`data/energy_sanupgisa/energy_sanupgisa_questions.json` | **에너지관리산업기사 22개 회차 기출문제 데이터 구축 및 V0.7 배포**<br>- `enegy_sanup_gisa_v3.docx` 파일의 특이 구조(문단 단위 서식, 빨간색 밑줄 정답 표시 등) 분석 및 상태 머신(State Machine) 기반의 파서 구현<br>- 총 22개 회차(1,760문제) 데이터 추출 및 JSON DB 구축 완료<br>- 앱에서 '에너지관리산업기사' 과목 선택 카드 및 문제 풀이 탭 연동을 완료하고, 버전 V0.7로 빌드 배포 |
+| **2026-06-15 18:15** | `v0.8` | `index.html`<br>`develop.md`<br>`css/style.css`<br>`js/app.js` | **ID별 개인 통계 대시보드(채점 탭 이관), 인증 위젯 도입 및 V0.8 배포**<br>- 메인 화면에서 과목 리스트를 숨기고, ID 및 비밀번호("dongbu") 인증 완료 시에만 과목 선택 섹션 노출 설계<br>- 기존의 3대 통계(푼문제수, 평균정답율, 합격한회차)를 채점 탭 내부로 이관 및 ID별 개인 통계로 분리 기록<br>- 마지막으로 풀던 문제의 '이어 풀기' 세션 이관 및 최근 학습 로그 기록 기능 구현 |
 
 ---
 
