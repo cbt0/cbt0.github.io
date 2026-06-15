@@ -1,4 +1,4 @@
-# 🛠️ CBT V0.4 프로젝트 개발 및 분석 문서 (develop.md)
+# 🛠️ CBT V0.9 프로젝트 개발 및 분석 문서 (develop.md)
 
 이 문서는 프로젝트 개발 시 요구되었던 **UI 수정 요구사항 및 작업 결과**와 **CBT 문제풀이 앱의 전체적인 구조 및 핵심 로직 분석**을 통합하여 정리한 문서입니다.
 
@@ -73,6 +73,7 @@
 | **2026-06-15 17:58** | `v0.6` | `index.html`<br>`develop.md`<br>`js/app.js`<br>`data/energy_ginungjang/energy_ginungjang_questions.json` | **에너지관리기능장 20회차 풀 세트 문제 탑재 및 V0.6 배포**<br>- `energy_ginungjang_01_20.docx` 파일을 기반으로 총 20회차(1,200문제) 기출 복원 데이터를 추출하여 JSON DB 구축<br>- 앱에서 '에너지관리기능장'을 클릭할 때 해당 실전모의고사 1~20회차 리스트가 자동 노출 및 기동되도록 UI 카드 상태 및 js 비동기 로딩 로직 개편<br>- 연도 정보가 빈 기출문제의 라운드 정보 렌더링 예외 처리 |
 | **2026-06-15 18:03** | `v0.7` | `index.html`<br>`develop.md`<br>`js/app.js`<br>`data/energy_sanupgisa/energy_sanupgisa_questions.json` | **에너지관리산업기사 22개 회차 기출문제 데이터 구축 및 V0.7 배포**<br>- `enegy_sanup_gisa_v3.docx` 파일의 특이 구조(문단 단위 서식, 빨간색 밑줄 정답 표시 등) 분석 및 상태 머신(State Machine) 기반의 파서 구현<br>- 총 22개 회차(1,760문제) 데이터 추출 및 JSON DB 구축 완료<br>- 앱에서 '에너지관리산업기사' 과목 선택 카드 및 문제 풀이 탭 연동을 완료하고, 버전 V0.7로 빌드 배포 |
 | **2026-06-15 18:15** | `v0.8` | `index.html`<br>`develop.md`<br>`css/style.css`<br>`js/app.js` | **ID별 개인 통계 대시보드(채점 탭 이관), 인증 위젯 도입 및 V0.8 배포**<br>- 메인 화면에서 과목 리스트를 숨기고, ID 및 비밀번호("dongbu") 인증 완료 시에만 과목 선택 섹션 노출 설계<br>- 기존의 3대 통계(푼문제수, 평균정답율, 합격한회차)를 채점 탭 내부로 이관 및 ID별 개인 통계로 분리 기록<br>- 마지막으로 풀던 문제의 '이어 풀기' 세션 이관 및 최근 학습 로그 기록 기능 구현 |
+| **2026-06-15 18:20** | `v0.9` | `index.html`<br>`develop.md`<br>`plan.md` | **실제 기출 데이터 탑재 과목 상단 재배치 및 V0.9 배포**<br>- 실제 기출문제가 완벽 탑재된 3개 과목(가스, 에너지산업기사, 에너지기능장)을 메인 선택 그리드 상위로 배치<br>- 앱 버전을 `CBT v0.9`로 상향하고 CSS/JS 캐시 갱신 쿼리(`?v=1.1.0`) 적용 |
 
 ---
 
@@ -88,8 +89,16 @@ cbt0.github.io/
 ├── js/
 │   └── app.js              # 비동기 데이터 로딩, SPA 라우팅 및 퀴즈 상태 제어 로직
 ├── data/
-│   └── gas/
-│       └── gas_questions.json # 가스기능사 기출문제 데이터베이스 (18회차 / 1,080문제)
+│   ├── gas/
+│   │   └── gas_questions.json          # 가스기능사 기출문제 데이터베이스 (18회차 / 1,080문제)
+│   ├── energy_ginungjang/
+│   │   └── energy_ginungjang_questions.json # 에너지관리기능장 기출 데이터베이스 (20회차 / 1,200문제)
+│   ├── energy_sanupgisa/
+│   │   └── energy_sanupgisa_questions.json  # 에너지관리산업기사 기출 데이터베이스 (22회차 / 1,760문제)
+│   └── source/
+│       ├── gas_ginungsa_CBT_2017_2025_Final.docx # 원본 가스 docx 파일
+│       ├── energy_ginungjang_01_20.docx          # 원본 기능장 docx 파일
+│       └── enegy_sanup_gisa_v3.docx              # 원본 산업기사 docx 파일
 └── develop/
     ├── develop.md          # [현재 파일] 개발 현황 정리 및 전체 로직 분석 문서
     └── history.md          # 이전 CLI 작업 내역 및 히스토리 로그
