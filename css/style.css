@@ -1269,8 +1269,8 @@ body {
     }
     
     .choice-item {
-        font-size: 16px; /* 보기 폰트 확대 */
-        padding: 14px 16px; /* 좌우 여백 최적화 */
+        font-size: 18px; /* 보기 폰트 확대 */
+        padding: 10px 10px; /* 좌우 여백 최적화 */
         text-align: left;
     }
     
