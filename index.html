@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CBT V0.7 - 최강 CBT 스타일 문제풀이</title>
+    <title>CBT V0.8 - 최강 CBT 스타일 문제풀이</title>
     <meta name="description" content="에너지기능사, 에너지산업관리기사, 에너지기능장, 가스기능사, 공조기능사 기출문제 무료 CBT 풀이 사이트. 실시간 채점 및 자동 힌트 제공.">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,7 +12,7 @@
     <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css?v=1.0.8">
+    <link rel="stylesheet" href="css/style.css?v=1.0.9">
 </head>
 <body>
     <!-- Premium Header -->
@@ -20,7 +20,7 @@
         <div class="header-container">
             <div class="logo" id="logo-btn">
                 <i class="fa-solid fa-graduation-cap logo-icon"></i>
-                <span class="logo-text">CBT <span class="logo-sub">V0.7</span></span>
+                <span class="logo-text">CBT <span class="logo-sub">V0.8</span></span>
             </div>
             
             <nav class="main-nav">
@@ -50,6 +50,27 @@
             <div class="hero-section">
                 <h1 class="hero-title">합격을 위한 최단 경로,<br><span class="gradient-text">Antigravity CBT</span></h1>
                 <p class="hero-subtitle">실시간 채점, 자동 힌트, 오답 노트를 통해 쉽고 빠르게 기출문제를 마스터하세요.</p>
+                
+                <!-- Login Box -->
+                <div class="login-box" id="login-form-container">
+                    <div class="login-inputs">
+                        <div class="input-field">
+                            <i class="fa-solid fa-user input-icon"></i>
+                            <input type="text" id="login-id" placeholder="사용자 ID 입력" required autocomplete="username">
+                        </div>
+                        <div class="input-field">
+                            <i class="fa-solid fa-lock input-icon"></i>
+                            <input type="password" id="login-pw" placeholder="비밀번호 입력" required autocomplete="current-password">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Welcome Profile Box -->
+                <div class="welcome-box hidden" id="welcome-container">
+                    <p class="welcome-msg"><i class="fa-solid fa-circle-user"></i> <span id="welcome-username">홍길동</span>님 환영합니다!</p>
+                    <button class="btn btn-sm btn-outline" id="logout-btn">로그아웃</button>
+                </div>
+
                 <div class="hero-buttons">
                     <button class="btn btn-primary btn-large" id="start-learning-btn">
                         학습 시작하기 <i class="fa-solid fa-arrow-right"></i>
@@ -57,41 +78,8 @@
                 </div>
             </div>
 
-            <!-- Dashboard Stats Grid -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon-wrapper purple">
-                        <i class="fa-solid fa-book-open"></i>
-                    </div>
-                    <div class="stat-info">
-                        <span class="stat-value" id="stats-total-solved">0</span>
-                        <span class="stat-label">푼 문제 수</span>
-                    </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon-wrapper green">
-                        <i class="fa-solid fa-circle-check"></i>
-                    </div>
-                    <div class="stat-info">
-                        <span class="stat-value" id="stats-correct-rate">0%</span>
-                        <span class="stat-label">평균 정답률</span>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon-wrapper blue">
-                        <i class="fa-solid fa-trophy"></i>
-                    </div>
-                    <div class="stat-info">
-                        <span class="stat-value" id="stats-passed-exams">0</span>
-                        <span class="stat-label">합격한 회차</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Subject Cards Grid -->
-            <div class="features-section">
+            <!-- Subject Cards Grid (Hidden initially, shown after click) -->
+            <div class="features-section hidden" id="subject-selection-section">
                 <h2 class="section-title">학습 과목 선택</h2>
                 <div class="subject-grid">
                     <div class="subject-card" data-subject="gas">
@@ -299,7 +287,68 @@
         </div>
     </div>
 
-    <!-- 5. Settings Screen -->
+    <!-- 5. Grading Dashboard Screen -->
+    <section id="grading-screen" class="view-section">
+        <div class="grading-dashboard-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); border-radius: var(--border-radius-lg); padding: 24px;">
+            <div class="grading-dashboard-header">
+                <h2><i class="fa-solid fa-square-check"></i> 개인 학습 통계 및 로그</h2>
+                <p class="grading-dashboard-subtitle">로그인된 사용자의 실시간 학습 기록 및 정답률 통계입니다.</p>
+            </div>
+
+            <!-- Dashboard Stats Grid (Moved here) -->
+            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 24px 0;">
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper purple">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="stats-total-solved">0</span>
+                        <span class="stat-label">푼 문제 수</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper green">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="stats-correct-rate">0%</span>
+                        <span class="stat-label">평균 정답률</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper blue">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="stats-passed-exams">0</span>
+                        <span class="stat-label">합격한 회차</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="user-dashboard-row">
+                <!-- Last Solved Exam Card -->
+                <div class="dashboard-box last-solved-box">
+                    <h3><i class="fa-solid fa-clock-rotate-left"></i> 마지막 풀었던 문제</h3>
+                    <div id="last-solved-info" class="last-solved-content">
+                        <p class="no-data-msg">최근 학습한 이력이 없습니다.</p>
+                    </div>
+                </div>
+
+                <!-- Activity Logs Card -->
+                <div class="dashboard-box logs-box">
+                    <h3><i class="fa-solid fa-list-ul"></i> 최근 학습 활동 로그</h3>
+                    <div class="logs-container" id="user-activity-logs">
+                        <p class="no-data-msg">활동 로그가 없습니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. Settings Screen -->
     <section id="settings-screen" class="view-section">
         <div class="settings-card">
             <h2 class="settings-title"><i class="fa-solid fa-gear"></i> 설정</h2>
@@ -318,6 +367,6 @@
     </section>
 
     <!-- Custom JavaScript -->
-    <script src="js/app.js?v=1.0.8"></script>
+    <script src="js/app.js?v=1.0.9"></script>
 </body>
 </html>
