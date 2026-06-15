@@ -24,30 +24,22 @@
             </div>
             
             <nav class="main-nav">
-                <button class="nav-item active" data-subject="home" id="nav-home">
-                    <i class="fa-solid fa-house"></i> 소개말
+                <button class="nav-item active" data-tab="home" id="nav-home">
+                    <i class="fa-solid fa-house"></i> <span class="nav-text">홈</span>
                 </button>
-                <button class="nav-item" data-subject="gas" id="nav-gas">
-                    <i class="fa-solid fa-fire"></i> 가스기능사
+                <button class="nav-item" data-tab="quiz" id="nav-quiz">
+                    <i class="fa-solid fa-book-open"></i> <span class="nav-text">문제</span>
                 </button>
-                <button class="nav-item" data-subject="energy_craftsman" id="nav-energy-c">
-                    <i class="fa-solid fa-bolt"></i> 에너지기능사
+                <button class="nav-item" data-tab="grading" id="nav-grading">
+                    <i class="fa-solid fa-square-check"></i> <span class="nav-text">채점</span>
                 </button>
-                <button class="nav-item" data-subject="energy_industrial" id="nav-energy-i">
-                    <i class="fa-solid fa-gears"></i> 에너지산업관리기사
-                </button>
-                <button class="nav-item" data-subject="energy_master" id="nav-energy-m">
-                    <i class="fa-solid fa-award"></i> 에너지기능장
-                </button>
-                <button class="nav-item" data-subject="air_conditioning" id="nav-air">
-                    <i class="fa-solid fa-wind"></i> 공조기능사
+                <button class="nav-item" data-tab="settings" id="nav-settings">
+                    <i class="fa-solid fa-gear"></i> <span class="nav-text">설정</span>
                 </button>
             </nav>
             
             <div class="header-actions">
-                <button id="theme-toggle" class="icon-btn" aria-label="테마 변경">
-                    <i class="fa-solid fa-moon"></i>
-                </button>
+                <!-- Theme toggle moved to settings screen -->
             </div>
         </div>
     </header>
@@ -190,15 +182,18 @@
                             <span class="subject-tag" id="quiz-subject-name">가스기능사</span>
                             <span class="round-tag" id="quiz-round-name">2017년 1회</span>
                         </div>
-                        <div class="quiz-timer">
-                            <i class="fa-regular fa-clock"></i> <span id="timer-text">00:00</span>
+                        <div class="quiz-header-right">
+                            <div class="quiz-timer">
+                                <i class="fa-regular fa-clock"></i> <span id="timer-text">00:00</span>
+                            </div>
+                            <button class="btn btn-danger btn-sm" id="quiz-top-submit-btn">제출</button>
                         </div>
                     </div>
 
                     <!-- Active Question Card -->
                     <div class="question-card" id="active-question-card">
                         <div class="question-title-wrapper">
-                            <span class="question-num-badge" id="question-num">Q. 01</span>
+                            <span class="question-num-badge" id="question-num">01</span>
                             <h3 class="question-text" id="question-text">
                                 질문 텍스트가 여기에 표시됩니다.
                             </h3>
@@ -209,22 +204,18 @@
                             <button class="choice-item" data-choice="1">
                                 <span class="choice-num">①</span>
                                 <span class="choice-text">보기 1 내용</span>
-                                <span class="choice-status-icon"><i class="fa-solid fa-circle"></i></span>
                             </button>
                             <button class="choice-item" data-choice="2">
                                 <span class="choice-num">②</span>
                                 <span class="choice-text">보기 2 내용</span>
-                                <span class="choice-status-icon"><i class="fa-solid fa-circle"></i></span>
                             </button>
                             <button class="choice-item" data-choice="3">
                                 <span class="choice-num">③</span>
                                 <span class="choice-text">보기 3 내용</span>
-                                <span class="choice-status-icon"><i class="fa-solid fa-circle"></i></span>
                             </button>
                             <button class="choice-item" data-choice="4">
                                 <span class="choice-num">④</span>
                                 <span class="choice-text">보기 4 내용</span>
-                                <span class="choice-status-icon"><i class="fa-solid fa-circle"></i></span>
                             </button>
                         </div>
 
@@ -307,6 +298,24 @@
             </div>
         </div>
     </div>
+
+    <!-- 5. Settings Screen -->
+    <section id="settings-screen" class="view-section">
+        <div class="settings-card">
+            <h2 class="settings-title"><i class="fa-solid fa-gear"></i> 설정</h2>
+            <div class="settings-list">
+                <div class="settings-item">
+                    <div class="settings-info">
+                        <span class="settings-label">화면 테마 설정</span>
+                        <span class="settings-desc">라이트 모드와 다크 모드를 전환합니다.</span>
+                    </div>
+                    <button id="theme-toggle" class="icon-btn" aria-label="테마 변경">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Custom JavaScript -->
     <script src="js/app.js"></script>
