@@ -102,6 +102,7 @@ cbt0.github.io/
 │       ├── energy_ginungjang_01_20.docx          # 원본 기능장 docx 파일
 │       └── enegy_sanup_gisa_v3.docx              # 원본 산업기사 docx 파일
 └── develop/
+    ├── database_integration_plan.md # 글로벌 DB 및 순위 연동 기획서
     ├── develop.md          # [현재 파일] 개발 현황 정리 및 전체 로직 분석 문서
     └── history.md          # 이전 CLI 작업 내역 및 히스토리 로그
 ```
