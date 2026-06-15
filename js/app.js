@@ -401,6 +401,9 @@ function renderGradingDashboard() {
     } else {
         dom.userActivityLogs.innerHTML = '<p class="no-data-msg">활동 로그가 없습니다.</p>';
     }
+
+    // Load Ranking Leaderboard
+    renderLeaderboard();
 }
 
 // Resume Last Solved Question
@@ -540,6 +543,22 @@ function registerEventListeners() {
             login();
         });
     }
+
+    // Sub-tab toggling in Grading Dashboard
+    document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const subtab = e.currentTarget.getAttribute('data-subtab');
+            
+            // Toggle active class on buttons
+            document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            
+            // Toggle active class on contents
+            document.querySelectorAll('.subtab-content').forEach(c => c.classList.remove('active'));
+            const targetContent = document.getElementById(`subtab-content-${subtab}`);
+            if (targetContent) targetContent.classList.add('active');
+        });
+    });
     
     // Logout Button
     if (dom.logoutBtn) {
@@ -1050,4 +1069,61 @@ function saveGlobalStats(scoreVal, total, isPass) {
     stats.averageSum += scoreVal;
     
     localStorage.setItem(statsKey, JSON.stringify(stats));
+}
+
+// Render Leaderboard Ranking
+function renderLeaderboard() {
+    const rankingList = document.getElementById('user-ranking-list');
+    if (!rankingList) return;
+
+    const rankings = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const match = key.match(/^cbt_(.+)_global_stats$/);
+        if (match) {
+            const username = match[1];
+            if (username === 'global') continue;
+            try {
+                const stats = JSON.parse(localStorage.getItem(key));
+                if (stats && typeof stats.totalSolved === 'number') {
+                    rankings.push({
+                        username: username,
+                        totalSolved: stats.totalSolved
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to parse user stats:', key, e);
+            }
+        }
+    }
+
+    // Sort by totalSolved descending
+    rankings.sort((a, b) => b.totalSolved - a.totalSolved);
+
+    if (rankings.length === 0) {
+        rankingList.innerHTML = '<p class="no-data-msg">순위 정보가 없습니다.</p>';
+        return;
+    }
+
+    rankingList.innerHTML = rankings.map((user, index) => {
+        const rank = index + 1;
+        let rankClass = '';
+        if (rank === 1) rankClass = 'rank-1';
+        else if (rank === 2) rankClass = 'rank-2';
+        else if (rank === 3) rankClass = 'rank-3';
+
+        const isMe = user.username === state.currentUser;
+        const meClass = isMe ? 'current-user' : '';
+        const meTag = isMe ? ' <span style="font-size: 11px; padding: 2px 6px; border-radius: 10px; background: var(--primary); color: white; margin-left: 4px;">나</span>' : '';
+
+        return `
+            <div class="ranking-item ${meClass}">
+                <div class="ranking-user-info">
+                    <span class="rank-badge ${rankClass}">${rank}</span>
+                    <span class="rank-user-name">${user.username}${meTag}</span>
+                </div>
+                <span class="rank-score">${user.totalSolved.toLocaleString()}문제</span>
+            </div>
+        `;
+    }).join('');
 }
