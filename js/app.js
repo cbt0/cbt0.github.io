@@ -2,6 +2,10 @@
  * Antigravity CBT - Core Application Script
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
+// 1. Supabase 설정 (나중에 본인의 정보로 채우세요)
+const SUPABASE_URL = 'https://your-project.id.supabase.co';
+const SUPABASE_KEY = 'your-anon-key';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Application Global State
 const state = {
