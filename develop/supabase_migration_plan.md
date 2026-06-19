@@ -126,6 +126,43 @@ CREATE POLICY "logs_own"
 ---
 작성자: 자동문서화 by Copilot
 
+## SQL 실행 결과 요약 (실행일: 2026-06-19)
+
+실행 쿼리: 안전 실행 — 테이블 생성(없으면) + RLS/정책 적용 (DO 블록 사용)
+
+```sql
+-- (생략) 전체 쿼리는 위 문서의 '권장 DB 스키마 (SQL)' 섹션과 동일합니다.
+-- profiles, user_stats, cbt_progress, user_logs 테이블을 생성하고,
+-- 각 테이블에 대해 RLS를 활성화하고 본인 데이터 접근 정책을 추가합니다.
+```
+
+실행 결과(사용자 확인)
+- 테이블 생성: `profiles`, `user_stats`, `cbt_progress`, `user_logs`가 생성되어 Table Editor에 표시됨.
+- RLS 활성화: 각 테이블에 대해 Row Level Security가 활성화됨을 확인함.
+- 정책 생성: `profiles_own_all`, `user_stats_own_all`, `cbt_progress_*`, `user_logs_own_all` 정책이 생성되어 `auth.uid()` 기반으로 본인 데이터만 CRUD 가능.
+
+검증에 사용한 쿼리
+- 테이블 존재 확인:
+```sql
+SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename IN ('profiles','user_stats','cbt_progress','user_logs');
+```
+- 정책 확인:
+```sql
+SELECT tablename, policyname, qual, with_check
+FROM pg_policies
+WHERE tablename IN ('profiles','user_stats','cbt_progress','user_logs');
+```
+
+운영상 코멘트
+- 이번 스크립트는 즉시 RLS를 활성화하므로 anon/publishable 키로의 노출을 방지합니다. 개발 중에는 반드시 개발용 프로젝트에서 먼저 실행하세요.
+- SQL 에디터에 붙여넣은 '쿼리 텍스트' 자체는 지워도 되지만, 이미 실행된 객체(테이블/정책)를 삭제하려면 별도 `DROP TABLE` 쿼리를 실행해야 합니다(데이터 소실 주의).
+
+다음 권장 작업
+1. 테스트 유저 생성 및 로그인 흐름 확인 (Supabase Authentication → Add user). 예: `testid@cbt.com`.
+2. 로컬에서 사이트 실행 후 로그인/시험 제출 시 `profiles`, `user_stats`, `cbt_progress`, `user_logs`에 레코드가 생성되는지 확인.
+3. 원하시면 `submitExam()` 결과를 Supabase에 저장하는 코드 패치를 제가 적용하겠습니다.
+
+
 ## 20260619 수행 작업 기록
 
 요약: 아래 변경은 로컬 개발 환경에서 클라이언트-사이드 연동을 빠르게 테스트하기 위해 적용한 내용입니다. 서버 비밀키(`sb_secret_...`)는 절대 코드에 넣지 않았습니다.
