@@ -7,6 +7,9 @@ const SUPABASE_URL = 'https://your-project.id.supabase.co';
 const SUPABASE_KEY = 'your-anon-key';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Global Idle Timer for Auto-Logout
+let idleTimer;
+
 // Application Global State
 const state = {
     exams: {},              // Loaded exam data by subject
@@ -18,7 +21,9 @@ const state = {
     timerInterval: null,
     timeSpentSeconds: 0,
     currentQuestions: [],   // Active question list (usually 60)
-    currentUser: null       // Logged in user ID
+    questionFilter: 'all', // 'all', 'wrong', 'unanswered'
+    currentUser: null,      // Logged in user ID
+    autoLogoutMinutes: 30   // Auto-logout idle timeout minutes
 };
 
 // Mock Exam Database for other subjects
@@ -183,6 +188,9 @@ const dom = {
     loginId: document.getElementById('login-id'),
     loginPw: document.getElementById('login-pw'),
     logoutBtn: document.getElementById('logout-btn'),
+    homeResumeBtn: document.getElementById('home-resume-btn'),
+    saveIdCheck: document.getElementById('save-id-check'),
+    autoLogoutSelect: document.getElementById('auto-logout-select'),
     subjectSelectionSection: document.getElementById('subject-selection-section'),
     
     // Grading dashboard elements
@@ -209,6 +217,14 @@ const dom = {
     quizProgressText: document.getElementById('quiz-progress-text'),
     quizSubmitBtn: document.getElementById('quiz-submit-btn'),
     quizTopSubmitBtn: document.getElementById('quiz-top-submit-btn'),
+    calculatorBtn: document.getElementById('calculator-btn'),
+    calculatorModal: document.getElementById('calculator-modal'),
+    calculatorDisplay: document.getElementById('calculator-display'),
+    calculatorButtons: document.querySelectorAll('.calculator-btn'),
+    calculatorCloseBtn: document.getElementById('calculator-close-btn'),
+    reviewWrongBtn: document.getElementById('btn-review-wrong'),
+    questionFilter: document.getElementById('question-filter'),
+    leaderboardList: document.getElementById('leaderboard-list'),
     
     // Active Question elements
     questionNum: document.getElementById('question-num'),
@@ -248,9 +264,15 @@ const subjectDetails = {
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
+    initAutoLogoutSettings();
     checkLoginState();
     loadQuestions();
     registerEventListeners();
+    
+    if (state.currentUser) {
+        resetIdleTimer();
+    }
+    
     router(); // Run initial routing based on page load hash state
 });
 
@@ -264,12 +286,103 @@ function checkLoginState() {
         dom.welcomeUsername.innerText = savedUser;
         dom.subjectSelectionSection.classList.remove('hidden');
         if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
+        updateHomeResumeButton();
     } else {
         state.currentUser = null;
         dom.loginFormContainer.classList.remove('hidden');
         dom.welcomeContainer.classList.add('hidden');
         dom.subjectSelectionSection.classList.add('hidden');
         if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.remove('hidden');
+        updateHomeResumeButton();
+        
+        // Load saved ID if present
+        const savedId = localStorage.getItem('cbt_saved_id');
+        if (savedId) {
+            if (dom.loginId) dom.loginId.value = savedId;
+            if (dom.saveIdCheck) dom.saveIdCheck.checked = true;
+        }
+    }
+}
+
+// Update Home Resume Button Visibility & Text
+function updateHomeResumeButton() {
+    if (!state.currentUser) {
+        if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
+        return;
+    }
+    
+    const key = `cbt_${state.currentUser}_autosave_session`;
+    const sessionStr = localStorage.getItem(key);
+    
+    if (sessionStr) {
+        try {
+            const session = JSON.parse(sessionStr);
+            if (session && session.activeRound) {
+                const round = session.activeRound;
+                const subjectName = round.subject || '';
+                const roundName = round.year ? `${round.year}년 ${round.round}` : round.round;
+                const questionNum = (round.questions && round.questions[session.activeQuestionIndex])
+                    ? round.questions[session.activeQuestionIndex].num
+                    : (session.activeQuestionIndex + 1);
+                
+                if (dom.homeResumeBtn) {
+                    dom.homeResumeBtn.innerText = `▶ 이어하기 : ${subjectName} ${roundName} (Q. ${questionNum})`;
+                    dom.homeResumeBtn.classList.remove('hidden');
+                }
+            } else {
+                if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
+            }
+        } catch (e) {
+            console.error('Error parsing session data:', e);
+            if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
+        }
+    } else {
+        if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
+    }
+}
+
+// Auto Save Quiz Session State to LocalStorage
+function autoSaveSession() {
+    if (!state.currentUser || !state.activeRound || state.quizMode !== 'solving') return;
+    
+    const key = `cbt_${state.currentUser}_autosave_session`;
+    const sessionData = {
+        subject: state.activeSubject,
+        activeRound: state.activeRound,
+        activeQuestionIndex: state.activeQuestionIndex,
+        userAnswers: state.userAnswers,
+        timeSpentSeconds: state.timeSpentSeconds
+    };
+    
+    localStorage.setItem(key, JSON.stringify(sessionData));
+}
+
+// Reset Idle Timeout Auto-Logout Timer
+function resetIdleTimer() {
+    if (idleTimer) {
+        clearTimeout(idleTimer);
+    }
+    
+    if (!state.currentUser) return;
+    
+    const timeoutMs = (state.autoLogoutMinutes || 30) * 60 * 1000;
+    idleTimer = setTimeout(() => {
+        alert("장시간 조작이 없어 안전을 위해 자동 로그아웃 되었습니다.");
+        logout();
+    }, timeoutMs);
+}
+
+// Initialize Auto-Logout settings from localStorage
+function initAutoLogoutSettings() {
+    const savedMinutes = localStorage.getItem('cbt_auto_logout_minutes');
+    if (savedMinutes) {
+        state.autoLogoutMinutes = parseInt(savedMinutes, 10);
+    } else {
+        state.autoLogoutMinutes = 30; // default
+    }
+    
+    if (dom.autoLogoutSelect) {
+        dom.autoLogoutSelect.value = String(state.autoLogoutMinutes);
     }
 }
 
@@ -290,6 +403,15 @@ function login() {
         return;
     }
 
+    // Save ID check logic
+    if (dom.saveIdCheck) {
+        if (dom.saveIdCheck.checked) {
+            localStorage.setItem('cbt_saved_id', username);
+        } else {
+            localStorage.removeItem('cbt_saved_id');
+        }
+    }
+
     // Login success
     localStorage.setItem('cbt_current_user', username);
     state.currentUser = username;
@@ -301,7 +423,11 @@ function login() {
     dom.subjectSelectionSection.classList.remove('hidden');
     if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
     
+    updateHomeResumeButton();
     logUserActivity('로그인 성공');
+    
+    // Start idle timer
+    resetIdleTimer();
     
     // Smooth scroll to subject list
     setTimeout(() => {
@@ -318,8 +444,19 @@ function logout() {
     state.currentUser = null;
     dom.loginId.value = '';
     dom.loginPw.value = '';
+    
+    // Clear auto-logout idle timer
+    if (idleTimer) {
+        clearTimeout(idleTimer);
+    }
+    
+    // Stop the quiz timer if running
+    if (state.timerInterval) {
+        clearInterval(state.timerInterval);
+    }
+    
     checkLoginState();
-    navigateTo('home');
+    switchTab('home');
 }
 
 // Log User Activity
@@ -570,6 +707,55 @@ function registerEventListeners() {
         dom.logoutBtn.addEventListener('click', logout);
     }
     
+    // Auto-logout select change
+    if (dom.autoLogoutSelect) {
+        dom.autoLogoutSelect.addEventListener('change', (e) => {
+            const minutes = parseInt(e.target.value, 10);
+            state.autoLogoutMinutes = minutes;
+            localStorage.setItem('cbt_auto_logout_minutes', minutes);
+            resetIdleTimer();
+        });
+    }
+    
+    // Global Idle Detection Events (only works if user logged in)
+    const idleEvents = ['mousemove', 'click', 'keydown', 'scroll', 'touchstart'];
+    idleEvents.forEach(evt => {
+        document.addEventListener(evt, () => {
+            if (state.currentUser) {
+                resetIdleTimer();
+            }
+        });
+    });
+    
+    // Home Resume Button
+    if (dom.homeResumeBtn) {
+        dom.homeResumeBtn.addEventListener('click', () => {
+            if (!state.currentUser) return;
+            const key = `cbt_${state.currentUser}_autosave_session`;
+            const sessionStr = localStorage.getItem(key);
+            if (!sessionStr) return;
+            
+            try {
+                const session = JSON.parse(sessionStr);
+                if (session && session.activeRound) {
+                    // Restore state variables
+                    state.activeSubject = session.subject;
+                    state.activeRound = session.activeRound;
+                    state.currentQuestions = session.activeRound.questions;
+                    state.activeQuestionIndex = session.activeQuestionIndex;
+                    state.userAnswers = session.userAnswers || {};
+                    state.timeSpentSeconds = session.timeSpentSeconds || 0;
+                    
+                    // Call startQuiz with isResume = true
+                    startQuiz(session.activeRound, true);
+                }
+            } catch (e) {
+                console.error('Error resuming session:', e);
+                alert('이어하기 중 오류가 발생했습니다.');
+            }
+        });
+    }
+    
     // Password Enter Key
     if (dom.loginPw) {
         dom.loginPw.addEventListener('keypress', (e) => {
@@ -593,6 +779,47 @@ function registerEventListeners() {
     // Quiz navigation buttons
     dom.prevBtn.addEventListener('click', prevQuestion);
     dom.nextBtn.addEventListener('click', nextQuestion);
+    
+    // Question filter select
+    if (dom.questionFilter) {
+        dom.questionFilter.addEventListener('change', (e) => {
+            state.questionFilter = e.target.value;
+            applyQuestionFilter();
+            renderMarkingSheet();
+            renderActiveQuestion();
+        });
+    }
+
+    // Review wrong answer button
+    if (dom.reviewWrongBtn) {
+        dom.reviewWrongBtn.addEventListener('click', reviewWrongAnswers);
+    }
+
+    // Calculator button and modal
+    if (dom.calculatorBtn) {
+        dom.calculatorBtn.addEventListener('click', () => {
+            if (dom.calculatorModal) dom.calculatorModal.classList.add('active');
+        });
+    }
+    if (dom.calculatorCloseBtn) {
+        dom.calculatorCloseBtn.addEventListener('click', () => {
+            if (dom.calculatorModal) dom.calculatorModal.classList.remove('active');
+        });
+    }
+    if (dom.calculatorButtons) {
+        dom.calculatorButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                handleCalculatorInput(e.currentTarget.getAttribute('data-value'));
+            });
+        });
+    }
+    if (dom.calculatorModal) {
+        dom.calculatorModal.addEventListener('click', (e) => {
+            if (e.target === dom.calculatorModal) {
+                dom.calculatorModal.classList.remove('active');
+            }
+        });
+    }
     
     // Manual Toggle Hint
     dom.hintBtn.addEventListener('click', toggleHintBox);
@@ -795,15 +1022,17 @@ function renderRoundsList(subject) {
 }
 
 // Start Quiz Session
-function startQuiz(round) {
+function startQuiz(round, isResume = false) {
     state.activeRound = round;
     state.currentQuestions = round.questions;
-    state.activeQuestionIndex = 0;
-    state.userAnswers = {};
+    if (!isResume) {
+        state.activeQuestionIndex = 0;
+        state.userAnswers = {};
+        state.timeSpentSeconds = 0;
+    }
     state.quizMode = 'solving';
-    state.timeSpentSeconds = 0;
     
-    logUserActivity(`${round.subject} ${round.round} 시험 시작`);
+    logUserActivity(`${round.subject} ${round.round} 시험 시작` + (isResume ? ' (이어하기)' : ''));
     
     // Set Header titles
     dom.quizSubjectName.innerText = round.subject;
@@ -820,7 +1049,10 @@ function startQuiz(round) {
     
     // Start timer
     clearInterval(state.timerInterval);
-    dom.timerText.innerText = '00:00';
+    const initialMins = String(Math.floor(state.timeSpentSeconds / 60)).padStart(2, '0');
+    const initialSecs = String(state.timeSpentSeconds % 60).padStart(2, '0');
+    dom.timerText.innerText = `${initialMins}:${initialSecs}`;
+    
     state.timerInterval = setInterval(() => {
         state.timeSpentSeconds++;
         const mins = String(Math.floor(state.timeSpentSeconds / 60)).padStart(2, '0');
@@ -830,6 +1062,9 @@ function startQuiz(round) {
     
     // Show screen and switch tab to quiz
     switchTab('quiz');
+    
+    // Auto-save session
+    autoSaveSession();
 }
 
 // Render Left side markings grid (1~60)
@@ -854,13 +1089,50 @@ function renderMarkingSheet() {
     updateMarkingStatus();
 }
 
+function doesQuestionMatchFilter(index) {
+    const q = state.currentQuestions[index];
+    if (!q) return false;
+
+    const userAnswer = state.userAnswers[index];
+    if (state.questionFilter === 'wrong') {
+        return userAnswer !== undefined && userAnswer !== q.answer;
+    }
+    if (state.questionFilter === 'unanswered') {
+        return userAnswer === undefined;
+    }
+    return true;
+}
+
+function getAdjacentFilteredIndex(direction) {
+    let idx = state.activeQuestionIndex + direction;
+    while (idx >= 0 && idx < state.currentQuestions.length) {
+        if (doesQuestionMatchFilter(idx)) {
+            return idx;
+        }
+        idx += direction;
+    }
+    return null;
+}
+
+function applyQuestionFilter() {
+    if (!doesQuestionMatchFilter(state.activeQuestionIndex)) {
+        const firstMatch = state.currentQuestions.findIndex((_, idx) => doesQuestionMatchFilter(idx));
+        if (firstMatch !== -1) {
+            state.activeQuestionIndex = firstMatch;
+        } else {
+            state.questionFilter = 'all';
+            alert('조건에 맞는 문제가 없습니다. 전체 문제 보기로 되돌립니다.');
+        }
+    }
+}
+
 function updateMarkingStatus() {
     state.currentQuestions.forEach((q, idx) => {
         const btn = document.getElementById(`marking-num-${idx}`);
         if (!btn) return;
         
-        // Remove states
         btn.className = 'marking-btn';
+        btn.style.display = doesQuestionMatchFilter(idx) ? 'inline-flex' : 'none';
         
         // Active highlight
         if (state.activeQuestionIndex === idx) {
@@ -889,8 +1161,15 @@ function updateMarkingStatus() {
     dom.quizProgressText.innerText = `${answeredCount} / ${state.currentQuestions.length}`;
 }
 
+function initializeQuestionFilter() {
+    if (dom.questionFilter) {
+        dom.questionFilter.value = state.questionFilter;
+    }
+}
+
 // Render active question to view pane
 function renderActiveQuestion() {
+    applyQuestionFilter();
     const q = state.currentQuestions[state.activeQuestionIndex];
     if (!q) return;
     
@@ -956,6 +1235,9 @@ function renderActiveQuestion() {
     
     // Sync marking board navigation
     updateMarkingStatus();
+    
+    // Auto-save session
+    autoSaveSession();
 }
 
 // Choice Click logic
@@ -969,6 +1251,9 @@ function handleSelectAnswer(choiceNum) {
     
     // Render current question updates (apply colors, open hint box)
     renderActiveQuestion();
+    
+    // Auto-save session
+    autoSaveSession();
     
     // Check if ALL questions solved (Auto-submit suggestion)
     const answeredCount = Object.keys(state.userAnswers).length;
@@ -984,15 +1269,17 @@ function handleSelectAnswer(choiceNum) {
 
 // Navigation between questions
 function prevQuestion() {
-    if (state.activeQuestionIndex > 0) {
-        state.activeQuestionIndex--;
+    const prevIndex = getAdjacentFilteredIndex(-1);
+    if (prevIndex !== null) {
+        state.activeQuestionIndex = prevIndex;
         renderActiveQuestion();
     }
 }
 
 function nextQuestion() {
-    if (state.activeQuestionIndex < state.currentQuestions.length - 1) {
-        state.activeQuestionIndex++;
+    const nextIndex = getAdjacentFilteredIndex(1);
+    if (nextIndex !== null) {
+        state.activeQuestionIndex = nextIndex;
         renderActiveQuestion();
     }
 }
@@ -1018,6 +1305,10 @@ function submitExam() {
     const scoreVal = Math.round((correct / total) * 100);
     const passScore = 60; // Standard qualification pass limit is 60 points
     const isPass = scoreVal >= passScore;
+    const timeMinutes = state.timeSpentSeconds / 60;
+    const baseScore = (correct / total) * 100;
+    const timeBonus = Math.max(0, (1 - (timeMinutes / 100)) * 100);
+    const gameScore = Math.round(baseScore + timeBonus);
     
     // Bind stats to modal
     dom.resultScore.innerText = `${correct} / ${total}`;
@@ -1064,14 +1355,21 @@ function submitExam() {
         time: state.timeSpentSeconds
     }));
     
-    // Clear last solved info upon submission
+    // Persist wrong answer history for this subject
+    saveWrongHistory();
+
+    // Save exam result log and update global stats
     if (state.currentUser) {
+        addExamResultLog(scoreVal, isPass);
+        updateGlobalStats(scoreVal, total, isPass);
+        saveLeaderboardEntry(gameScore, Math.round(baseScore), state.timeSpentSeconds);
         localStorage.removeItem(`cbt_${state.currentUser}_last_solved`);
-        logUserActivity(`${state.activeRound.subject} ${state.activeRound.round} 제출 - ${scoreVal}점 (${isPass ? '합격' : '불합격'})`);
+        localStorage.removeItem(`cbt_${state.currentUser}_autosave_session`);
+        updateHomeResumeButton();
     }
     
-    // Update dashboard global counters
-    saveGlobalStats(scoreVal, total, isPass);
+    // Refresh leaderboard immediately
+    renderLeaderboard();
     
     // Display Modal
     dom.resultModal.classList.add('active');
@@ -1086,8 +1384,8 @@ function enterReviewMode() {
 }
 
 // LocalStorage User Stats Tracker
-function saveGlobalStats(scoreVal, total, isPass) {
-    const statsKey = state.currentUser ? `cbt_${state.currentUser}_global_stats` : 'cbt_global_stats';
+function updateGlobalStats(scoreVal, total, isPass) {
+    const statsKey = `cbt_${state.currentUser}_global_stats`;
     const stats = JSON.parse(localStorage.getItem(statsKey)) || {
         totalSolved: 0,
         totalExamsAttempted: 0,
@@ -1101,62 +1399,207 @@ function saveGlobalStats(scoreVal, total, isPass) {
         stats.passedExamsCount += 1;
     }
     stats.averageSum += scoreVal;
-    
     localStorage.setItem(statsKey, JSON.stringify(stats));
+
+    const globalStatsKey = 'cbt_global_stats';
+    const globalStats = JSON.parse(localStorage.getItem(globalStatsKey)) || {};
+    globalStats[state.currentUser] = {
+        totalSolved: stats.totalSolved,
+        totalExamsAttempted: stats.totalExamsAttempted,
+        passedExamsCount: stats.passedExamsCount,
+        averageRate: Math.round(stats.averageSum / stats.totalExamsAttempted)
+    };
+    localStorage.setItem(globalStatsKey, JSON.stringify(globalStats));
+}
+
+function addExamResultLog(scoreVal, isPass) {
+    const logsKey = `cbt_logs_${state.currentUser}`;
+    const logs = JSON.parse(localStorage.getItem(logsKey)) || [];
+    const summary = `${state.activeRound.subject} ${state.activeRound.round} - ${scoreVal}점 (${isPass ? '합격' : '불합격'})`;
+    logs.unshift({ timestamp: Date.now(), summary });
+    if (logs.length > 50) logs.pop();
+    localStorage.setItem(logsKey, JSON.stringify(logs));
+}
+
+function saveLeaderboardEntry(gameScore, baseScore, timeSpent) {
+    const boardKey = 'cbt_leaderboard';
+    const entries = JSON.parse(localStorage.getItem(boardKey)) || [];
+    entries.push({
+        userId: state.currentUser,
+        gameScore,
+        baseScore,
+        timeSpent,
+        summary: abbreviateText(state.activeRound.subject, state.activeRound.round),
+        timestamp: Date.now()
+    });
+    localStorage.setItem(boardKey, JSON.stringify(entries));
+}
+
+function abbreviateText(subject, round) {
+    const subjectMap = {
+        '에너지관리산업기사': '에너지산기',
+        '에너지관리기능장': '에너지기능장',
+        '가스기능사': '가스기능사',
+        '에너지기능사': '에너지기능사',
+        '공조기능사': '공조기능사'
+    };
+    let summary = subjectMap[subject] || subject;
+    if (/오답/i.test(round)) {
+        summary = `${summary} 오답`;
+    } else {
+        const match = round.match(/(\d+)회차?/);
+        if (match) {
+            summary = `${summary} ${match[1]}회`;
+        } else {
+            summary = `${summary} ${round}`;
+        }
+    }
+    return summary;
+}
+
+function saveWrongHistory() {
+    if (!state.currentUser || !state.activeRound) return;
+    const historyKey = `cbt_${state.currentUser}_past_sessions_${state.activeSubject}`;
+    const stored = JSON.parse(localStorage.getItem(historyKey)) || [];
+    
+    const wrongQuestions = state.currentQuestions
+        .filter((q, idx) => state.userAnswers[idx] !== undefined && state.userAnswers[idx] !== q.answer)
+        .map(q => ({ ...q }));
+    
+    if (wrongQuestions.length === 0) return;
+    
+    stored.unshift({
+        timestamp: Date.now(),
+        subject: state.activeSubject,
+        round: state.activeRound.round,
+        year: state.activeRound.year,
+        wrongQuestions
+    });
+
+    if (stored.length > 20) stored.length = 20;
+    localStorage.setItem(historyKey, JSON.stringify(stored));
+}
+
+function handleCalculatorInput(value) {
+    if (!dom.calculatorDisplay) return;
+    let current = dom.calculatorDisplay.value || '';
+    if (value === 'C') {
+        dom.calculatorDisplay.value = '0';
+        return;
+    }
+    if (value === '=') {
+        try {
+            const sanitized = current
+                .replace(/÷/g, '/')
+                .replace(/×/g, '*')
+                .replace(/\^2/g, '**2')
+                .replace(/\^3/g, '**3');
+            const result = evaluateCalculatorExpression(sanitized);
+            dom.calculatorDisplay.value = String(result);
+        } catch (e) {
+            dom.calculatorDisplay.value = 'Error';
+        }
+        return;
+    }
+
+    if (current === '0' && !/[\+\-\*\/\^\.]/.test(value)) {
+        current = '';
+    }
+
+    dom.calculatorDisplay.value = current + value;
+}
+
+function evaluateCalculatorExpression(expr) {
+    const cleaned = expr
+        .replace(/sqrt\(/g, 'Math.sqrt(')
+        .replace(/ln\(/g, 'Math.log(')
+        .replace(/log\(/g, 'Math.log10(')
+        .replace(/\^/g, '**');
+
+    return Function(`"use strict"; return (${cleaned})`)();
+}
+
+function gatherWrongReviewQuestions() {
+    if (!state.currentUser || !state.activeSubject) return [];
+    const historyKey = `cbt_${state.currentUser}_past_sessions_${state.activeSubject}`;
+    const sessions = JSON.parse(localStorage.getItem(historyKey)) || [];
+    const questionMap = new Map();
+
+    sessions.forEach(session => {
+        (session.wrongQuestions || []).forEach(question => {
+            const key = `${question.num}-${question.question}`;
+            if (!questionMap.has(key)) {
+                questionMap.set(key, { ...question });
+            }
+        });
+    });
+
+    return Array.from(questionMap.values());
+}
+
+function reviewWrongAnswers() {
+    if (!state.currentUser) {
+        alert('로그인 후 사용할 수 있습니다.');
+        return;
+    }
+    const wrongQuestions = gatherWrongReviewQuestions();
+    if (wrongQuestions.length === 0) {
+        alert('오답 복습 가능한 문제가 없습니다. 먼저 시험을 풀어주세요.');
+        return;
+    }
+
+    const customRound = {
+        subject: subjectDetails[state.activeSubject]?.name || '오답 복습 회차',
+        year: new Date().getFullYear(),
+        round: '오답 복습 회차',
+        questions: wrongQuestions
+    };
+    state.questionFilter = 'all';
+    if (dom.questionFilter) dom.questionFilter.value = 'all';
+    startQuiz(customRound);
 }
 
 // Render Leaderboard Ranking
 function renderLeaderboard() {
-    const rankingList = document.getElementById('user-ranking-list');
+    const rankingList = document.getElementById('leaderboard-list');
     if (!rankingList) return;
 
-    const rankings = [];
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        const match = key.match(/^cbt_(.+)_global_stats$/);
-        if (match) {
-            const username = match[1];
-            if (username === 'global') continue;
-            try {
-                const stats = JSON.parse(localStorage.getItem(key));
-                if (stats && typeof stats.totalSolved === 'number') {
-                    rankings.push({
-                        username: username,
-                        totalSolved: stats.totalSolved
-                    });
-                }
-            } catch (e) {
-                console.error('Failed to parse user stats:', key, e);
-            }
-        }
-    }
-
-    // Sort by totalSolved descending
-    rankings.sort((a, b) => b.totalSolved - a.totalSolved);
-
-    if (rankings.length === 0) {
+    const stored = JSON.parse(localStorage.getItem('cbt_leaderboard')) || [];
+    if (!Array.isArray(stored) || stored.length === 0) {
         rankingList.innerHTML = '<p class="no-data-msg">순위 정보가 없습니다.</p>';
         return;
     }
 
-    rankingList.innerHTML = rankings.map((user, index) => {
+    const bestByUser = new Map();
+    stored.forEach(entry => {
+        const key = `${entry.userId}-${entry.summary}`;
+        const existing = bestByUser.get(key);
+        if (!existing || entry.gameScore > existing.gameScore) {
+            bestByUser.set(key, entry);
+        }
+    });
+
+    const bestRecords = Array.from(bestByUser.values());
+    bestRecords.sort((a, b) => b.gameScore - a.gameScore);
+
+    rankingList.innerHTML = bestRecords.map((data, index) => {
         const rank = index + 1;
         let rankClass = '';
         if (rank === 1) rankClass = 'rank-1';
         else if (rank === 2) rankClass = 'rank-2';
         else if (rank === 3) rankClass = 'rank-3';
-
-        const isMe = user.username === state.currentUser;
-        const meClass = isMe ? 'current-user' : '';
+        const isMe = data.userId === state.currentUser;
         const meTag = isMe ? ' <span style="font-size: 11px; padding: 2px 6px; border-radius: 10px; background: var(--primary); color: white; margin-left: 4px;">나</span>' : '';
-
         return `
-            <div class="ranking-item ${meClass}">
+            <div class="ranking-item ${isMe ? 'current-user' : ''}">
                 <div class="ranking-user-info">
-                    <span class="rank-badge ${rankClass}">${rank}</span>
-                    <span class="rank-user-name">${user.username}${meTag}</span>
+                    <div class="rank-badge ${rankClass}">${rank}</div>
+                    <div class="rank-user-name">${data.userId}${meTag}</div>
                 </div>
-                <span class="rank-score">${user.totalSolved.toLocaleString()}문제</span>
+                <div class="rank-details" style="text-align: right;">
+                    <div class="rank-score" style="color:var(--warning); font-size:16px;">🎮 ${data.gameScore}점</div>
+                    <div class="rank-subject" style="font-size:12px; color:var(--text-muted);">${data.summary} (정답 ${data.baseScore}점)</div>
+                </div>
             </div>
         `;
     }).join('');

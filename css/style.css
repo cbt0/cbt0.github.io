@@ -1108,6 +1108,54 @@ body {
     flex: 1;
 }
 
+.calculator-card {
+    max-width: 520px;
+}
+
+.calculator-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.calculator-display {
+    width: 100%;
+    padding: 16px 18px;
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--glass-border);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    text-align: right;
+    letter-spacing: 0.04em;
+}
+
+.calculator-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.calculator-btn {
+    min-height: 52px;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.calculator-btn[data-value="C"] {
+    background: #eb5757;
+    color: white;
+}
+
+.calculator-btn[data-value="="] {
+    background: var(--primary);
+    color: white;
+}
+
+.calculator-btn[data-value="ln("] , .calculator-btn[data-value="log("] {
+    font-size: 0.9rem;
+}
+
 /* Settings Screen */
 .settings-card {
     background: var(--glass-bg);
@@ -1153,6 +1201,25 @@ body {
 .settings-desc {
     font-size: 13px;
     color: var(--text-secondary);
+}
+.settings-select {
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+.settings-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(9, 132, 227, 0.2);
+}
+.settings-select option {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
 }
 .quiz-header-right {
     display: flex;
@@ -1346,11 +1413,73 @@ body {
     width: 100%;
 }
 
+.login-inputs-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    max-width: 480px;
+    width: 100%;
+}
+
 .login-inputs {
     display: flex;
     gap: 16px;
-    max-width: 480px;
     width: 100%;
+}
+
+.login-options {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    padding-left: 4px;
+}
+
+.save-id-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.save-id-label input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--glass-border);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.save-id-label input[type="checkbox"]:checked {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.save-id-label input[type="checkbox"]:checked::after {
+    content: "\f00c";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    color: white;
+    font-size: 10px;
+}
+
+.save-id-label input[type="checkbox"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(9, 132, 227, 0.2);
+}
+
+.save-id-label span {
+    font-weight: 500;
 }
 
 .input-field {
