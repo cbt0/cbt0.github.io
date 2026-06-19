@@ -125,3 +125,34 @@ CREATE POLICY "logs_own"
 
 ---
 작성자: 자동문서화 by Copilot
+
+## 20260619 수행 작업 기록
+
+요약: 아래 변경은 로컬 개발 환경에서 클라이언트-사이드 연동을 빠르게 테스트하기 위해 적용한 내용입니다. 서버 비밀키(`sb_secret_...`)는 절대 코드에 넣지 않았습니다.
+
+1) HTML 변경
+- 파일: `index.html`
+- 작업: Supabase JavaScript SDK(CDN)를 `js/app.js` 로드 이전에 추가했습니다. (이로써 `window.supabase`를 사용할 수 있습니다.)
+
+2) 클라이언트 자바스크립트 변경
+- 파일: `js/app.js`
+- 작업: Supabase 클라이언트 초기화를 실제 프로젝트 URL과 publishable 키(`sb_publishable_...`)로 설정했습니다. 또한 기존의 로컬 전용 인증(고정 비밀번호)을 Supabase Auth 기반으로 리팩토링했습니다:
+  - `login()` → `supabase.auth.signInWithPassword(...)` 사용. 로그인 성공 시 `profiles`와 `user_stats`를 upsert하여 기본 레코드를 생성합니다.
+  - `logout()` → `supabase.auth.signOut()` 호출로 세션 종료.
+  - `logUserActivity()` → 로컬 로그 유지 + Supabase `user_logs` 테이블에 비동기 기록 시도(실패해도 UI 차단하지 않음).
+
+3) DB / RLS
+- 작업: 테이블 생성 및 RLS 정책 적용용 SQL 스크립트를 준비하여 문서에 포함했습니다(`profiles`, `user_stats`, `cbt_progress`, `user_logs`).
+- 상태: 해당 SQL은 아직 Supabase SQL Editor에서 실행되지 않았습니다. (실행 권한은 사용자가 Supabase 콘솔에서 직접 수행해야 합니다.)
+
+4) 안전 및 권장사항
+- 클라이언트 코드에는 `sb_publishable_...` (publishable)만 사용해야 합니다. `sb_secret_...`(service role)는 절대 클라이언트에 노출하지 않습니다.
+- SQL 실행 전 반드시 백업 또는 개발용 프로젝트에서 테스트하세요.
+
+Rollback (간단)
+- `index.html`에서 추가한 CDN 라인을 제거하면 SDK가 로드되지 않습니다.
+- `js/app.js` 변경은 커밋으로 관리되므로 되돌리려면 git에서 해당 파일을 이전 커밋으로 리셋하세요.
+
+다음 작업 제안
+- 제가 지금 변경한 파일들을 로컬에서 개별 커밋하겠습니다(요청하신 커밋 포맷으로). 원하시면 커밋 메시지를 수정할 수 있습니다.
+
