@@ -2,6 +2,10 @@
  * Antigravity CBT - Core Application Script
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
+// 1. Supabase 설정 (나중에 본인의 정보로 채우세요)
+const SUPABASE_URL = 'https://your-project.id.supabase.co';
+const SUPABASE_KEY = 'your-anon-key';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Global Idle Timer for Auto-Logout
 let idleTimer;
@@ -384,24 +388,34 @@ function initAutoLogoutSettings() {
 
 // Perform Login
 function login() {
-    const username = dom.loginId.value.trim();
-    const password = dom.loginPw.value;
+    // Resolve DOM elements at call time to avoid TDZ / initialization order issues
+    const loginIdEl = document.getElementById('login-id');
+    const loginPwEl = document.getElementById('login-pw');
+    const saveIdEl = document.getElementById('save-id-check');
+    const loginFormContainer = document.getElementById('login-form-container') || (typeof dom !== 'undefined' ? dom.loginFormContainer : null);
+    const welcomeContainer = document.getElementById('welcome-container') || (typeof dom !== 'undefined' ? dom.welcomeContainer : null);
+    const welcomeUsernameEl = document.getElementById('welcome-username') || (typeof dom !== 'undefined' ? dom.welcomeUsername : null);
+    const subjectSelectionSection = document.getElementById('subject-selection-section') || (typeof dom !== 'undefined' ? dom.subjectSelectionSection : null);
+    const loginSubmitBtnEl = document.getElementById('login-submit-btn') || (typeof dom !== 'undefined' ? dom.loginSubmitBtn : null);
+
+    const username = loginIdEl ? loginIdEl.value.trim() : '';
+    const password = loginPwEl ? loginPwEl.value : '';
 
     if (!username) {
         alert('아이디를 입력해 주세요.');
-        dom.loginId.focus();
+        if (loginIdEl) loginIdEl.focus();
         return;
     }
 
     if (password !== 'dongbu') {
         alert('비밀번호가 맞지 않습니다. (비밀번호: dongbu)');
-        dom.loginPw.focus();
+        if (loginPwEl) loginPwEl.focus();
         return;
     }
 
     // Save ID check logic
-    if (dom.saveIdCheck) {
-        if (dom.saveIdCheck.checked) {
+    if (saveIdEl) {
+        if (saveIdEl.checked) {
             localStorage.setItem('cbt_saved_id', username);
         } else {
             localStorage.removeItem('cbt_saved_id');
@@ -412,12 +426,12 @@ function login() {
     localStorage.setItem('cbt_current_user', username);
     state.currentUser = username;
     
-    // UI transition
-    dom.loginFormContainer.classList.add('hidden');
-    dom.welcomeContainer.classList.remove('hidden');
-    dom.welcomeUsername.innerText = username;
-    dom.subjectSelectionSection.classList.remove('hidden');
-    if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
+    // UI transition (use resolved elements)
+    if (loginFormContainer) loginFormContainer.classList.add('hidden');
+    if (welcomeContainer) welcomeContainer.classList.remove('hidden');
+    if (welcomeUsernameEl) welcomeUsernameEl.innerText = username;
+    if (subjectSelectionSection) subjectSelectionSection.classList.remove('hidden');
+    if (loginSubmitBtnEl) loginSubmitBtnEl.classList.add('hidden');
     
     updateHomeResumeButton();
     logUserActivity('로그인 성공');
@@ -427,7 +441,9 @@ function login() {
     
     // Smooth scroll to subject list
     setTimeout(() => {
-        dom.subjectSelectionSection.scrollIntoView({ behavior: 'smooth' });
+        if (subjectSelectionSection && subjectSelectionSection.scrollIntoView) {
+            subjectSelectionSection.scrollIntoView({ behavior: 'smooth' });
+        }
     }, 100);
 }
 
