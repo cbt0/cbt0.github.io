@@ -6,6 +6,12 @@
   ▄▀▀      ▀▀▄
 
 ────────────────────────────────────────────────────────────
+## 2026-06-19 — Version 2.0 요약
+- 주요 작업: Supabase(Auth + Postgres) 통합, 로컬→서버 마이그레이션 구현, 클라우드 우선 로그인/동기화, `submitExam()` 서버 동기화 추가
+- 관련 파일: `index.html`, `js/app.js`, `develop/supabase_migration_plan.md`, `develop/supabase_submit_sync.md`, `develop/history.md`
+- 브랜치 변경: 기존 `main` 내용을 `frontend` 브랜치로 보존한 뒤 `supabase` 브랜치 내용을 `main`으로 승격(원격 강제 푸시). 
+- 참고: 서비스 역할 키는 리포지토리에 커밋하지 않았고, 클라이언트에는 publishable 키만 사용했습니다.
+
 > 깃 홈페이즈를 만들었어 cbt 문제풀이 사이트를 만들예정이야 최강cbt처럼 문제는
   gas_CBT_2017_2025_final.docx 이용해 퀴즈 웹페이지를 만들기 편한 스타일로 변경할꺼고   니가 계호기을
   세워서 plan.md에 적어줘 기능은 홈페이지가 있고 소개말, 에너지기능사, 에너지산업관리기사,

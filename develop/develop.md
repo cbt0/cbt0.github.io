@@ -1,4 +1,4 @@
-# 🛠️ CBT V1.91 프로젝트 개발 및 분석 문서 (develop.md)
+# 🛠️ CBT V2.0 프로젝트 개발 및 분석 문서 (develop.md)
 
 이 문서는 프로젝트 개발 시 요구되었던 **UI 수정 요구사항 및 작업 결과**와 **CBT 문제풀이 앱의 전체적인 구조 및 핵심 로직 분석**을 통합하여 정리한 문서입니다.
 
@@ -82,7 +82,7 @@
 | **2026-06-15 19:03** | `v1.5` | `README.md`<br>`index.html`<br>`develop.md`<br>`plan.md` | **README.md 프로젝트 개요 및 상세도 문서화 완료 V1.5 배포**<br>- README.md에 CBT 웹 앱의 세부 아키텍처 개요, 상태/데이터 모델 상세도 설계도(Mermaid 다이어그램) 및 기술 스택 분석 추가<br>- 앱 버전을 `CBT v1.5`로 상향하고 CSS/JS 캐시 갱신 쿼리(`?v=1.1.6`) 적용 |
 | **2026-06-15 20:30** | `v1.6` | `index.html`<br>`js/app.js`<br>`develop.md`<br>`plan.md` | **SPA 해시 라우터 도입을 통한 브라우저 뒤로가기(방지 및 복원) 기능 구현 V1.6 배포**<br>- `hashchange` 이벤트 리스너를 통한 SPA 내비게이션 라우터 탑재<br>- 과목별 회차 목록 및 시험 보기 등 동적 상태를 URL 해시와 연동하여 브라우저 뒤로가기 완벽 지원<br>- 앱 버전을 `CBT v1.6`로 상향하고 CSS/JS 캐시 갱신 쿼리(`?v=1.1.7`) 적용 |
 | **2026-06-15 20:52** | `v1.7` | `css/style.css`<br>`index.html`<br>`develop.md`<br>`plan.md` | **모바일 보기 폰트 사이즈 및 내부 패딩 최적화 V1.7 배포**<br>- 모바일(768px 이하) 보기의 폰트 크기를 16px에서 18px로 확대하여 시인성 확보<br>- 보기 내부 패딩을 14px 16px에서 10px 10px로 슬림하게 줄여 모바일 기기 화면 공간 효율성 극대화<br>- 앱 버전을 `CBT v1.7`로 상향하고 CSS/JS 캐시 갱신 쿼리(`?v=1.1.8`) 적용 |
-| **2026-06-19** | `v1.91` | `index.html`<br>`css/style.css`<br>`js/app.js`<br>`develop.md`<br>`plan.md` | **계산기 기능 추가 및 오답/리더보드 고도화 V1.91 배포**<br>- 문제 풀이 화면에 계산기 버튼과 모달 UI를 추가하여 괄호, 제곱, 루트, ln/log, 지수 연산 지원.<br>- `오답 모아 풀기`, `전체/오답/미제출` 필터를 추가하여 오답 복습과 문제 선택 경험을 개선.<br>- `localStorage` 기반 채점 로그 및 게임 스코어 리더보드를 기록하고 즉시 갱신하도록 구현. |
+| **2026-06-19** | `v2.0` | `index.html`<br>`css/style.css`<br>`js/app.js`<br>`develop.md`<br>`plan.md` | **Supabase 통합 및 대규모 리팩터링 V2.0 배포**<br>- Supabase(Auth + Postgres) SDK를 프론트엔드에 추가하고 DB 테이블(`profiles`, `user_stats`, `cbt_progress`, `user_logs`)을 생성.<br>- 회원가입 시 로컬 데이터의 서버 마이그레이션(`signupAndMigrate()`), 로그인 시 클라우드 우선 동기화(`syncDataFromCloud()`), `submitExam()`에서 서버 동기화 로직 추가.<br>- 관련 SQL 문서화 및 `develop/` 문서 추가, Git 브랜치 재구성(기존 `main` → `frontend`, `supabase` → `main`). |
 
 ---
 
