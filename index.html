@@ -143,6 +143,7 @@
             <div class="rounds-header">
                 <h2 id="rounds-title" class="rounds-subject-title">가스기능사</h2>
                 <p class="rounds-subtitle">풀어볼 기출문제의 회차를 선택해 주세요.</p>
+                <button id="btn-review-wrong" class="btn btn-warning">🔥 오답 모아 풀기</button>
             </div>
             
             <div class="rounds-grid" id="rounds-list">
@@ -179,6 +180,14 @@
                             <span class="round-tag" id="quiz-round-name">2017년 1회</span>
                         </div>
                         <div class="quiz-header-right">
+                                <div class="question-filter" style="margin-right: 12px; display: flex; align-items: center; gap: 8px;">
+                                <label for="question-filter" style="font-size: 13px; color: var(--text-muted);">필터</label>
+                                <select id="question-filter" class="select-filter">
+                                    <option value="all">전체</option>
+                                    <option value="wrong">오답</option>
+                                    <option value="unanswered">미제출</option>
+                                </select>
+                            </div>
                             <div class="quiz-timer">
                                 <i class="fa-regular fa-clock"></i> <span id="timer-text">00:00</span>
                             </div>
@@ -367,8 +376,8 @@
             <div id="subtab-content-ranking" class="subtab-content">
                 <!-- User Ranking Leaderboard Card -->
                 <div class="dashboard-box ranking-box" style="margin-top: 16px;">
-                    <h3><i class="fa-solid fa-ranking-star"></i> 사용자 순위 (푼 문제수)</h3>
-                    <div class="ranking-container" id="user-ranking-list">
+                    <h3><i class="fa-solid fa-ranking-star"></i> 사용자 순위 (게임 스코어)</h3>
+                    <div class="ranking-container" id="leaderboard-list">
                         <p class="no-data-msg">순위 정보가 없습니다.</p>
                     </div>
                 </div>
