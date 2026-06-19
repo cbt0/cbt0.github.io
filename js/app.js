@@ -180,6 +180,7 @@ const dom = {
     logo: document.getElementById('logo-btn'),
     themeToggle: document.getElementById('theme-toggle'),
     loginSubmitBtn: document.getElementById('login-submit-btn'),
+    signupBtn: document.getElementById('signup-btn'),
     
     // Login / Welcome widget elements
     loginFormContainer: document.getElementById('login-form-container'),
@@ -372,6 +373,73 @@ function resetIdleTimer() {
     }, timeoutMs);
 }
 
+// 클라우드 우선 동기화: Supabase -> localStorage
+async function syncDataFromCloud(userId, username) {
+    if (!userId || !username) return;
+    try {
+        // 1) user_stats 조회
+        const { data: statsRow, error: statsErr } = await supabase.from('user_stats').select('*').eq('user_id', userId).maybeSingle();
+        if (!statsErr && statsRow) {
+            const perUserStats = {
+                totalSolved: statsRow.total_solved || 0,
+                totalExamsAttempted: statsRow.total_exams_attempted || 0,
+                passedExamsCount: statsRow.passed_exams_count || 0,
+                averageSum: statsRow.average_sum || 0
+            };
+
+            // 덮어쓰기: 사용자별 키
+            const perUserKey = `cbt_${username}_global_stats`;
+            localStorage.setItem(perUserKey, JSON.stringify(perUserStats));
+
+            // 글로벌 맵 업데이트
+            const globalKey = 'cbt_global_stats';
+            let globalMap = {};
+            try { globalMap = JSON.parse(localStorage.getItem(globalKey)) || {}; } catch (e) { globalMap = {}; }
+            const avgRate = perUserStats.totalExamsAttempted > 0 ? Math.round(perUserStats.averageSum / perUserStats.totalExamsAttempted) : 0;
+            globalMap[username] = {
+                totalSolved: perUserStats.totalSolved,
+                totalExamsAttempted: perUserStats.totalExamsAttempted,
+                passedExamsCount: perUserStats.passedExamsCount,
+                averageRate: avgRate
+            };
+            localStorage.setItem(globalKey, JSON.stringify(globalMap));
+        }
+
+        // 2) cbt_progress 조회 및 로컬 덮어쓰기
+        const { data: progressRows, error: progErr } = await supabase.from('cbt_progress').select('*').eq('user_id', userId);
+        if (!progErr) {
+            // 기존 로컬 progress 키 전부 제거
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('cbt_progress_')) {
+                    localStorage.removeItem(k);
+                }
+            });
+
+            // 클라우드 데이터를 로컬에 기록 (username 접두사 사용)
+            (progressRows || []).forEach(row => {
+                const subj = row.subject || 'unknown';
+                const roundKey = row.round_key || (`id_${row.id || Date.now()}`);
+                const key = `cbt_progress_${username}_${subj}_${roundKey}`;
+                const payload = {
+                    score: row.score || 0,
+                    total: row.total || 0,
+                    percent: row.percent || 0,
+                    time: row.time_seconds || row.time || 0,
+                    completed: !!row.completed
+                };
+                localStorage.setItem(key, JSON.stringify(payload));
+            });
+        }
+
+        // 상태 업데이트
+        state.currentUser = username;
+        updateHomeResumeButton();
+        renderGradingDashboard();
+    } catch (e) {
+        console.warn('syncDataFromCloud error', e);
+    }
+}
+
 // Initialize Auto-Logout settings from localStorage
 function initAutoLogoutSettings() {
     const savedMinutes = localStorage.getItem('cbt_auto_logout_minutes');
@@ -386,7 +454,7 @@ function initAutoLogoutSettings() {
     }
 }
 
-// Perform Login
+// Perform Login (클라우드 우선 동기화)
 async function login() {
     const username = dom.loginId.value.trim();
     const password = dom.loginPw.value;
@@ -396,28 +464,126 @@ async function login() {
         dom.loginId.focus();
         return;
     }
-
     if (!password) {
         alert('비밀번호를 입력해 주세요.');
         dom.loginPw.focus();
         return;
     }
 
-    // Supabase Auth 로그인 (아이디를 이메일로 가공)
+    const email = `${username}@cbt.com`;
+
+    // 시도 1: 로그인
     try {
-        const email = `${username}@cbt.com`;
         const { data: signData, error: signError } = await supabase.auth.signInWithPassword({ email, password });
         if (signError) {
-            alert('로그인 실패: ' + signError.message);
-            dom.loginPw.focus();
+            // 로그인 실패 -> 신규 가입 자동 시도
+            console.warn('signIn error, attempting signUp', signError.message || signError);
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
+            if (signUpError) {
+                alert('로그인/회원가입 실패: ' + signUpError.message);
+                return;
+            }
+
+            const newUser = signUpData && signUpData.user ? signUpData.user : null;
+            if (!newUser) {
+                alert('회원가입 처리 중 오류가 발생했습니다.');
+                return;
+            }
+
+            // profiles 생성
+            try {
+                await supabase.from('profiles').insert([{ id: newUser.id, username: username, display_name: username }]);
+            } catch (e) { console.warn('profiles insert error after signup', e.message || e); }
+
+            // 로컬에 남아있는 데이터가 있으면 클라우드로 업로드 (user_stats, cbt_progress)
+            try {
+                // user_stats 업로드
+                const perUserKey = `cbt_${username}_global_stats`;
+                const perUserStr = localStorage.getItem(perUserKey);
+                let statsPayload = {};
+                if (perUserStr) {
+                    try { statsPayload = JSON.parse(perUserStr); } catch (e) { statsPayload = {}; }
+                } else {
+                    const globalStr = localStorage.getItem('cbt_global_stats');
+                    if (globalStr) {
+                        try { const gm = JSON.parse(globalStr) || {}; if (gm[username]) statsPayload = gm[username]; } catch (e) { }
+                    }
+                }
+
+                if (Object.keys(statsPayload).length > 0) {
+                    await supabase.from('user_stats').upsert([{
+                        user_id: newUser.id,
+                        total_solved: statsPayload.totalSolved || statsPayload.total_solved || 0,
+                        total_exams_attempted: statsPayload.totalExamsAttempted || statsPayload.totalExamsAttempted || 0,
+                        passed_exams_count: statsPayload.passedExamsCount || statsPayload.passedExamsCount || 0,
+                        average_sum: statsPayload.averageSum || statsPayload.average_sum || 0
+                    }]);
+                }
+
+                // cbt_progress 업로드
+                const progressInserts = [];
+                Object.keys(localStorage).forEach(key => {
+                    if (!key.startsWith('cbt_progress_')) return;
+                    const raw = localStorage.getItem(key);
+                    if (!raw) return;
+                    try {
+                        const parsed = JSON.parse(raw);
+                        let suffix = key.replace('cbt_progress_', '');
+                        if (suffix.startsWith(username + '_')) suffix = suffix.slice(username.length + 1);
+                        const parts = suffix.split('_');
+                        const subject = parts[0] || null;
+                        const roundKey = parts.slice(1).join('_') || null;
+                        progressInserts.push({
+                            user_id: newUser.id,
+                            subject: subject,
+                            round_key: roundKey,
+                            score: parsed.score || parsed.correct || 0,
+                            total: parsed.total || 0,
+                            percent: parsed.percent || 0,
+                            time_seconds: parsed.time || parsed.time_seconds || 0,
+                            completed: parsed.completed ? true : false
+                        });
+                    } catch (e) { }
+                });
+                if (progressInserts.length > 0) {
+                    await supabase.from('cbt_progress').insert(progressInserts);
+                }
+            } catch (e) {
+                console.warn('upload local -> cloud after signup error', e);
+            }
+
+            // 완료 메시지 및 화면 전환
+            localStorage.setItem('cbt_current_user', username);
+            state.currentUser = username;
+            if (dom.saveIdCheck) {
+                if (dom.saveIdCheck.checked) localStorage.setItem('cbt_saved_id', username);
+            }
+
+            // UI
+            dom.loginFormContainer.classList.add('hidden');
+            dom.welcomeContainer.classList.remove('hidden');
+            dom.welcomeUsername.innerText = username;
+            dom.subjectSelectionSection.classList.remove('hidden');
+            if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
+            updateHomeResumeButton();
+            logUserActivity('신규 계정 생성 및 로컬 데이터 백업 완료');
+            resetIdleTimer();
+            alert('새로운 클라우드 계정이 생성되고 데이터가 백업되었습니다.');
+            setTimeout(() => { dom.subjectSelectionSection.scrollIntoView({ behavior: 'smooth' }); }, 100);
             return;
         }
 
-        // 사용자 정보 가져오기
-        const { data: userData } = await supabase.auth.getUser();
-        const supaUser = userData && userData.user ? userData.user : (signData && signData.user ? signData.user : null);
+        // 로그인 성공
+        const supaUser = signData && signData.user ? signData.user : null;
+        const uid = supaUser ? supaUser.id : null;
 
-        // 로컬 ID 저장(기존 동작 유지)
+        // 클라우드 데이터 우선 동기화
+        if (uid) {
+            await syncDataFromCloud(uid, username);
+            alert('클라우드 데이터가 동기화되었습니다.');
+        }
+
+        // 로컬 ID 저장
         if (dom.saveIdCheck) {
             if (dom.saveIdCheck.checked) localStorage.setItem('cbt_saved_id', username);
             else localStorage.removeItem('cbt_saved_id');
@@ -426,46 +592,25 @@ async function login() {
         localStorage.setItem('cbt_current_user', username);
         state.currentUser = username;
 
-        // Supabase 프로필/스탯 초기화(최초 로그인 시 생성)
-        if (supaUser && supaUser.id) {
-            try {
-                await supabase.from('profiles').upsert({ id: supaUser.id, username: username, display_name: username });
-            } catch (e) {
-                console.warn('profiles upsert error', e.message || e);
-            }
-            try {
-                await supabase.from('user_stats').upsert({ user_id: supaUser.id });
-            } catch (e) {
-                console.warn('user_stats upsert error', e.message || e);
-            }
-        }
+        // ensure profile exists
+        try { if (uid) await supabase.from('profiles').upsert({ id: uid, username: username, display_name: username }); } catch (e) { console.warn(e); }
 
-    // Save ID check logic
-    if (dom.saveIdCheck) {
-        if (dom.saveIdCheck.checked) {
-            localStorage.setItem('cbt_saved_id', username);
-        } else {
-            localStorage.removeItem('cbt_saved_id');
-        }
+        // UI transition
+        dom.loginFormContainer.classList.add('hidden');
+        dom.welcomeContainer.classList.remove('hidden');
+        dom.welcomeUsername.innerText = username;
+        dom.subjectSelectionSection.classList.remove('hidden');
+        if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
+
+        updateHomeResumeButton();
+        logUserActivity('로그인 성공');
+        resetIdleTimer();
+        setTimeout(() => { dom.subjectSelectionSection.scrollIntoView({ behavior: 'smooth' }); }, 100);
+
+    } catch (e) {
+        console.error('login flow error', e);
+        alert('로그인 중 오류가 발생했습니다. 콘솔을 확인하세요.');
     }
-
-    // UI transition
-    dom.loginFormContainer.classList.add('hidden');
-    dom.welcomeContainer.classList.remove('hidden');
-    dom.welcomeUsername.innerText = username;
-    dom.subjectSelectionSection.classList.remove('hidden');
-    if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
-    
-    updateHomeResumeButton();
-    logUserActivity('로그인 성공');
-    
-    // Start idle timer
-    resetIdleTimer();
-    
-    // Smooth scroll to subject list
-    setTimeout(() => {
-        dom.subjectSelectionSection.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
 }
 
 // Perform Logout
@@ -491,6 +636,148 @@ function logout() {
         checkLoginState();
         switchTab('home');
     })();
+}
+
+// 회원가입 및 로컬 데이터 마이그레이션
+async function signupAndMigrate() {
+    const username = dom.loginId.value.trim();
+    const password = dom.loginPw.value;
+
+    if (!username) {
+        alert('아이디를 입력해 주세요.');
+        dom.loginId.focus();
+        return;
+    }
+    if (!password) {
+        alert('비밀번호를 입력해 주세요.');
+        dom.loginPw.focus();
+        return;
+    }
+
+    try {
+        const email = `${username}@cbt.com`;
+        const { data: signData, error: signError } = await supabase.auth.signUp({ email, password });
+        if (signError) {
+            alert('회원가입 실패: ' + signError.message);
+            return;
+        }
+
+        const newUser = signData && signData.user ? signData.user : null;
+        if (!newUser) {
+            alert('회원가입 처리 중 사용자 정보를 가져오지 못했습니다.');
+            return;
+        }
+
+        // 1) profiles 테이블에 기본 프로필 생성
+        try {
+            await supabase.from('profiles').insert([{ id: newUser.id, username: username, display_name: username }]);
+        } catch (e) {
+            console.warn('profiles insert error', e.message || e);
+        }
+
+        // 2) 로컬 통계(user_stats) 마이그레이션
+        let migratedStats = {
+            totalSolved: 0,
+            totalExamsAttempted: 0,
+            passedExamsCount: 0,
+            averageSum: 0
+        };
+
+        // Per-user key 우선
+        const perUserKey = `cbt_${username}_global_stats`;
+        const perUserStr = localStorage.getItem(perUserKey);
+        if (perUserStr) {
+            try {
+                const s = JSON.parse(perUserStr);
+                migratedStats.totalSolved = s.totalSolved || s.total_solved || 0;
+                migratedStats.totalExamsAttempted = s.totalExamsAttempted || s.totalExamsAttempted || 0;
+                migratedStats.passedExamsCount = s.passedExamsCount || s.passedExamsCount || 0;
+                migratedStats.averageSum = s.averageSum || s.average_sum || 0;
+            } catch (e) { /* ignore parse errors */ }
+        } else {
+            // 글로벌 맵에서 해당 ID 항목이 있는지 확인
+            const globalStr = localStorage.getItem('cbt_global_stats');
+            if (globalStr) {
+                try {
+                    const globalMap = JSON.parse(globalStr) || {};
+                    if (globalMap[username]) {
+                        const s = globalMap[username];
+                        migratedStats.totalSolved = s.totalSolved || s.total_solved || 0;
+                        migratedStats.totalExamsAttempted = s.totalExamsAttempted || s.totalExamsAttempted || 0;
+                        migratedStats.passedExamsCount = s.passedExamsCount || s.passedExamsCount || 0;
+                        migratedStats.averageSum = s.averageRate ? (s.averageRate * (s.totalExamsAttempted || 0)) : (s.averageSum || 0);
+                    }
+                } catch (e) { /* ignore */ }
+            }
+        }
+
+        // Insert/Upsert user_stats
+        try {
+            await supabase.from('user_stats').upsert([{
+                user_id: newUser.id,
+                total_solved: migratedStats.totalSolved || 0,
+                total_exams_attempted: migratedStats.totalExamsAttempted || 0,
+                passed_exams_count: migratedStats.passedExamsCount || 0,
+                average_sum: migratedStats.averageSum || 0
+            }]);
+        } catch (e) {
+            console.warn('user_stats upsert error', e.message || e);
+        }
+
+        // 3) cbt_progress 항목 마이그레이션
+        const progressInserts = [];
+        Object.keys(localStorage).forEach(key => {
+            if (!key.startsWith('cbt_progress_')) return;
+
+            const raw = localStorage.getItem(key);
+            if (!raw) return;
+
+            try {
+                const parsed = JSON.parse(raw);
+                // 키에서 subject 및 round 정보를 추출: cbt_progress_[maybe username_]subject_year_round
+                let suffix = key.replace('cbt_progress_', '');
+                if (suffix.startsWith(username + '_')) {
+                    suffix = suffix.slice(username.length + 1);
+                }
+                const parts = suffix.split('_');
+                const subject = parts[0] || null;
+                const roundKey = parts.slice(1).join('_') || null;
+
+                const obj = {
+                    user_id: newUser.id,
+                    subject: subject,
+                    round_key: roundKey,
+                    score: parsed.score || parsed.correct || 0,
+                    total: parsed.total || 0,
+                    percent: parsed.percent || parsed.percent || 0,
+                    time_seconds: parsed.time || parsed.time_seconds || 0,
+                    completed: parsed.completed ? true : false
+                };
+
+                progressInserts.push(obj);
+            } catch (e) {
+                // skip invalid JSON
+            }
+        });
+
+        if (progressInserts.length > 0) {
+            try {
+                // Bulk insert
+                await supabase.from('cbt_progress').insert(progressInserts);
+            } catch (e) {
+                console.warn('cbt_progress insert error', e.message || e);
+            }
+        }
+
+        // 완료 알림 및 입력 초기화 (사용자에게 로그인 권장)
+        alert('회원가입 및 기존 학습 데이터 복구가 완료되었습니다! 로그인 버튼을 눌러 시작해주세요.');
+        dom.loginId.value = '';
+        dom.loginPw.value = '';
+
+    } catch (e) {
+        console.error('signupAndMigrate error', e);
+        alert('회원가입 중 오류가 발생했습니다. 콘솔을 확인하세요.');
+    }
 }
 
 // Log User Activity
@@ -734,6 +1021,12 @@ function registerEventListeners() {
         });
     }
 
+    // Signup Button (회원가입 및 로컬 데이터 마이그레이션)
+    if (dom.signupBtn) {
+        dom.signupBtn.addEventListener('click', () => {
+            signupAndMigrate();
+        });
+    }
     // Sub-tab toggling in Grading Dashboard
     document.querySelectorAll('.sub-tab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -1338,7 +1631,7 @@ function toggleHintBox() {
 }
 
 // Grading Engine & Result Modal
-function submitExam() {
+async function submitExam() {
     clearInterval(state.timerInterval);
     
     const total = state.currentQuestions.length;
@@ -1418,6 +1711,55 @@ function submitExam() {
     
     // Refresh leaderboard immediately
     renderLeaderboard();
+
+    // 서버 동기화: cbt_progress 삽입 및 user_stats 집계 업데이트 (클라우드 우선 방식)
+    if (state.currentUser) {
+        try {
+            const { data: userData } = await supabase.auth.getUser();
+            const uid = userData && userData.user ? userData.user.id : null;
+            if (uid) {
+                // Insert progress to cloud
+                try {
+                    await supabase.from('cbt_progress').insert([{ 
+                        user_id: uid,
+                        subject: state.activeSubject,
+                        round_key: roundKey,
+                        score: correct,
+                        total: total,
+                        percent: scoreVal,
+                        time_seconds: state.timeSpentSeconds,
+                        completed: true
+                    }]);
+                } catch (e) {
+                    console.warn('cbt_progress insert error', e.message || e);
+                }
+
+                // Update aggregated user_stats (fetch current, then upsert totals)
+                try {
+                    const { data: existingStats } = await supabase.from('user_stats').select('*').eq('user_id', uid).maybeSingle();
+                    const updated = {
+                        user_id: uid,
+                        total_solved: (existingStats && existingStats.total_solved ? existingStats.total_solved : 0) + total,
+                        total_exams_attempted: (existingStats && existingStats.total_exams_attempted ? existingStats.total_exams_attempted : 0) + 1,
+                        passed_exams_count: (existingStats && existingStats.passed_exams_count ? existingStats.passed_exams_count : 0) + (isPass ? 1 : 0),
+                        average_sum: (existingStats && existingStats.average_sum ? existingStats.average_sum : 0) + scoreVal
+                    };
+                    await supabase.from('user_stats').upsert([updated]);
+                } catch (e) {
+                    console.warn('user_stats update error', e.message || e);
+                }
+
+                // Refresh local from cloud to ensure 단일 소스 진실성
+                try {
+                    await syncDataFromCloud(uid, state.currentUser);
+                } catch (e) {
+                    console.warn('syncDataFromCloud after submit error', e.message || e);
+                }
+            }
+        } catch (e) {
+            console.warn('submitExam cloud sync error', e.message || e);
+        }
+    }
     
     // Display Modal
     dom.resultModal.classList.add('active');
