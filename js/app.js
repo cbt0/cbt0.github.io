@@ -179,6 +179,7 @@ const dom = {
     loginId: document.getElementById('login-id'),
     loginPw: document.getElementById('login-pw'),
     logoutBtn: document.getElementById('logout-btn'),
+    homeResumeBtn: document.getElementById('home-resume-btn'),
     subjectSelectionSection: document.getElementById('subject-selection-section'),
     
     // Grading dashboard elements
@@ -260,13 +261,68 @@ function checkLoginState() {
         dom.welcomeUsername.innerText = savedUser;
         dom.subjectSelectionSection.classList.remove('hidden');
         if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
+        updateHomeResumeButton();
     } else {
         state.currentUser = null;
         dom.loginFormContainer.classList.remove('hidden');
         dom.welcomeContainer.classList.add('hidden');
         dom.subjectSelectionSection.classList.add('hidden');
         if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.remove('hidden');
+        updateHomeResumeButton();
     }
+}
+
+// Update Home Resume Button Visibility & Text
+function updateHomeResumeButton() {
+    if (!state.currentUser) {
+        if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
+        return;
+    }
+    
+    const key = `cbt_${state.currentUser}_autosave_session`;
+    const sessionStr = localStorage.getItem(key);
+    
+    if (sessionStr) {
+        try {
+            const session = JSON.parse(sessionStr);
+            if (session && session.activeRound) {
+                const round = session.activeRound;
+                const subjectName = round.subject || '';
+                const roundName = round.year ? `${round.year}년 ${round.round}` : round.round;
+                const questionNum = (round.questions && round.questions[session.activeQuestionIndex])
+                    ? round.questions[session.activeQuestionIndex].num
+                    : (session.activeQuestionIndex + 1);
+                
+                if (dom.homeResumeBtn) {
+                    dom.homeResumeBtn.innerText = `▶ 이어하기 : ${subjectName} ${roundName} (Q. ${questionNum})`;
+                    dom.homeResumeBtn.classList.remove('hidden');
+                }
+            } else {
+                if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
+            }
+        } catch (e) {
+            console.error('Error parsing session data:', e);
+            if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
+        }
+    } else {
+        if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
+    }
+}
+
+// Auto Save Quiz Session State to LocalStorage
+function autoSaveSession() {
+    if (!state.currentUser || !state.activeRound || state.quizMode !== 'solving') return;
+    
+    const key = `cbt_${state.currentUser}_autosave_session`;
+    const sessionData = {
+        subject: state.activeSubject,
+        activeRound: state.activeRound,
+        activeQuestionIndex: state.activeQuestionIndex,
+        userAnswers: state.userAnswers,
+        timeSpentSeconds: state.timeSpentSeconds
+    };
+    
+    localStorage.setItem(key, JSON.stringify(sessionData));
 }
 
 // Perform Login
@@ -297,6 +353,7 @@ function login() {
     dom.subjectSelectionSection.classList.remove('hidden');
     if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
     
+    updateHomeResumeButton();
     logUserActivity('로그인 성공');
     
     // Smooth scroll to subject list
@@ -566,6 +623,35 @@ function registerEventListeners() {
         dom.logoutBtn.addEventListener('click', logout);
     }
     
+    // Home Resume Button
+    if (dom.homeResumeBtn) {
+        dom.homeResumeBtn.addEventListener('click', () => {
+            if (!state.currentUser) return;
+            const key = `cbt_${state.currentUser}_autosave_session`;
+            const sessionStr = localStorage.getItem(key);
+            if (!sessionStr) return;
+            
+            try {
+                const session = JSON.parse(sessionStr);
+                if (session && session.activeRound) {
+                    // Restore state variables
+                    state.activeSubject = session.subject;
+                    state.activeRound = session.activeRound;
+                    state.currentQuestions = session.activeRound.questions;
+                    state.activeQuestionIndex = session.activeQuestionIndex;
+                    state.userAnswers = session.userAnswers || {};
+                    state.timeSpentSeconds = session.timeSpentSeconds || 0;
+                    
+                    // Call startQuiz with isResume = true
+                    startQuiz(session.activeRound, true);
+                }
+            } catch (e) {
+                console.error('Error resuming session:', e);
+                alert('이어하기 중 오류가 발생했습니다.');
+            }
+        });
+    }
+    
     // Password Enter Key
     if (dom.loginPw) {
         dom.loginPw.addEventListener('keypress', (e) => {
@@ -791,15 +877,17 @@ function renderRoundsList(subject) {
 }
 
 // Start Quiz Session
-function startQuiz(round) {
+function startQuiz(round, isResume = false) {
     state.activeRound = round;
     state.currentQuestions = round.questions;
-    state.activeQuestionIndex = 0;
-    state.userAnswers = {};
+    if (!isResume) {
+        state.activeQuestionIndex = 0;
+        state.userAnswers = {};
+        state.timeSpentSeconds = 0;
+    }
     state.quizMode = 'solving';
-    state.timeSpentSeconds = 0;
     
-    logUserActivity(`${round.subject} ${round.round} 시험 시작`);
+    logUserActivity(`${round.subject} ${round.round} 시험 시작` + (isResume ? ' (이어하기)' : ''));
     
     // Set Header titles
     dom.quizSubjectName.innerText = round.subject;
@@ -816,7 +904,10 @@ function startQuiz(round) {
     
     // Start timer
     clearInterval(state.timerInterval);
-    dom.timerText.innerText = '00:00';
+    const initialMins = String(Math.floor(state.timeSpentSeconds / 60)).padStart(2, '0');
+    const initialSecs = String(state.timeSpentSeconds % 60).padStart(2, '0');
+    dom.timerText.innerText = `${initialMins}:${initialSecs}`;
+    
     state.timerInterval = setInterval(() => {
         state.timeSpentSeconds++;
         const mins = String(Math.floor(state.timeSpentSeconds / 60)).padStart(2, '0');
@@ -826,6 +917,9 @@ function startQuiz(round) {
     
     // Show screen and switch tab to quiz
     switchTab('quiz');
+    
+    // Auto-save session
+    autoSaveSession();
 }
 
 // Render Left side markings grid (1~60)
@@ -952,6 +1046,9 @@ function renderActiveQuestion() {
     
     // Sync marking board navigation
     updateMarkingStatus();
+    
+    // Auto-save session
+    autoSaveSession();
 }
 
 // Choice Click logic
@@ -965,6 +1062,9 @@ function handleSelectAnswer(choiceNum) {
     
     // Render current question updates (apply colors, open hint box)
     renderActiveQuestion();
+    
+    // Auto-save session
+    autoSaveSession();
     
     // Check if ALL questions solved (Auto-submit suggestion)
     const answeredCount = Object.keys(state.userAnswers).length;
@@ -1060,9 +1160,11 @@ function submitExam() {
         time: state.timeSpentSeconds
     }));
     
-    // Clear last solved info upon submission
+    // Clear last solved info and autosave session upon submission
     if (state.currentUser) {
         localStorage.removeItem(`cbt_${state.currentUser}_last_solved`);
+        localStorage.removeItem(`cbt_${state.currentUser}_autosave_session`);
+        updateHomeResumeButton();
         logUserActivity(`${state.activeRound.subject} ${state.activeRound.round} 제출 - ${scoreVal}점 (${isPass ? '합격' : '불합격'})`);
     }
     
