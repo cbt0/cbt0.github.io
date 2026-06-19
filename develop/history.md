@@ -920,3 +920,23 @@ expand)
 - `오답 모아 풀기`, `전체/오답/미제출` 필터를 도입하여 오답 복습과 문제 지정 학습 흐름을 개선했습니다.
 - `localStorage` 기반 채점 로그 및 게임 스코어 리더보드 기록을 추가하여 순위 데이터가 즉시 반영되도록 고도화했습니다.
 - `develop.md` 및 `plan.md`에 V1.91 릴리즈 로그를 반영하여 문서 동기화를 완료했습니다.
+
+### 2026-06-19 추가 기록: Supabase 통합 및 브랜치 재구성
+
+- Supabase 연동 및 인증/동기화
+  - Supabase JS SDK를 `index.html`에 추가하고 `js/app.js`에서 클라이언트 초기화(SUPABASE_URL, SUPABASE_KEY)를 적용했습니다.
+  - 회원가입 버튼을 `.login-inputs`에 추가하고(`id="signup-btn"`), `signupAndMigrate()`를 구현해 회원가입 시 로컬(localStorage) 데이터를 Supabase로 마이그레이션하도록 했습니다.
+  - 로그인 흐름을 클라우드 우선으로 재설계: `login()`에서 `signInWithPassword()` 성공 시 `syncDataFromCloud(userId, username)`로 서버 데이터를 로컬에 덮어쓰고, 로그인 실패(신규 유저)는 `signUp()` 자동 가입 후 로컬 데이터를 서버로 업로드합니다.
+  - `syncDataFromCloud(userId, username)` 구현: `user_stats`와 `cbt_progress`를 조회해 localStorage와 `state`를 최신화합니다.
+  - `submitExam()`을 비동기(async)로 변경하여 제출 시 `cbt_progress`를 서버에 삽입하고 `user_stats`를 집계해 upsert한 뒤, `syncDataFromCloud()`로 로컬을 갱신하도록 구현했습니다.
+
+- 문서화 및 커밋
+  - `develop/supabase_migration_plan.md` 및 `develop/supabase_submit_sync.md`에 SQL, RLS 정책, 마이그레이션 및 submit 동기화 설계를 문서화했습니다.
+  - 관련 소스 변경을 개별 커밋으로 기록했습니다 (예: `index.html`, `js/app.js`, `develop/*` 문서).
+
+- 브랜치/배포 관련
+  - 기존 `main` 스냅샷을 `frontend` 브랜치로 동기화(로컬/원격)하여 `frontend`에 보존했습니다.
+  - `supabase` 브랜치를 로컬 `main`으로 가져와 `origin/main`을 강제 업데이트해 원격 `main`이 `supabase` 내용이 되도록 재구성했습니다.
+  - 원격 기본 브랜치(Default branch) 설정 및 불필요한 원격 브랜치 정리는 GitHub 웹 UI에서 권한을 확인 후 수동으로 처리하는 것을 권장합니다.
+
+참고: 클라이언트에는 publishable 키만 사용해야 하며 서비스 롤 키는 절대 노출하지 마십시오. RLS 정책(auth.uid())이 정확히 설정되어야 클라이언트에서의 insert/upsert가 정상 동작합니다.
