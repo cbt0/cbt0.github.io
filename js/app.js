@@ -213,6 +213,11 @@ const dom = {
     quizProgressText: document.getElementById('quiz-progress-text'),
     quizSubmitBtn: document.getElementById('quiz-submit-btn'),
     quizTopSubmitBtn: document.getElementById('quiz-top-submit-btn'),
+    calculatorBtn: document.getElementById('calculator-btn'),
+    calculatorModal: document.getElementById('calculator-modal'),
+    calculatorDisplay: document.getElementById('calculator-display'),
+    calculatorButtons: document.querySelectorAll('.calculator-btn'),
+    calculatorCloseBtn: document.getElementById('calculator-close-btn'),
     reviewWrongBtn: document.getElementById('btn-review-wrong'),
     questionFilter: document.getElementById('question-filter'),
     leaderboardList: document.getElementById('leaderboard-list'),
@@ -784,6 +789,32 @@ function registerEventListeners() {
     // Review wrong answer button
     if (dom.reviewWrongBtn) {
         dom.reviewWrongBtn.addEventListener('click', reviewWrongAnswers);
+    }
+
+    // Calculator button and modal
+    if (dom.calculatorBtn) {
+        dom.calculatorBtn.addEventListener('click', () => {
+            if (dom.calculatorModal) dom.calculatorModal.classList.add('active');
+        });
+    }
+    if (dom.calculatorCloseBtn) {
+        dom.calculatorCloseBtn.addEventListener('click', () => {
+            if (dom.calculatorModal) dom.calculatorModal.classList.remove('active');
+        });
+    }
+    if (dom.calculatorButtons) {
+        dom.calculatorButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                handleCalculatorInput(e.currentTarget.getAttribute('data-value'));
+            });
+        });
+    }
+    if (dom.calculatorModal) {
+        dom.calculatorModal.addEventListener('click', (e) => {
+            if (e.target === dom.calculatorModal) {
+                dom.calculatorModal.classList.remove('active');
+            }
+        });
     }
     
     // Manual Toggle Hint
@@ -1443,6 +1474,45 @@ function saveWrongHistory() {
 
     if (stored.length > 20) stored.length = 20;
     localStorage.setItem(historyKey, JSON.stringify(stored));
+}
+
+function handleCalculatorInput(value) {
+    if (!dom.calculatorDisplay) return;
+    let current = dom.calculatorDisplay.value || '';
+    if (value === 'C') {
+        dom.calculatorDisplay.value = '0';
+        return;
+    }
+    if (value === '=') {
+        try {
+            const sanitized = current
+                .replace(/÷/g, '/')
+                .replace(/×/g, '*')
+                .replace(/\^2/g, '**2')
+                .replace(/\^3/g, '**3');
+            const result = evaluateCalculatorExpression(sanitized);
+            dom.calculatorDisplay.value = String(result);
+        } catch (e) {
+            dom.calculatorDisplay.value = 'Error';
+        }
+        return;
+    }
+
+    if (current === '0' && !/[\+\-\*\/\^\.]/.test(value)) {
+        current = '';
+    }
+
+    dom.calculatorDisplay.value = current + value;
+}
+
+function evaluateCalculatorExpression(expr) {
+    const cleaned = expr
+        .replace(/sqrt\(/g, 'Math.sqrt(')
+        .replace(/ln\(/g, 'Math.log(')
+        .replace(/log\(/g, 'Math.log10(')
+        .replace(/\^/g, '**');
+
+    return Function(`"use strict"; return (${cleaned})`)();
 }
 
 function gatherWrongReviewQuestions() {

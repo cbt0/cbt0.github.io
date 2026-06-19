@@ -1108,6 +1108,54 @@ body {
     flex: 1;
 }
 
+.calculator-card {
+    max-width: 520px;
+}
+
+.calculator-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.calculator-display {
+    width: 100%;
+    padding: 16px 18px;
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--glass-border);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    text-align: right;
+    letter-spacing: 0.04em;
+}
+
+.calculator-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.calculator-btn {
+    min-height: 52px;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.calculator-btn[data-value="C"] {
+    background: #eb5757;
+    color: white;
+}
+
+.calculator-btn[data-value="="] {
+    background: var(--primary);
+    color: white;
+}
+
+.calculator-btn[data-value="ln("] , .calculator-btn[data-value="log("] {
+    font-size: 0.9rem;
+}
+
 /* Settings Screen */
 .settings-card {
     background: var(--glass-bg);
