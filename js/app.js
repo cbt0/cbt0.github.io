@@ -2,9 +2,9 @@
  * Antigravity CBT - Core Application Script
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
-// 1. Supabase 설정 (나중에 본인의 정보로 채우세요)
-const SUPABASE_URL = 'https://your-project.id.supabase.co';
-const SUPABASE_KEY = 'your-anon-key';
+// 1. Supabase 설정 — Publishable(브라우저용) 키만 사용하세요
+const SUPABASE_URL = 'https://yjtfdxeuslkjyxklitsp.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_DEJKbgIeEmgBMXb89lbVMw_TC4DXxDn';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Global Idle Timer for Auto-Logout
@@ -387,7 +387,7 @@ function initAutoLogoutSettings() {
 }
 
 // Perform Login
-function login() {
+async function login() {
     const username = dom.loginId.value.trim();
     const password = dom.loginPw.value;
 
@@ -397,11 +397,48 @@ function login() {
         return;
     }
 
-    if (password !== 'dongbu') {
-        alert('비밀번호가 맞지 않습니다. (비밀번호: dongbu)');
+    if (!password) {
+        alert('비밀번호를 입력해 주세요.');
         dom.loginPw.focus();
         return;
     }
+
+    // Supabase Auth 로그인 (아이디를 이메일로 가공)
+    try {
+        const email = `${username}@cbt.com`;
+        const { data: signData, error: signError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signError) {
+            alert('로그인 실패: ' + signError.message);
+            dom.loginPw.focus();
+            return;
+        }
+
+        // 사용자 정보 가져오기
+        const { data: userData } = await supabase.auth.getUser();
+        const supaUser = userData && userData.user ? userData.user : (signData && signData.user ? signData.user : null);
+
+        // 로컬 ID 저장(기존 동작 유지)
+        if (dom.saveIdCheck) {
+            if (dom.saveIdCheck.checked) localStorage.setItem('cbt_saved_id', username);
+            else localStorage.removeItem('cbt_saved_id');
+        }
+
+        localStorage.setItem('cbt_current_user', username);
+        state.currentUser = username;
+
+        // Supabase 프로필/스탯 초기화(최초 로그인 시 생성)
+        if (supaUser && supaUser.id) {
+            try {
+                await supabase.from('profiles').upsert({ id: supaUser.id, username: username, display_name: username });
+            } catch (e) {
+                console.warn('profiles upsert error', e.message || e);
+            }
+            try {
+                await supabase.from('user_stats').upsert({ user_id: supaUser.id });
+            } catch (e) {
+                console.warn('user_stats upsert error', e.message || e);
+            }
+        }
 
     // Save ID check logic
     if (dom.saveIdCheck) {
@@ -412,10 +449,6 @@ function login() {
         }
     }
 
-    // Login success
-    localStorage.setItem('cbt_current_user', username);
-    state.currentUser = username;
-    
     // UI transition
     dom.loginFormContainer.classList.add('hidden');
     dom.welcomeContainer.classList.remove('hidden');
@@ -437,26 +470,27 @@ function login() {
 
 // Perform Logout
 function logout() {
-    if (state.currentUser) {
-        logUserActivity('로그아웃');
-    }
-    localStorage.removeItem('cbt_current_user');
-    state.currentUser = null;
-    dom.loginId.value = '';
-    dom.loginPw.value = '';
-    
-    // Clear auto-logout idle timer
-    if (idleTimer) {
-        clearTimeout(idleTimer);
-    }
-    
-    // Stop the quiz timer if running
-    if (state.timerInterval) {
-        clearInterval(state.timerInterval);
-    }
-    
-    checkLoginState();
-    switchTab('home');
+    (async () => {
+        if (state.currentUser) {
+            logUserActivity('로그아웃');
+        }
+        try {
+            await supabase.auth.signOut();
+        } catch (e) {
+            console.warn('Supabase signOut error', e.message || e);
+        }
+
+        localStorage.removeItem('cbt_current_user');
+        state.currentUser = null;
+        dom.loginId.value = '';
+        dom.loginPw.value = '';
+
+        if (idleTimer) clearTimeout(idleTimer);
+        if (state.timerInterval) clearInterval(state.timerInterval);
+
+        checkLoginState();
+        switchTab('home');
+    })();
 }
 
 // Log User Activity
@@ -474,6 +508,20 @@ function logUserActivity(msg) {
     
     if (logs.length > 50) logs.pop();
     localStorage.setItem(logsKey, JSON.stringify(logs));
+
+    // Also persist to Supabase `user_logs` if authenticated
+    (async () => {
+        try {
+            const { data: userData } = await supabase.auth.getUser();
+            const uid = userData && userData.user ? userData.user.id : null;
+            if (uid) {
+                await supabase.from('user_logs').insert([{ user_id: uid, event_type: 'activity', message: msg }]);
+            }
+        } catch (e) {
+            // Do not block UI on logging errors
+            console.warn('user_logs insert error', e.message || e);
+        }
+    })();
 }
 
 // Render Grading Dashboard
