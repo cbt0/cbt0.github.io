@@ -3,6 +3,9 @@
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
 
+// Global Idle Timer for Auto-Logout
+let idleTimer;
+
 // Application Global State
 const state = {
     exams: {},              // Loaded exam data by subject
@@ -14,7 +17,8 @@ const state = {
     timerInterval: null,
     timeSpentSeconds: 0,
     currentQuestions: [],   // Active question list (usually 60)
-    currentUser: null       // Logged in user ID
+    currentUser: null,      // Logged in user ID
+    autoLogoutMinutes: 30   // Auto-logout idle timeout minutes
 };
 
 // Mock Exam Database for other subjects
@@ -180,6 +184,8 @@ const dom = {
     loginPw: document.getElementById('login-pw'),
     logoutBtn: document.getElementById('logout-btn'),
     homeResumeBtn: document.getElementById('home-resume-btn'),
+    saveIdCheck: document.getElementById('save-id-check'),
+    autoLogoutSelect: document.getElementById('auto-logout-select'),
     subjectSelectionSection: document.getElementById('subject-selection-section'),
     
     // Grading dashboard elements
@@ -245,9 +251,15 @@ const subjectDetails = {
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
+    initAutoLogoutSettings();
     checkLoginState();
     loadQuestions();
     registerEventListeners();
+    
+    if (state.currentUser) {
+        resetIdleTimer();
+    }
+    
     router(); // Run initial routing based on page load hash state
 });
 
@@ -269,6 +281,13 @@ function checkLoginState() {
         dom.subjectSelectionSection.classList.add('hidden');
         if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.remove('hidden');
         updateHomeResumeButton();
+        
+        // Load saved ID if present
+        const savedId = localStorage.getItem('cbt_saved_id');
+        if (savedId) {
+            if (dom.loginId) dom.loginId.value = savedId;
+            if (dom.saveIdCheck) dom.saveIdCheck.checked = true;
+        }
     }
 }
 
@@ -325,6 +344,35 @@ function autoSaveSession() {
     localStorage.setItem(key, JSON.stringify(sessionData));
 }
 
+// Reset Idle Timeout Auto-Logout Timer
+function resetIdleTimer() {
+    if (idleTimer) {
+        clearTimeout(idleTimer);
+    }
+    
+    if (!state.currentUser) return;
+    
+    const timeoutMs = (state.autoLogoutMinutes || 30) * 60 * 1000;
+    idleTimer = setTimeout(() => {
+        alert("장시간 조작이 없어 안전을 위해 자동 로그아웃 되었습니다.");
+        logout();
+    }, timeoutMs);
+}
+
+// Initialize Auto-Logout settings from localStorage
+function initAutoLogoutSettings() {
+    const savedMinutes = localStorage.getItem('cbt_auto_logout_minutes');
+    if (savedMinutes) {
+        state.autoLogoutMinutes = parseInt(savedMinutes, 10);
+    } else {
+        state.autoLogoutMinutes = 30; // default
+    }
+    
+    if (dom.autoLogoutSelect) {
+        dom.autoLogoutSelect.value = String(state.autoLogoutMinutes);
+    }
+}
+
 // Perform Login
 function login() {
     const username = dom.loginId.value.trim();
@@ -342,6 +390,15 @@ function login() {
         return;
     }
 
+    // Save ID check logic
+    if (dom.saveIdCheck) {
+        if (dom.saveIdCheck.checked) {
+            localStorage.setItem('cbt_saved_id', username);
+        } else {
+            localStorage.removeItem('cbt_saved_id');
+        }
+    }
+
     // Login success
     localStorage.setItem('cbt_current_user', username);
     state.currentUser = username;
@@ -355,6 +412,9 @@ function login() {
     
     updateHomeResumeButton();
     logUserActivity('로그인 성공');
+    
+    // Start idle timer
+    resetIdleTimer();
     
     // Smooth scroll to subject list
     setTimeout(() => {
@@ -371,8 +431,19 @@ function logout() {
     state.currentUser = null;
     dom.loginId.value = '';
     dom.loginPw.value = '';
+    
+    // Clear auto-logout idle timer
+    if (idleTimer) {
+        clearTimeout(idleTimer);
+    }
+    
+    // Stop the quiz timer if running
+    if (state.timerInterval) {
+        clearInterval(state.timerInterval);
+    }
+    
     checkLoginState();
-    navigateTo('home');
+    switchTab('home');
 }
 
 // Log User Activity
@@ -622,6 +693,26 @@ function registerEventListeners() {
     if (dom.logoutBtn) {
         dom.logoutBtn.addEventListener('click', logout);
     }
+    
+    // Auto-logout select change
+    if (dom.autoLogoutSelect) {
+        dom.autoLogoutSelect.addEventListener('change', (e) => {
+            const minutes = parseInt(e.target.value, 10);
+            state.autoLogoutMinutes = minutes;
+            localStorage.setItem('cbt_auto_logout_minutes', minutes);
+            resetIdleTimer();
+        });
+    }
+    
+    // Global Idle Detection Events (only works if user logged in)
+    const idleEvents = ['mousemove', 'click', 'keydown', 'scroll', 'touchstart'];
+    idleEvents.forEach(evt => {
+        document.addEventListener(evt, () => {
+            if (state.currentUser) {
+                resetIdleTimer();
+            }
+        });
+    });
     
     // Home Resume Button
     if (dom.homeResumeBtn) {

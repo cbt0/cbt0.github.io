@@ -53,14 +53,22 @@
                 
                 <!-- Login Box -->
                 <div class="login-box" id="login-form-container">
-                    <div class="login-inputs">
-                        <div class="input-field">
-                            <i class="fa-solid fa-user input-icon"></i>
-                            <input type="text" id="login-id" placeholder="사용자 ID 입력" required autocomplete="username">
+                    <div class="login-inputs-wrapper">
+                        <div class="login-inputs">
+                            <div class="input-field">
+                                <i class="fa-solid fa-user input-icon"></i>
+                                <input type="text" id="login-id" placeholder="사용자 ID 입력" required autocomplete="username">
+                            </div>
+                            <div class="input-field">
+                                <i class="fa-solid fa-lock input-icon"></i>
+                                <input type="password" id="login-pw" placeholder="비밀번호 입력" required autocomplete="current-password">
+                            </div>
                         </div>
-                        <div class="input-field">
-                            <i class="fa-solid fa-lock input-icon"></i>
-                            <input type="password" id="login-pw" placeholder="비밀번호 입력" required autocomplete="current-password">
+                        <div class="login-options">
+                            <label for="save-id-check" class="save-id-label">
+                                <input type="checkbox" id="save-id-check">
+                                <span>아이디 저장</span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -381,6 +389,17 @@
                     <button id="theme-toggle" class="icon-btn" aria-label="테마 변경">
                         <i class="fa-solid fa-moon"></i>
                     </button>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-info">
+                        <span class="settings-label">자동 로그아웃 시간</span>
+                        <span class="settings-desc">마우스 이동 등 조작이 없을 때 안전을 위해 로그아웃되는 유휴 시간입니다.</span>
+                    </div>
+                    <select id="auto-logout-select" class="settings-select">
+                        <option value="10">10분</option>
+                        <option value="30" selected>30분</option>
+                        <option value="50">50분</option>
+                    </select>
                 </div>
                 <div class="settings-item">
                     <div class="settings-info">
