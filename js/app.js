@@ -3,6 +3,11 @@
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
 
+// Supabase Client Initialization
+const SUPABASE_URL = 'https://yjtfdxeuslkjyxklitsp.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_DEJKbgIeEmgBMXb89lbVMw_TC4DXxDn';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 // Global Idle Timer for Auto-Logout
 let idleTimer;
 
@@ -383,7 +388,7 @@ function initAutoLogoutSettings() {
 }
 
 // Perform Login
-function login() {
+async function login() {
     const username = dom.loginId.value.trim();
     const password = dom.loginPw.value;
 
@@ -392,50 +397,74 @@ function login() {
         dom.loginId.focus();
         return;
     }
-
-    if (password !== 'dongbu') {
-        alert('비밀번호가 맞지 않습니다. (비밀번호: dongbu)');
+    if (!password) {
+        alert('비밀번호를 입력해 주세요.');
         dom.loginPw.focus();
         return;
     }
 
-    // Save ID check logic
-    if (dom.saveIdCheck) {
-        if (dom.saveIdCheck.checked) {
-            localStorage.setItem('cbt_saved_id', username);
-        } else {
-            localStorage.removeItem('cbt_saved_id');
-        }
-    }
+    // 아이디를 이메일 형식으로 변환
+    const email = username.includes('@') ? username : `${username}@cbt.com`;
 
-    // Login success
-    localStorage.setItem('cbt_current_user', username);
-    state.currentUser = username;
-    
-    // UI transition
-    dom.loginFormContainer.classList.add('hidden');
-    dom.welcomeContainer.classList.remove('hidden');
-    dom.welcomeUsername.innerText = username;
-    dom.subjectSelectionSection.classList.remove('hidden');
-    if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
-    
-    updateHomeResumeButton();
-    logUserActivity('로그인 성공');
-    
-    // Start idle timer
-    resetIdleTimer();
-    
-    // Smooth scroll to subject list
-    setTimeout(() => {
-        dom.subjectSelectionSection.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+    try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+        if (error) {
+            alert('로그인 실패: ' + error.message);
+            dom.loginPw.focus();
+            return;
+        }
+
+        // Save ID check logic
+        if (dom.saveIdCheck) {
+            if (dom.saveIdCheck.checked) {
+                localStorage.setItem('cbt_saved_id', username);
+            } else {
+                localStorage.removeItem('cbt_saved_id');
+            }
+        }
+
+        // Login success
+        localStorage.setItem('cbt_current_user', username);
+        state.currentUser = username;
+        
+        // UI transition
+        dom.loginFormContainer.classList.add('hidden');
+        dom.welcomeContainer.classList.remove('hidden');
+        dom.welcomeUsername.innerText = username;
+        dom.subjectSelectionSection.classList.remove('hidden');
+        if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
+        
+        updateHomeResumeButton();
+        logUserActivity('로그인 성공');
+        
+        // Start idle timer
+        resetIdleTimer();
+        
+        // Smooth scroll to subject list
+        setTimeout(() => {
+            dom.subjectSelectionSection.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+    } catch (e) {
+        alert('로그인 에러 발생: ' + e.message);
+    }
 }
 
 // Perform Logout
-function logout() {
+async function logout() {
     if (state.currentUser) {
         logUserActivity('로그아웃');
     }
+    
+    try {
+        await supabaseClient.auth.signOut();
+    } catch (e) {
+        console.error('Supabase 로그아웃 에러:', e);
+    }
+
     localStorage.removeItem('cbt_current_user');
     state.currentUser = null;
     dom.loginId.value = '';
