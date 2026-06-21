@@ -181,6 +181,8 @@ const dom = {
     logo: document.getElementById('logo-btn'),
     themeToggle: document.getElementById('theme-toggle'),
     loginSubmitBtn: document.getElementById('login-submit-btn'),
+    signupSubmitBtn: document.getElementById('signup-submit-btn'),
+    supabaseStatus: document.getElementById('supabase-status'),
     
     // Login / Welcome widget elements
     loginFormContainer: document.getElementById('login-form-container'),
@@ -209,6 +211,7 @@ const dom = {
     roundsTitle: document.getElementById('rounds-title'),
     roundsList: document.getElementById('rounds-list'),
     roundsBackBtn: document.getElementById('rounds-back-btn'),
+    roundsResumeBtn: document.getElementById('btn-rounds-resume'),
     
     // Quiz screen elements
     quizSubjectName: document.getElementById('quiz-subject-name'),
@@ -287,6 +290,8 @@ function checkLoginState() {
         dom.welcomeUsername.innerText = savedUser;
         dom.subjectSelectionSection.classList.remove('hidden');
         if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
+        if (dom.signupSubmitBtn) dom.signupSubmitBtn.classList.add('hidden');
+        if (dom.supabaseStatus) dom.supabaseStatus.classList.add('hidden');
         updateHomeResumeButton();
     } else {
         state.currentUser = null;
@@ -294,6 +299,8 @@ function checkLoginState() {
         dom.welcomeContainer.classList.add('hidden');
         dom.subjectSelectionSection.classList.add('hidden');
         if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.remove('hidden');
+        if (dom.signupSubmitBtn) dom.signupSubmitBtn.classList.remove('hidden');
+        if (dom.supabaseStatus) dom.supabaseStatus.classList.remove('hidden');
         updateHomeResumeButton();
         
         // Load saved ID if present
@@ -302,6 +309,26 @@ function checkLoginState() {
             if (dom.loginId) dom.loginId.value = savedId;
             if (dom.saveIdCheck) dom.saveIdCheck.checked = true;
         }
+
+        // Check Supabase connection and account status
+        checkSupabaseStatus();
+    }
+}
+
+// Check current user session status in Supabase
+async function checkSupabaseStatus() {
+    if (!dom.supabaseStatus) return;
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (user) {
+            const username = user.email.includes('@cbt.com') ? user.email.split('@')[0] : user.email;
+            dom.supabaseStatus.innerHTML = `<span style="color: var(--success); font-weight: 600;">✅ ${username}님은 이미 가입 및 로그인 완료 상태입니다.</span>`;
+        } else {
+            dom.supabaseStatus.innerHTML = `<span style="color: var(--warning); font-weight: 500;">⚠️ 가입되지 않은 브라우저이거나 로그아웃 상태입니다. 가입을 진행해 주세요.</span>`;
+        }
+    } catch (e) {
+        console.error('Supabase 상태 확인 실패:', e);
+        dom.supabaseStatus.innerText = '상태 확인 실패';
     }
 }
 
@@ -312,33 +339,73 @@ function updateHomeResumeButton() {
         return;
     }
     
-    const key = `cbt_${state.currentUser}_autosave_session`;
+    const subjects = ['gas', 'energy_craftsman', 'energy_industrial', 'energy_master', 'air_conditioning'];
+    let latestSession = null;
+    
+    for (const sub of subjects) {
+        const key = `cbt_${state.currentUser}_autosave_${sub}`;
+        const sessionStr = localStorage.getItem(key);
+        if (sessionStr) {
+            try {
+                const session = JSON.parse(sessionStr);
+                if (session && session.activeRound) {
+                    if (!latestSession || (session.timestamp && session.timestamp > latestSession.timestamp)) {
+                        latestSession = session;
+                    }
+                }
+            } catch (e) {
+                console.error(`Error parsing session data for ${sub}:`, e);
+            }
+        }
+    }
+    
+    if (latestSession) {
+        const round = latestSession.activeRound;
+        const subjectName = round.subject || '';
+        const roundName = round.year ? `${round.year}년 ${round.round}` : round.round;
+        const questionNum = (round.questions && round.questions[latestSession.activeQuestionIndex])
+            ? round.questions[latestSession.activeQuestionIndex].num
+            : (latestSession.activeQuestionIndex + 1);
+        
+        if (dom.homeResumeBtn) {
+            dom.homeResumeBtn.innerText = `▶ 이어하기 : ${subjectName} ${roundName} (Q. ${questionNum})`;
+            dom.homeResumeBtn.classList.remove('hidden');
+        }
+    } else {
+        if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
+    }
+}
+
+// Update Subject-Specific Rounds Resume Button Visibility & Text
+function updateRoundsResumeButton(subject) {
+    if (!state.currentUser || !dom.roundsResumeBtn) {
+        if (dom.roundsResumeBtn) dom.roundsResumeBtn.classList.add('hidden');
+        return;
+    }
+    
+    const key = `cbt_${state.currentUser}_autosave_${subject}`;
     const sessionStr = localStorage.getItem(key);
     
     if (sessionStr) {
         try {
             const session = JSON.parse(sessionStr);
             if (session && session.activeRound) {
-                const round = session.activeRound;
-                const subjectName = round.subject || '';
-                const roundName = round.year ? `${round.year}년 ${round.round}` : round.round;
-                const questionNum = (round.questions && round.questions[session.activeQuestionIndex])
-                    ? round.questions[session.activeQuestionIndex].num
+                const roundName = session.activeRound.year ? `${session.activeRound.year}년 ${session.activeRound.round}` : session.activeRound.round;
+                const questionNum = (session.activeRound.questions && session.activeRound.questions[session.activeQuestionIndex])
+                    ? session.activeRound.questions[session.activeQuestionIndex].num
                     : (session.activeQuestionIndex + 1);
                 
-                if (dom.homeResumeBtn) {
-                    dom.homeResumeBtn.innerText = `▶ 이어하기 : ${subjectName} ${roundName} (Q. ${questionNum})`;
-                    dom.homeResumeBtn.classList.remove('hidden');
-                }
+                dom.roundsResumeBtn.innerText = `▶ 이어하기 : ${roundName} (Q. ${questionNum})`;
+                dom.roundsResumeBtn.classList.remove('hidden');
             } else {
-                if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
+                dom.roundsResumeBtn.classList.add('hidden');
             }
         } catch (e) {
-            console.error('Error parsing session data:', e);
-            if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
+            console.error('Error parsing session data for rounds resume:', e);
+            dom.roundsResumeBtn.classList.add('hidden');
         }
     } else {
-        if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
+        dom.roundsResumeBtn.classList.add('hidden');
     }
 }
 
@@ -346,13 +413,14 @@ function updateHomeResumeButton() {
 function autoSaveSession() {
     if (!state.currentUser || !state.activeRound || state.quizMode !== 'solving') return;
     
-    const key = `cbt_${state.currentUser}_autosave_session`;
+    const key = `cbt_${state.currentUser}_autosave_${state.activeSubject}`;
     const sessionData = {
         subject: state.activeSubject,
         activeRound: state.activeRound,
         activeQuestionIndex: state.activeQuestionIndex,
         userAnswers: state.userAnswers,
-        timeSpentSeconds: state.timeSpentSeconds
+        timeSpentSeconds: state.timeSpentSeconds,
+        timestamp: Date.now()
     };
     
     localStorage.setItem(key, JSON.stringify(sessionData));
@@ -384,6 +452,76 @@ function initAutoLogoutSettings() {
     
     if (dom.autoLogoutSelect) {
         dom.autoLogoutSelect.value = String(state.autoLogoutMinutes);
+    }
+}
+
+// Supabase 클라우드 데이터를 로컬 스토리지로 복원 및 연동
+async function syncDataFromSupabase(user, username) {
+    try {
+        // 1. 프로필 관리 (없으면 생성)
+        await supabaseClient.from('profiles').upsert({
+            id: user.id,
+            username: username,
+            display_name: username
+        });
+
+        // 2. 글로벌 통계 복원
+        const { data: statsData } = await supabaseClient
+            .from('user_stats')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        if (statsData) {
+            localStorage.setItem(`cbt_${username}_global_stats`, JSON.stringify({
+                totalSolved: statsData.total_solved || 0,
+                totalExamsAttempted: statsData.total_exams_attempted || 0,
+                passedExamsCount: statsData.passed_exams_count || 0,
+                averageSum: statsData.average_sum || 0
+            }));
+        }
+
+        // 3. 시험 진척도(cbt_progress) 복원
+        const { data: progressData } = await supabaseClient
+            .from('cbt_progress')
+            .select('*')
+            .eq('user_id', user.id);
+
+        if (progressData) {
+            progressData.forEach(row => {
+                const key = `cbt_progress_${username}_${row.subject}_${row.round_key}`;
+                localStorage.setItem(key, JSON.stringify({
+                    score: row.score,
+                    total: row.total,
+                    completed: true,
+                    percent: row.percent,
+                    time: row.time_seconds
+                }));
+            });
+        }
+
+        // 4. 활동 로그 복원
+        const { data: logsData } = await supabaseClient
+            .from('user_logs')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        if (logsData) {
+            const formattedLogs = logsData.map(row => {
+                const date = new Date(row.created_at);
+                const timeStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+                return { time: timeStr, message: row.message };
+            });
+            localStorage.setItem(`cbt_${username}_logs`, JSON.stringify(formattedLogs));
+        }
+
+        // 대시보드 및 이어하기 버튼 갱신
+        renderGradingDashboard();
+        updateHomeResumeButton();
+    } catch (e) {
+        console.error("데이터 동기화 실패:", e);
     }
 }
 
@@ -430,6 +568,9 @@ async function login() {
         // Login success
         localStorage.setItem('cbt_current_user', username);
         state.currentUser = username;
+
+        // Sync data from Supabase
+        await syncDataFromSupabase(data.user, username);
         
         // UI transition
         dom.loginFormContainer.classList.add('hidden');
@@ -450,6 +591,46 @@ async function login() {
         }, 100);
     } catch (e) {
         alert('로그인 에러 발생: ' + e.message);
+    }
+}
+
+// Perform Sign Up
+async function signUp() {
+    const username = dom.loginId.value.trim();
+    const password = dom.loginPw.value;
+
+    if (!username) {
+        alert('회원가입할 아이디를 입력해 주세요.');
+        dom.loginId.focus();
+        return;
+    }
+    if (!password) {
+        alert('비밀번호를 입력해 주세요.');
+        dom.loginPw.focus();
+        return;
+    }
+
+    // 아이디를 이메일 형식으로 변환
+    const email = username.includes('@') ? username : `${username}@cbt.com`;
+
+    try {
+        const { data, error } = await supabaseClient.auth.signUp({
+            email: email,
+            password: password
+        });
+
+        if (error) {
+            alert('회원가입 실패: ' + error.message);
+            dom.loginPw.focus();
+            return;
+        }
+
+        alert('회원가입이 성공적으로 완료되었습니다! 자동으로 로그인합니다.');
+        
+        // Automatically login
+        await login();
+    } catch (e) {
+        alert('회원가입 에러 발생: ' + e.message);
     }
 }
 
@@ -499,6 +680,19 @@ function logUserActivity(msg) {
     
     if (logs.length > 50) logs.pop();
     localStorage.setItem(logsKey, JSON.stringify(logs));
+
+    // Sync to Supabase user_logs
+    supabaseClient.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+            supabaseClient.from('user_logs').insert({
+                user_id: user.id,
+                message: msg,
+                event_type: 'activity'
+            }).then(({ error }) => {
+                if (error) console.error("활동 로그 Supabase 전송 실패:", error);
+            });
+        }
+    });
 }
 
 // Render Grading Dashboard
@@ -711,6 +905,13 @@ function registerEventListeners() {
         });
     }
 
+    // Sign Up Button
+    if (dom.signupSubmitBtn) {
+        dom.signupSubmitBtn.addEventListener('click', () => {
+            signUp();
+        });
+    }
+
     // Sub-tab toggling in Grading Dashboard
     document.querySelectorAll('.sub-tab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -756,27 +957,74 @@ function registerEventListeners() {
     if (dom.homeResumeBtn) {
         dom.homeResumeBtn.addEventListener('click', () => {
             if (!state.currentUser) return;
-            const key = `cbt_${state.currentUser}_autosave_session`;
-            const sessionStr = localStorage.getItem(key);
-            if (!sessionStr) return;
+            const subjects = ['gas', 'energy_craftsman', 'energy_industrial', 'energy_master', 'air_conditioning'];
+            let latestSession = null;
             
-            try {
-                const session = JSON.parse(sessionStr);
-                if (session && session.activeRound) {
+            for (const sub of subjects) {
+                const key = `cbt_${state.currentUser}_autosave_${sub}`;
+                const sessionStr = localStorage.getItem(key);
+                if (sessionStr) {
+                    try {
+                        const session = JSON.parse(sessionStr);
+                        if (session && session.activeRound) {
+                            if (!latestSession || (session.timestamp && session.timestamp > latestSession.timestamp)) {
+                                latestSession = session;
+                            }
+                        }
+                    } catch (e) {
+                        console.error(`Error parsing session data for ${sub}:`, e);
+                    }
+                }
+            }
+            
+            if (latestSession) {
+                try {
                     // Restore state variables
-                    state.activeSubject = session.subject;
-                    state.activeRound = session.activeRound;
-                    state.currentQuestions = session.activeRound.questions;
-                    state.activeQuestionIndex = session.activeQuestionIndex;
-                    state.userAnswers = session.userAnswers || {};
-                    state.timeSpentSeconds = session.timeSpentSeconds || 0;
+                    state.activeSubject = latestSession.subject;
+                    state.activeRound = latestSession.activeRound;
+                    state.currentQuestions = latestSession.activeRound.questions;
+                    state.activeQuestionIndex = latestSession.activeQuestionIndex;
+                    state.userAnswers = latestSession.userAnswers || {};
+                    state.timeSpentSeconds = latestSession.timeSpentSeconds || 0;
                     
                     // Call startQuiz with isResume = true
-                    startQuiz(session.activeRound, true);
+                    startQuiz(latestSession.activeRound, true);
+                } catch (e) {
+                    console.error('Error resuming session:', e);
+                    alert('이어하기 중 오류가 발생했습니다.');
                 }
-            } catch (e) {
-                console.error('Error resuming session:', e);
-                alert('이어하기 중 오류가 발생했습니다.');
+            } else {
+                alert('이어할 수 있는 진행 중인 시험 세션이 없습니다.');
+            }
+        });
+    }
+    
+    // Rounds Page Subject-Specific Resume Button
+    if (dom.roundsResumeBtn) {
+        dom.roundsResumeBtn.addEventListener('click', () => {
+            if (!state.currentUser || !state.activeSubject) return;
+            const key = `cbt_${state.currentUser}_autosave_${state.activeSubject}`;
+            const sessionStr = localStorage.getItem(key);
+            if (sessionStr) {
+                try {
+                    const session = JSON.parse(sessionStr);
+                    if (session && session.activeRound) {
+                        // Restore state variables
+                        state.activeRound = session.activeRound;
+                        state.currentQuestions = session.activeRound.questions;
+                        state.activeQuestionIndex = session.activeQuestionIndex;
+                        state.userAnswers = session.userAnswers || {};
+                        state.timeSpentSeconds = session.timeSpentSeconds || 0;
+                        
+                        // Call startQuiz with isResume = true
+                        startQuiz(session.activeRound, true);
+                    }
+                } catch (e) {
+                    console.error('Error resuming subject session:', e);
+                    alert('이어하기 중 오류가 발생했습니다.');
+                }
+            } else {
+                alert('이 과목의 진행 중인 시험 세션이 없습니다.');
             }
         });
     }
@@ -993,6 +1241,9 @@ function renderRoundsList(subject) {
     const details = subjectDetails[subject];
     dom.roundsTitle.innerText = details.name;
     dom.roundsList.innerHTML = '';
+    
+    // Show subject-specific resume button if session exists
+    updateRoundsResumeButton(subject);
     
     let roundsData = [];
     if (subject === 'gas') {
@@ -1389,8 +1640,25 @@ function submitExam() {
         updateGlobalStats(scoreVal, total, isPass);
         saveLeaderboardEntry(gameScore, Math.round(baseScore), state.timeSpentSeconds);
         localStorage.removeItem(`cbt_${state.currentUser}_last_solved`);
-        localStorage.removeItem(`cbt_${state.currentUser}_autosave_session`);
+        localStorage.removeItem(`cbt_${state.currentUser}_autosave_${state.activeSubject}`);
         updateHomeResumeButton();
+
+        // Sync to Supabase cbt_progress
+        supabaseClient.auth.getUser().then(({ data: { user } }) => {
+            if (user) {
+                supabaseClient.from('cbt_progress').insert({
+                    user_id: user.id,
+                    subject: state.activeSubject,
+                    round_key: roundKey,
+                    score: correct,
+                    total: total,
+                    percent: scoreVal,
+                    time_seconds: state.timeSpentSeconds
+                }).then(({ error }) => {
+                    if (error) console.error("시험 진척도 Supabase 전송 실패:", error);
+                });
+            }
+        });
     }
     
     // Refresh leaderboard immediately
@@ -1435,6 +1703,22 @@ function updateGlobalStats(scoreVal, total, isPass) {
         averageRate: Math.round(stats.averageSum / stats.totalExamsAttempted)
     };
     localStorage.setItem(globalStatsKey, JSON.stringify(globalStats));
+
+    // Sync to Supabase user_stats
+    supabaseClient.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+            supabaseClient.from('user_stats').upsert({
+                user_id: user.id,
+                total_solved: stats.totalSolved,
+                total_exams_attempted: stats.totalExamsAttempted,
+                passed_exams_count: stats.passedExamsCount,
+                average_sum: stats.averageSum,
+                updated_at: new Date().toISOString()
+            }).then(({ error }) => {
+                if (error) console.error("글로벌 통계 Supabase 업데이트 실패:", error);
+            });
+        }
+    });
 }
 
 function addExamResultLog(scoreVal, isPass) {
@@ -1444,6 +1728,19 @@ function addExamResultLog(scoreVal, isPass) {
     logs.unshift({ timestamp: Date.now(), summary });
     if (logs.length > 50) logs.pop();
     localStorage.setItem(logsKey, JSON.stringify(logs));
+
+    // Sync to Supabase user_logs
+    supabaseClient.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+            supabaseClient.from('user_logs').insert({
+                user_id: user.id,
+                message: summary,
+                event_type: 'exam_result'
+            }).then(({ error }) => {
+                if (error) console.error("시험 성적 로그 Supabase 전송 실패:", error);
+            });
+        }
+    });
 }
 
 function saveLeaderboardEntry(gameScore, baseScore, timeSpent) {
