@@ -1,1 +1,8 @@
 .DS_Store
+.vs/VSWorkspaceState.json
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vscode/settings.json
