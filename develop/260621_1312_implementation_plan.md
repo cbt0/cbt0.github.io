@@ -20,7 +20,8 @@
 > **양방향 동기화 방식 (기존 계획 유지)**
 > 사용자가 새로운 브라우저나 기기에서 로그인하더라도 클라우드에 저장된 정보가 자동으로 로컬 환경(`localStorage`)과 병합되도록 구현합니다. 
 > * **클라우드 저장**: 시험 제출 시점(`submitExam`), 통계 누적 시점(`updateGlobalStats`), 로그 생성 시점(`logUserActivity`)에 Supabase에 비동기로 데이터를 전송합니다.
-> * **로컬 동기화 (Hydration)**: 로그인 성공 시 Supabase에서 사용자의 모든 기록을 불러와 `localStorage`에 복원한 후 대시보드를 갱신합니다.
+> * **임시 세션 클라우드 동기화**: 매 문항 클릭 시가 아니라 **로그아웃(자동 로그아웃 포함)** 또는 **시험 제출** 시점에만 전체 과목 중 가장 최근의 임시 저장 세션 1개를 Supabase `profiles.active_session` 컬럼에 동기화(Update)하여 DB 부하를 최소화합니다.
+> * **로컬 동기화 (Hydration)**: 로그인 성공 시 Supabase에서 사용자의 모든 기록과 최종 임시 저장 세션을 불러와 `localStorage`에 복원한 후 대시보드 및 이어 풀기 버튼을 즉시 갱신합니다.
 
 ## Proposed Changes
 
@@ -58,14 +59,17 @@
 * **UI 엘리먼트 매핑 추가 (`dom.roundsResumeBtn`)**:
   * `btn-rounds-resume` 엘리먼트를 매핑합니다.
 * **임시 세션 관리 수정 (`autoSaveSession` / `startQuiz` / `submitExam` / `updateHomeResumeButton` / `updateRoundsResumeButton`)**:
-  * `autoSaveSession()`: 저장 키를 `cbt_${state.currentUser}_autosave_${state.activeSubject}`로 변경하고 저장 데이터 객체에 `timestamp: Date.now()`를 추가합니다.
+  * `autoSaveSession()`: 저장 키를 `cbt_${state.currentUser}_autosave_${state.activeSubject}`로 변경하고 저장 데이터 객체에 `timestamp: Date.now()`를 추가합니다. (DB 갱신은 배제하여 트래픽 보호)
   * `updateHomeResumeButton()`: `gas`, `energy_master`, `energy_industrial`, `energy_craftsman`, `air_conditioning` 등 모든 과목의 세션 키를 검사하여 가장 최근 `timestamp`를 가진 세션 정보를 기반으로 홈 화면 이어하기 버튼을 구성합니다.
   * `updateRoundsResumeButton(subject)` [신규 함수]: 회차 화면 렌더링 시 해당 과목의 세션 키(`cbt_${state.currentUser}_autosave_${subject}`)가 존재하는 경우 `btn-rounds-resume`을 활성화하고 텍스트를 업데이트합니다.
   * `renderRoundsList()`: 리스트 렌더링 시 `updateRoundsResumeButton(subject)`을 호출합니다.
-  * `submitExam()`: 제출 성공 후 해당 과목의 세션 키(`cbt_${state.currentUser}_autosave_${state.activeSubject}`)를 제거합니다.
+  * `submitExam()`: 제출 성공 후 해당 과목의 세션 키(`cbt_${state.currentUser}_autosave_${state.activeSubject}`)를 제거하고 전체 최종 세션을 DB에 동기화합니다.
+* **임시 세션 동기화 구현 (`syncActiveSessionToSupabase`) [신규 함수]**:
+  * 로그아웃, 자동 로그아웃 및 시험 제출 시에 전체 임시 세션 중 가장 최근 세션을 Supabase `profiles.active_session` 컬럼에 업데이트합니다.
 * **로그인 성공 후 데이터 동기화 (`syncDataFromSupabase`) [신규 함수]**:
   * 로그인 성공 직후 호출됩니다.
   * Supabase `profiles` 테이블에 유저 정보가 있는지 확인하고, 없으면 신규 행을 인서트(Upsert)합니다.
+  * Supabase `profiles`에서 `active_session`을 로드하여 `localStorage`에 이어 풀기 세션을 복구합니다.
   * Supabase `user_stats`에서 통계 데이터를 가져와 `cbt_${username}_global_stats` 형식으로 `localStorage`에 동기화합니다.
   * Supabase `cbt_progress`에서 해당 유저의 모든 시험 기록을 가져와 `cbt_progress_${username}_${subject}_${roundKey}` 형식으로 복원합니다.
   * Supabase `user_logs`에서 최근 활동 이력을 가져와 `cbt_${username}_logs` 형식으로 복원합니다.
@@ -93,7 +97,11 @@
    * "에너지관리기능장" 1회 시험을 시작하고 몇 문제 푼 뒤 "홈"으로 이동합니다.
    * 홈 화면의 이어하기가 가장 최근인 "에너지관리기능장"으로 매핑되어 표시되는지 확인합니다.
    * "가스기능사" 과목 선택 시 가스기능사 회차 화면 상단에 가스기능사 전용 이어 풀기 버튼이 표시되는지 확인합니다.
-3. **시험 제출 시 세션 만료 및 동기화 테스트**:
+3. **로그아웃 시 세션 동기화 및 타 기기 복원 테스트**:
+   * "가스기능사" 1회 시험 진행 도중 설정 탭에서 로그아웃을 명시적으로 실행합니다.
+   * Supabase 콘솔에서 `profiles` 테이블의 `active_session` 컬럼에 진행 중인 가스기능사 JSON 데이터가 안전하게 저장되었는지 확인합니다.
+   * 로컬 스토리지를 초기화한 후 다시 로그인했을 때, 해당 진행 세션이 클라우드로부터 즉시 내려받아져 홈 및 과목 화면에 복원되는지 검증합니다.
+4. **시험 제출 시 세션 만료 및 동기화 테스트**:
    * 가스기능사 시험을 제출하여 완료합니다.
    * 가스기능사의 이어하기 버튼이 사라지는지 확인합니다.
    * Supabase 대시보드에서 `cbt_progress`, `user_stats`, `user_logs` 테이블에 정상적으로 동기화되는지 확인합니다.

@@ -458,7 +458,25 @@ function initAutoLogoutSettings() {
 // Supabase 클라우드 데이터를 로컬 스토리지로 복원 및 연동
 async function syncDataFromSupabase(user, username) {
     try {
-        // 1. 프로필 관리 (없으면 생성)
+        // 1. 프로필 관리 및 클라우드 세션 복원 (없으면 생성)
+        const { data: profileData } = await supabaseClient
+            .from('profiles')
+            .select('active_session')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        if (profileData && profileData.active_session) {
+            try {
+                const session = JSON.parse(profileData.active_session);
+                if (session && session.subject) {
+                    const key = `cbt_${username}_autosave_${session.subject}`;
+                    localStorage.setItem(key, profileData.active_session);
+                }
+            } catch (e) {
+                console.error("클라우드 세션 복원 에러:", e);
+            }
+        }
+
         await supabaseClient.from('profiles').upsert({
             id: user.id,
             username: username,
@@ -634,10 +652,64 @@ async function signUp() {
     }
 }
 
+// Sync active session to Supabase profiles.active_session
+async function syncActiveSessionToSupabase() {
+    if (!state.currentUser) return;
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) return;
+
+        // Find the latest active session from all subjects in local storage
+        const subjects = ['gas', 'energy_craftsman', 'energy_industrial', 'energy_master', 'air_conditioning'];
+        let latestSession = null;
+        
+        for (const sub of subjects) {
+            const key = `cbt_${state.currentUser}_autosave_${sub}`;
+            const sessionStr = localStorage.getItem(key);
+            if (sessionStr) {
+                try {
+                    const session = JSON.parse(sessionStr);
+                    if (session && session.activeRound) {
+                        if (!latestSession || (session.timestamp && session.timestamp > latestSession.timestamp)) {
+                            latestSession = session;
+                        }
+                    }
+                } catch (e) {
+                    console.error(`Error parsing session data for ${sub} during sync:`, e);
+                }
+            }
+        }
+
+        // If currently in a quiz flow, merge the current active state
+        if (state.activeRound && state.quizMode === 'solving') {
+            const currentSession = {
+                subject: state.activeSubject,
+                activeRound: state.activeRound,
+                activeQuestionIndex: state.activeQuestionIndex,
+                userAnswers: state.userAnswers,
+                timeSpentSeconds: state.timeSpentSeconds,
+                timestamp: Date.now()
+            };
+            if (!latestSession || currentSession.timestamp > latestSession.timestamp) {
+                latestSession = currentSession;
+            }
+        }
+
+        const sessionDataStr = latestSession ? JSON.stringify(latestSession) : null;
+        await supabaseClient.from('profiles').update({
+            active_session: sessionDataStr
+        }).eq('id', user.id);
+    } catch (e) {
+        console.error("클라우드 세션 동기화 실패:", e);
+    }
+}
+
 // Perform Logout
 async function logout() {
     if (state.currentUser) {
         logUserActivity('로그아웃');
+        // Save latest session to Supabase before logging out
+        await syncActiveSessionToSupabase();
     }
     
     try {
@@ -1642,6 +1714,9 @@ function submitExam() {
         localStorage.removeItem(`cbt_${state.currentUser}_last_solved`);
         localStorage.removeItem(`cbt_${state.currentUser}_autosave_${state.activeSubject}`);
         updateHomeResumeButton();
+        
+        // Sync remaining sessions (or clear if none) to Supabase active_session
+        syncActiveSessionToSupabase();
 
         // Sync to Supabase cbt_progress
         supabaseClient.auth.getUser().then(({ data: { user } }) => {
