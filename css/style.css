@@ -768,14 +768,17 @@ body {
     font-weight: 500;
 }
 
-.quiz-timer {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'Outfit', sans-serif;
-    font-weight: 600;
-    font-size: 15px;
-    color: var(--text-secondary);
+.quiz-timer { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  font-family: 'Outfit', sans-serif; 
+  font-weight: 600; 
+  font-size: 15px; 
+  color: var(--text-secondary); 
+  font-variant-numeric: tabular-nums; /* 추가됨: 숫자를 고정폭으로 정렬 */
+  min-width: 65px;                    /* 추가됨: 타이머 공간 고정 */
+  justify-content: center;            /* 추가됨: 중앙 정렬 */
 }
 
 .question-card {
