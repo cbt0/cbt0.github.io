@@ -1851,7 +1851,6 @@ body {
   right: 5%;                          /* 오른쪽으로 배치 */
   max-width: 300px;                   /* 💡 계산기 가로 폭을 슬림하게 축소! */
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);        /* 뒤쪽 문제가 반투명하게 비침 */
   box-shadow: var(--shadow-lg);
   transform: none !important;         /* 기본 중앙 정렬 무효화 */
 }
