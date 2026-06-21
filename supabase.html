@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Supabase Status and Signup Reference</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="login-box">
+        <!-- Input fields -->
+        <input type="text" id="login-id" placeholder="ID or Email">
+        <input type="password" id="login-pw" placeholder="Password">
+        
+        <!-- Status & Action buttons -->
+        <button id="login-submit-btn">로그인</button>
+        <div id="supabase-status">가입 여부 확인 중...</div>
+        <button id="signup-submit-btn">회원가입</button>
+    </div>
+
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://yjtfdxeuslkjyxklitsp.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_DEJKbgIeEmgBMXb89lbVMw_TC4DXxDn';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const loginId = document.getElementById('login-id');
+        const loginPw = document.getElementById('login-pw');
+        const statusDiv = document.getElementById('supabase-status');
+        const signupBtn = document.getElementById('signup-submit-btn');
+
+        // Check authentication / subscription status on load
+        async function checkSupabaseStatus() {
+            try {
+                const { data: { user }, error } = await supabase.auth.getUser();
+                if (user) {
+                    const username = user.email.split('@')[0];
+                    statusDiv.innerHTML = `<span style="color: var(--success); font-weight: 600;">✅ ${username}님은 이미 가입 및 로그인 완료 상태입니다.</span>`;
+                } else {
+                    statusDiv.innerHTML = `<span style="color: var(--warning); font-weight: 500;">⚠️ 가입되지 않은 브라우저이거나 로그아웃 상태입니다. 가입을 진행해 주세요.</span>`;
+                }
+            } catch (e) {
+                statusDiv.innerText = '상태 확인 실패';
+            }
+        }
+
+        // Perform Signup
+        async function signUp() {
+            const username = loginId.value.trim();
+            const password = loginPw.value;
+
+            if (!username || !password) {
+                alert('아이디와 비밀번호를 모두 입력해 주세요.');
+                return;
+            }
+
+            // Convert username to email if it does not contain '@'
+            const email = username.includes('@') ? username : `${username}@cbt.com`;
+
+            try {
+                // Call Supabase SignUp API
+                const { data, error } = await supabase.auth.signUp({
+                    email: email,
+                    password: password
+                });
+
+                if (error) {
+                    alert('회원가입 실패: ' + error.message);
+                } else {
+                    alert('회원가입이 완료되었습니다! 자동으로 로그인합니다.');
+                    
+                    // If SignUp auto-signs in (if confirm email is disabled), we just refresh
+                    // Otherwise, trigger the login function directly.
+                    if (data.user) {
+                        // Success - profile table will be upserted during login
+                        location.reload();
+                    }
+                }
+            } catch (e) {
+                alert('에러 발생: ' + e.message);
+            }
+        }
+
+        signupBtn.addEventListener('click', signUp);
+        window.addEventListener('DOMContentLoaded', checkSupabaseStatus);
+    </script>
+</body>
+</html>
