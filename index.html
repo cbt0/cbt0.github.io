@@ -79,9 +79,15 @@
                     <button class="btn btn-primary btn-sm hidden" id="home-resume-btn">▶ 이어하기</button>
                 </div>
 
-                <div class="hero-buttons">
-                    <button class="btn btn-primary btn-large" id="login-submit-btn">
+                <div class="hero-buttons" style="display: flex; flex-direction: column; gap: 12px; align-items: center; max-width: 320px; margin: 20px auto 0;">
+                    <button class="btn btn-primary btn-large" id="login-submit-btn" style="width: 100%;">
                         로그인 <i class="fa-solid fa-right-to-bracket"></i>
+                    </button>
+                    <div id="supabase-status" style="font-size: 13px; color: var(--text-muted); text-align: center; line-height: 1.4; margin: 6px 0;">
+                        가입 여부 확인 중...
+                    </div>
+                    <button class="btn btn-outline btn-large" id="signup-submit-btn" style="width: 100%;">
+                        회원가입 <i class="fa-solid fa-user-plus"></i>
                     </button>
                 </div>
             </div>
@@ -143,7 +149,10 @@
             <div class="rounds-header">
                 <h2 id="rounds-title" class="rounds-subject-title">가스기능사</h2>
                 <p class="rounds-subtitle">풀어볼 기출문제의 회차를 선택해 주세요.</p>
-                <button id="btn-review-wrong" class="btn btn-warning">🔥 오답 모아 풀기</button>
+                <div class="rounds-actions" style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button id="btn-review-wrong" class="btn btn-warning">🔥 오답 모아 풀기</button>
+                    <button id="btn-rounds-resume" class="btn btn-primary hidden">▶ 이어서 풀기</button>
+                </div>
             </div>
             
             <div class="rounds-grid" id="rounds-list">
