@@ -1519,8 +1519,8 @@ body {
 
 /* Welcome profile box */
 .welcome-box {
-    margin-top: 20px;
-    margin-bottom: 20px;
+    margin-top: 20px auto;   /* 추가: 위아래 20px, 좌우 자동(가운데 정렬) */
+    /* margin-bottom: 20px; */
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--glass-border);
     border-radius: var(--border-radius-md);
