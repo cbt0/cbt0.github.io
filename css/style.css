@@ -1898,3 +1898,10 @@ transition: all 0.2s ease;
 color: var(--danger) !important;   /* 마우스 올리면 빨간색으로 변함 */
 transform: scale(1.2);             /* 살짝 커지는 효과 */
 }
+
+/* --- 모바일 터치 이벤트 씹힘(텍스트 노드 가로채기) 방지 --- */
+.btn *,
+.choice-item *,
+.nav-item * {
+  pointer-events: none;
+}
