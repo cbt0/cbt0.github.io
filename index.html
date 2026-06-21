@@ -309,20 +309,27 @@
     <div class="modal-overlay" id="calculator-modal">
         <div class="modal-card calculator-card">
             <!-- 👇 추가된 드래그 이동 손잡이 영역 👇 -->
-            <div id="calculator-header" style="cursor: move; text-align: center; padding: 10px; margin: -36px -36px 20px -36px; background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--glass-border); color: var(--text-secondary); font-size: 12px; border-radius: 12px 12px 0 0;">
-                <i class="fa-solid fa-grip-lines"></i> 이 곳을 잡아 끌어 이동하세요
+            <div id="calculator-header" style="cursor: move; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; margin: -16px -16px 16px -16px; background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--glass-border); color: var(--text-secondary); font-size: 12px; border-radius: 12px 12px 0 0;">
+                <span style="width: 20px;"></span> <!-- 텍스트 중앙 정렬을 위한 투명 여백 -->
+                <span><i class="fa-solid fa-grip-lines"></i> 이 곳을 잡아 끌어 이동하세요</span>
+                <!-- 우측 X 닫기 버튼 (기존 id 재사용) -->
+                <i class="fa-solid fa-xmark" id="calculator-close-btn" style="cursor: pointer; font-size: 16px; width: 20px; text-align: right;" title="닫기"></i>
             </div>
-            <div class="modal-header">
-                <i class="fa-solid fa-calculator modal-header-icon"></i>
-                <h2>계산기</h2>
-            </div>
+
             <div class="modal-body calculator-body">
                 <input type="text" id="calculator-display" class="calculator-display" readonly value="0">
                 <div class="calculator-grid">
-                    <button class="btn calculator-btn" data-value="C">C</button>
+                    <!-- <button class="btn calculator-btn" data-value="**2">x²</button>
+                    <button class="btn calculator-btn" data-value="**3">x³</button> -->
+                    <button class="btn calculator-btn" data-value="sqrt(">√</button>
+                    <button class="btn calculator-btn" data-value="ln(">ln</button>
+                    <button class="btn calculator-btn" data-value="log(">log</button>
+                    <button class="btn calculator-btn" data-value="**">^</button>
+
                     <button class="btn calculator-btn" data-value="(">(</button>
                     <button class="btn calculator-btn" data-value=")">)</button>
-                    <button class="btn calculator-btn" data-value="/">÷</button>
+                    <button class="btn calculator-btn" data-value="C">C</button>
+                    <button class="calculator-btn" data-value="backspace" title="지우기"><i class="fa-solid fa-delete-left"></i></button>
 
                     <button class="btn calculator-btn" data-value="7">7</button>
                     <button class="btn calculator-btn" data-value="8">8</button>
@@ -332,26 +339,19 @@
                     <button class="btn calculator-btn" data-value="4">4</button>
                     <button class="btn calculator-btn" data-value="5">5</button>
                     <button class="btn calculator-btn" data-value="6">6</button>
-                    <button class="btn calculator-btn" data-value="**2">x²</button>
+                    <button class="btn calculator-btn" data-value="/">÷</button>
 
                     <button class="btn calculator-btn" data-value="1">1</button>
                     <button class="btn calculator-btn" data-value="2">2</button>
                     <button class="btn calculator-btn" data-value="3">3</button>
-                    <button class="btn calculator-btn" data-value="**3">x³</button>
+                    <button class="btn calculator-btn" data-value="+">+</button>
 
                     <button class="btn calculator-btn" data-value="0">0</button>
                     <button class="btn calculator-btn" data-value=".">.</button>
-                    <button class="btn calculator-btn" data-value="sqrt(">√</button>
-                    <button class="btn calculator-btn" data-value="+">+</button>
-
-                    <button class="btn calculator-btn" data-value="ln(">ln</button>
-                    <button class="btn calculator-btn" data-value="log(">log</button>
-                    <button class="btn calculator-btn" data-value="**">^</button>
+                    <button class="btn calculator-btn" data-value="-">-</button>
                     <button class="btn calculator-btn" data-value="=">=</button>
+                    
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" id="calculator-close-btn">닫기</button>
             </div>
         </div>
     </div>

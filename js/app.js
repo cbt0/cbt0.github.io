@@ -215,6 +215,7 @@ const dom = {
     quizTopSubmitBtn: document.getElementById('quiz-top-submit-btn'),
     calculatorBtn: document.getElementById('calculator-btn'),
     calculatorModal: document.getElementById('calculator-modal'),
+    calculatorHeader: document.getElementById('calculator-header'), // 👈 드래그켜기
     calculatorDisplay: document.getElementById('calculator-display'),
     calculatorButtons: document.querySelectorAll('.calculator-btn'),
     calculatorCloseBtn: document.getElementById('calculator-close-btn'),
@@ -1483,6 +1484,17 @@ function handleCalculatorInput(value) {
         dom.calculatorDisplay.value = '0';
         return;
     }
+    // 👇 백스페이스 기능 추가 👇
+    if (value === 'backspace') {
+        // 에러 상태이거나 글자가 1개만 남았을 때는 0으로 초기화
+        if (current === 'Error' || current.length === 1) {
+            dom.calculatorDisplay.value = '0';
+        } else {
+            // 맨 마지막 글자 하나만 잘라내기
+            dom.calculatorDisplay.value = current.slice(0, -1);
+        }
+        return;
+    }
     if (value === '=') {
         try {
             const sanitized = current
@@ -1599,4 +1611,37 @@ function renderLeaderboard() {
             </div>
         `;
     }).join('');
+}
+
+// --- 계산기 드래그 앤 드롭 이동 로직 ---
+if (dom.calculatorHeader && dom.calculatorModal) {
+    const calcCard = dom.calculatorModal.querySelector('.calculator-card');
+    let isDragging = false;
+    let startX, startY, initialLeft, initialTop;
+
+    dom.calculatorHeader.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = calcCard.getBoundingClientRect();
+        initialLeft = rect.left;
+        initialTop = rect.top;
+        calcCard.style.left = initialLeft + 'px';
+        calcCard.style.top = initialTop + 'px';
+        calcCard.style.right = 'auto'; // right 속성 해제
+        calcCard.style.transform = 'none'; // 혹시 모를 충돌 방지
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        calcCard.style.left = (initialLeft + dx) + 'px';
+        calcCard.style.top = (initialTop + dy) + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+
 }

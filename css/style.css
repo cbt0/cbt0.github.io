@@ -1842,6 +1842,8 @@ body {
 #calculator-modal {
   background: transparent !important; /* 화면을 덮는 검은 배경 투명하게 */
   pointer-events: none;               /* 배경을 뚫고 뒤쪽 문제 클릭 가능하게 */
+  backdrop-filter: none !important;           /* 🔥 추가: 전체 막의 안개 효과 완벽 제거 */
+  -webkit-backdrop-filter: none !important;   /* 🔥 추가: 모바일/사파리 브라우저 호환용 */
 }
 
 #calculator-modal .calculator-card {
@@ -1850,6 +1852,7 @@ body {
   top: 15%;                           /* 위에서 15% 위치에 띄움 */
   right: 5%;                          /* 오른쪽으로 배치 */
   max-width: 300px;                   /* 💡 계산기 가로 폭을 슬림하게 축소! */
+  padding: 16px !important;    /* 🔥 핵심: 기존 36px이었던 내부 여백을 16px로 날씬하게 줄임 */
   background: var(--glass-bg);
   box-shadow: var(--shadow-lg);
   transform: none !important;         /* 기본 중앙 정렬 무효화 */
@@ -1885,4 +1888,13 @@ body {
 }
 #calculator-modal .calculator-btn[data-value="="]:hover {
   background: rgba(99, 102, 241, 0.3);
+}
+
+/* --- 계산기 헤더 X(닫기) 버튼 호버 효과 --- */
+#calculator-header #calculator-close-btn {
+transition: all 0.2s ease;
+}
+#calculator-header #calculator-close-btn:hover {
+color: var(--danger) !important;   /* 마우스 올리면 빨간색으로 변함 */
+transform: scale(1.2);             /* 살짝 커지는 효과 */
 }
