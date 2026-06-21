@@ -1,149 +1,99 @@
-# Supabase Auth 연동 및 로그인 구현 계획서
+---
+날짜: 2026년 6월 21일
+시간: 오후 1시 12분
+타임스탬프: 2026-06-21T13:12:44+09:00
+---
 
-이 계획서는 프론트엔드로만 작동하던 CBT 문제풀이 서비스에 **Supabase Auth**를 연동하여 실제 사용자 계정으로 로그인 및 로그아웃을 처리하는 기능의 구현 방안을 정의합니다.
+# Supabase Database 연동 및 데이터 동기화 & 다중 이어 풀기 구현 계획
+
+이 계획서는 Supabase 데이터베이스와의 동기화 및 사용자의 학습 편의성을 극대화하기 위한 과목별 이어 풀기(임시 저장) 기능 개선 구현 방안을 정의합니다.
 
 ## User Review Required
 
-> [!IMPORTANT]
-> **Supabase 프로젝트 정보 확인**
-> 이전에 사용하시던 설정 정보인 아래 URL과 Key를 사용하여 연동을 진행하고자 합니다. 만약 새로운 프로젝트를 사용하시거나 Key가 변경되었다면 알려주세요.
-> * **Supabase URL**: `https://yjtfdxeuslkjyxklitsp.supabase.co`
-> * **Publishable Key (anon key)**: `sb_publishable_DEJKbgIeEmgBMXb89lbVMw_TC4DXxDn`
+> [!NOTE]
+> **과목별 이어 풀기 개별 관리**
+> * **홈 화면 (과목 선택 UI)**: 모든 과목을 통틀어 가장 최근에 풀던 세션을 찾아 전체 이어 풀기 버튼(`homeResumeBtn`)을 노출합니다.
+> * **각 과목 화면 (회차 선택 UI)**: 해당 과목에서 풀고 있던 세션이 존재할 때만 과목별 이어 풀기 버튼(`roundsResumeBtn`)을 상단에 노출합니다.
+> * **임시 저장 세션 키 형식 변경**: 기존 `cbt_${username}_autosave_session` 단일 키에서 `cbt_${username}_autosave_${subject}` 과목별 키로 세분화하여 저장합니다.
 
-> [!WARNING]
-> **로그인 테스트 전 필수 작업**
-> Supabase 대시보드(Authentication -> Users)에서 테스트 계정을 생성해 두셔야 실제 로그인이 가능합니다.
-> * 예: 아이디 `testid`로 로그인하려면 `testid@cbt.com` 이메일로 사용자를 추가해야 합니다.
-> * 대시보드의 Authentication -> Providers -> Email 설정에서 **Confirm email** 옵션은 비활성화(Off) 해두시는 것을 권장합니다.
+> [!IMPORTANT]
+> **양방향 동기화 방식 (기존 계획 유지)**
+> 사용자가 새로운 브라우저나 기기에서 로그인하더라도 클라우드에 저장된 정보가 자동으로 로컬 환경(`localStorage`)과 병합되도록 구현합니다. 
+> * **클라우드 저장**: 시험 제출 시점(`submitExam`), 통계 누적 시점(`updateGlobalStats`), 로그 생성 시점(`logUserActivity`)에 Supabase에 비동기로 데이터를 전송합니다.
+> * **로컬 동기화 (Hydration)**: 로그인 성공 시 Supabase에서 사용자의 모든 기록을 불러와 `localStorage`에 복원한 후 대시보드를 갱신합니다.
 
 ## Proposed Changes
 
-### [Frontend & Authentication Core]
+### [HTML UI Changes]
 
-Supabase SDK를 추가하고, 기존 `login()` 및 `logout()` 함수를 Supabase Auth API를 사용하도록 변경합니다.
+`index.html`의 회차 선택 화면(`rounds-screen`)에 과목별 이어 풀기 버튼을 추가합니다.
 
 ---
 
 #### [MODIFY] [index.html](file:///d:/git/cbt0.github.io/index.html)
 
-* 파일 하단의 `js/app.js` 로드 직전에 Supabase JS 라이브러리(CDN) 스크립트를 추가합니다.
+* **회차 선택 헤더 수정** (line 146 부근):
+  * `btn-review-wrong` 버튼 옆에 `btn-rounds-resume` 버튼을 추가합니다.
+  ```html
+  <div class="rounds-header">
+      <h2 id="rounds-title" class="rounds-subject-title">가스기능사</h2>
+      <p class="rounds-subtitle">풀어볼 기출문제의 회차를 선택해 주세요.</p>
+      <div class="rounds-actions" style="display: flex; gap: 8px; margin-top: 12px;">
+          <button id="btn-review-wrong" class="btn btn-warning">🔥 오답 모아 풀기</button>
+          <button id="btn-rounds-resume" class="btn btn-primary hidden">▶ 이어서 풀기</button>
+      </div>
+  </div>
+  ```
 
-```html
-    <!-- Supabase JS Library -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Custom JavaScript -->
-    <script src="js/app.js?v=1.1.8"></script>
-```
+---
+
+### [Database & State Synchronization]
+
+`js/app.js`에서 데이터 저장 및 로드 로직을 개선하여 로컬 스토리지와 Supabase DB 간의 동기화 및 다중 이어 풀기를 처리합니다.
 
 ---
 
 #### [MODIFY] [app.js](file:///d:/git/cbt0.github.io/js/app.js)
 
-* **Supabase 클라이언트 초기화**: 파일 맨 위에 Supabase SDK 초기화 코드를 작성합니다.
-* **`login()` 리팩토링**:
-  * 고정된 비밀번호 `'dongbu'` 체크 대신 `supabase.auth.signInWithPassword`를 사용해 인증을 진행합니다.
-  * 입력된 아이디가 이메일 형식이 아닐 경우 자동으로 `@cbt.com`을 붙여서 이메일 로그인 규격에 맞춥니다.
-  * 인증 성공 시 기존 UI 상태 변화와 `localStorage` 저장을 동일하게 수행하여 기존 학습 통계, 활동 로그, 이어 풀기 로직이 깨지지 않게 보존합니다.
-* **`logout()` 리팩토링**:
-  * `supabase.auth.signOut()`을 비동기 호출하여 세션을 종료합니다.
-
-```javascript
-// js/app.js 파일 상단 추가 코드 예시
-const SUPABASE_URL = 'https://yjtfdxeuslkjyxklitsp.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_DEJKbgIeEmgBMXb89lbVMw_TC4DXxDn';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-```
-
-```javascript
-// login 함수 리팩토링 예시
-async function login() {
-    const username = dom.loginId.value.trim();
-    const password = dom.loginPw.value;
-
-    if (!username) {
-        alert('아이디를 입력해 주세요.');
-        dom.loginId.focus();
-        return;
-    }
-    if (!password) {
-        alert('비밀번호를 입력해 주세요.');
-        dom.loginPw.focus();
-        return;
-    }
-
-    // 아이디를 이메일 형식으로 변환
-    const email = username.includes('@') ? username : `${username}@cbt.com`;
-
-    try {
-        // Supabase Auth 로그인 시도
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
-
-        if (error) {
-            alert('로그인 실패: ' + error.message);
-            dom.loginPw.focus();
-            return;
-        }
-
-        // 로그인 성공 시 이후 로직 (기존 로직 보존)
-        localStorage.setItem('cbt_current_user', username);
-        state.currentUser = username;
-
-        // UI 전환 및 타이머 리셋 등
-        dom.loginFormContainer.classList.add('hidden');
-        dom.welcomeContainer.classList.remove('hidden');
-        dom.welcomeUsername.innerText = username;
-        dom.subjectSelectionSection.classList.remove('hidden');
-        if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
-
-        updateHomeResumeButton();
-        logUserActivity('로그인 성공');
-        resetIdleTimer();
-
-        setTimeout(() => {
-            dom.subjectSelectionSection.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-    } catch (e) {
-        alert('로그인 처리 중 에러 발생: ' + e.message);
-    }
-}
-```
-
-```javascript
-// logout 함수 리팩토링 예시
-async function logout() {
-    if (state.currentUser) {
-        logUserActivity('로그아웃');
-    }
-    
-    try {
-        await supabase.auth.signOut();
-    } catch (e) {
-        console.error('Supabase 로그아웃 에러:', e);
-    }
-
-    localStorage.removeItem('cbt_current_user');
-    state.currentUser = null;
-    dom.loginId.value = '';
-    dom.loginPw.value = '';
-    
-    if (idleTimer) clearTimeout(idleTimer);
-    if (state.timerInterval) clearInterval(state.timerInterval);
-    
-    checkLoginState();
-    switchTab('home');
-}
-```
+* **UI 엘리먼트 매핑 추가 (`dom.roundsResumeBtn`)**:
+  * `btn-rounds-resume` 엘리먼트를 매핑합니다.
+* **임시 세션 관리 수정 (`autoSaveSession` / `startQuiz` / `submitExam` / `updateHomeResumeButton` / `updateRoundsResumeButton`)**:
+  * `autoSaveSession()`: 저장 키를 `cbt_${state.currentUser}_autosave_${state.activeSubject}`로 변경하고 저장 데이터 객체에 `timestamp: Date.now()`를 추가합니다.
+  * `updateHomeResumeButton()`: `gas`, `energy_master`, `energy_industrial`, `energy_craftsman`, `air_conditioning` 등 모든 과목의 세션 키를 검사하여 가장 최근 `timestamp`를 가진 세션 정보를 기반으로 홈 화면 이어하기 버튼을 구성합니다.
+  * `updateRoundsResumeButton(subject)` [신규 함수]: 회차 화면 렌더링 시 해당 과목의 세션 키(`cbt_${state.currentUser}_autosave_${subject}`)가 존재하는 경우 `btn-rounds-resume`을 활성화하고 텍스트를 업데이트합니다.
+  * `renderRoundsList()`: 리스트 렌더링 시 `updateRoundsResumeButton(subject)`을 호출합니다.
+  * `submitExam()`: 제출 성공 후 해당 과목의 세션 키(`cbt_${state.currentUser}_autosave_${state.activeSubject}`)를 제거합니다.
+* **로그인 성공 후 데이터 동기화 (`syncDataFromSupabase`) [신규 함수]**:
+  * 로그인 성공 직후 호출됩니다.
+  * Supabase `profiles` 테이블에 유저 정보가 있는지 확인하고, 없으면 신규 행을 인서트(Upsert)합니다.
+  * Supabase `user_stats`에서 통계 데이터를 가져와 `cbt_${username}_global_stats` 형식으로 `localStorage`에 동기화합니다.
+  * Supabase `cbt_progress`에서 해당 유저의 모든 시험 기록을 가져와 `cbt_progress_${username}_${subject}_${roundKey}` 형식으로 복원합니다.
+  * Supabase `user_logs`에서 최근 활동 이력을 가져와 `cbt_${username}_logs` 형식으로 복원합니다.
+  * 복원 완료 후 대시보드 및 이어 풀기 상태를 갱신합니다.
+* **이벤트 리스너 등록 (`registerEventListeners`)**:
+  * `btn-rounds-resume` 클릭 시 해당 과목의 임시 저장 데이터를 읽어와 `startQuiz(session.activeRound, true)`를 호출하도록 리스너를 추가합니다.
+* **로그인 함수(`login`) 연동**:
+  * Supabase 로그인 성공 시 `syncDataFromSupabase()`를 호출하도록 추가합니다.
+* **활동 로그 기록 (`logUserActivity` / `addExamResultLog`) 수정**:
+  * 로그를 기존 `localStorage`에 남기는 것과 동시에 Supabase의 `user_logs` 테이블에도 비동기로 인서트(Insert)합니다.
+* **전체 통계 갱신 (`updateGlobalStats`) 수정**:
+  * 기존 `localStorage` 연동 후, Supabase의 `user_stats` 테이블에 누적된 성적 지표를 업데이트(Upsert)합니다.
+* **시험 제출 (`submitExam`) 수정**:
+  * 채점 후 `cbt_progress` 테이블에 현재 회차의 시험 결과를 비동기로 인서트(Insert)합니다.
 
 ## Verification Plan
 
 ### Manual Verification
-1. **로컬 서버 실행**: `python3 -m http.server 8000` 등으로 서버 기동 후 접속.
-2. **계정 확인**: Supabase Console에 등록해 둔 `testid@cbt.com` 계정 정보로 로그인 시도.
-3. **아이디 변환 테스트**: 
-   * `testid` 입력 시 -> 성공 여부 확인
-   * `testid@cbt.com` 입력 시 -> 성공 여부 확인
-4. **오동작 테스트**: 잘못된 비밀번호 입력 시 오류 메시지가 잘 나오는지 확인.
-5. **로그아웃 테스트**: 로그아웃 시 세션이 완전히 정리되고 로그인 폼으로 회귀하는지 확인.
+1. **기존 데이터 초기화 및 브라우저 로그인**:
+   * 브라우저 `localStorage`를 깨끗이 지웁니다.
+   * 테스트 계정으로 로그인 시도하여 Supabase 클라우드에서 이전 기록들이 복원되는지 확인합니다.
+2. **다중 이어 풀기 테스트**:
+   * "가스기능사" 1회 시험을 시작하고 몇 문제 푼 뒤 "홈"으로 이동합니다.
+   * 홈 화면에서 가스기능사 이어 풀기 버튼이 표시되는지 확인합니다.
+   * "에너지관리기능장" 1회 시험을 시작하고 몇 문제 푼 뒤 "홈"으로 이동합니다.
+   * 홈 화면의 이어하기가 가장 최근인 "에너지관리기능장"으로 매핑되어 표시되는지 확인합니다.
+   * "가스기능사" 과목 선택 시 가스기능사 회차 화면 상단에 가스기능사 전용 이어 풀기 버튼이 표시되는지 확인합니다.
+3. **시험 제출 시 세션 만료 및 동기화 테스트**:
+   * 가스기능사 시험을 제출하여 완료합니다.
+   * 가스기능사의 이어하기 버튼이 사라지는지 확인합니다.
+   * Supabase 대시보드에서 `cbt_progress`, `user_stats`, `user_logs` 테이블에 정상적으로 동기화되는지 확인합니다.
