@@ -664,7 +664,7 @@ body {
 
 .marking-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(10, 1fr);
     gap: 10px;
     overflow-y: auto;
     padding-right: 4px;
@@ -1258,7 +1258,7 @@ body {
     
     .marking-grid {
         max-height: none;
-        grid-template-columns: repeat(6, 1fr);
+        grid-template-columns: repeat(10, 1fr);
         gap: 12px;
     }
     
@@ -1345,7 +1345,7 @@ body {
     }
     
     .marking-grid {
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(10, 1fr);
         gap: 10px;
     }
     
