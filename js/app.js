@@ -1496,6 +1496,12 @@ function handleCalculatorInput(value) {
         return;
     }
     if (value === '=') {
+        // 🔥 [추가] 열린 괄호만큼 닫는 괄호 자동 완성 로직
+        const openParens = (current.match(/\(/g) || []).length;
+        const closeParens = (current.match(/\)/g) || []).length;
+        if (openParens > closeParens) {
+            current += ')'.repeat(openParens - closeParens); // 부족한 만큼 ')' 추가
+        }
         try {
             const sanitized = current
                 .replace(/÷/g, '/')
