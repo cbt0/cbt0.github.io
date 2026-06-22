@@ -1520,10 +1520,9 @@ function handleCalculatorInput(value) {
 function evaluateCalculatorExpression(expr) {
     const cleaned = expr
         .replace(/sqrt\(/g, 'Math.sqrt(')
-        .replace(/ln\(/g, 'Math.log(')
         .replace(/log\(/g, 'Math.log10(')
+        .replace(/ln\(/g, 'Math.log(')
         .replace(/\^/g, '**');
-
     return Function(`"use strict"; return (${cleaned})`)();
 }
 
