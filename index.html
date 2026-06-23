@@ -251,6 +251,122 @@
                 </article>
             </div>
         </section>
+        <!-- 5. Grading Dashboard Screen -->
+        <section id="grading-screen" class="view-section">
+            <div class="grading-dashboard-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); border-radius: var(--border-radius-lg); padding: 24px;">
+                <div class="grading-dashboard-header">
+                    <h2><i class="fa-solid fa-square-check"></i> 개인 학습 통계 및 로그</h2>
+                    <p class="grading-dashboard-subtitle">로그인된 사용자의 실시간 학습 기록 및 정답률 통계입니다.</p>
+                </div>
+
+                <!-- Sub Tab Navigation -->
+                <div class="sub-tab-container">
+                    <button class="sub-tab-btn active" data-subtab="stats">채점</button>
+                    <button class="sub-tab-btn" data-subtab="ranking">순위</button>
+                </div>
+
+                <!-- Tab 1: Stats & Logs -->
+                <div id="subtab-content-stats" class="subtab-content active">
+                    <!-- Dashboard Stats Grid (Moved here) -->
+                    <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 24px 0;">
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper purple">
+                                <i class="fa-solid fa-book-open"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="stats-total-solved">0</span>
+                                <span class="stat-label">푼 문제 수</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper green">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="stats-correct-rate">0%</span>
+                                <span class="stat-label">평균 정답률</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper blue">
+                                <i class="fa-solid fa-trophy"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="stats-passed-exams">0</span>
+                                <span class="stat-label">합격한 회차</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="user-dashboard-row">
+                        <!-- Last Solved Exam Card -->
+                        <div class="dashboard-box last-solved-box">
+                            <h3><i class="fa-solid fa-clock-rotate-left"></i> 마지막 풀었던 문제</h3>
+                            <div id="last-solved-info" class="last-solved-content">
+                                <p class="no-data-msg">최근 학습한 이력이 없습니다.</p>
+                            </div>
+                        </div>
+
+                        <!-- Activity Logs Card -->
+                        <div class="dashboard-box logs-box">
+                            <h3><i class="fa-solid fa-list-ul"></i> 최근 학습 활동 로그</h3>
+                            <div class="logs-container" id="user-activity-logs">
+                                <p class="no-data-msg">활동 로그가 없습니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Rankings -->
+                <div id="subtab-content-ranking" class="subtab-content">
+                    <!-- User Ranking Leaderboard Card -->
+                    <div class="dashboard-box ranking-box" style="margin-top: 16px;">
+                        <h3><i class="fa-solid fa-ranking-star"></i> 사용자 순위 (게임 스코어)</h3>
+                        <div class="ranking-container" id="leaderboard-list">
+                            <p class="no-data-msg">순위 정보가 없습니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Settings Screen -->
+        <section id="settings-screen" class="view-section">
+            <div class="settings-card">
+                <h2 class="settings-title"><i class="fa-solid fa-gear"></i> 설정</h2>
+                <div class="settings-list">
+                    <div class="settings-item">
+                        <div class="settings-info">
+                            <span class="settings-label">화면 테마 설정</span>
+                            <span class="settings-desc">라이트 모드와 다크 모드를 전환합니다.</span>
+                        </div>
+                        <button id="theme-toggle" class="icon-btn" aria-label="테마 변경">
+                            <i class="fa-solid fa-moon"></i>
+                        </button>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-info">
+                            <span class="settings-label">자동 로그아웃 시간</span>
+                            <span class="settings-desc">마우스 이동 등 조작이 없을 때 안전을 위해 로그아웃되는 유휴 시간입니다.</span>
+                        </div>
+                        <select id="auto-logout-select" class="settings-select">
+                            <option value="10">10분</option>
+                            <option value="30" selected>30분</option>
+                            <option value="50">50분</option>
+                        </select>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-info">
+                            <span class="settings-label">계정 관리</span>
+                            <span class="settings-desc">현재 계정에서 로그아웃합니다.</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline" id="logout-btn">로그아웃</button>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- 4. Premium Result Modal Overlay -->
@@ -477,122 +593,7 @@
         </div>
     </div>
 
-    <!-- 5. Grading Dashboard Screen -->
-    <section id="grading-screen" class="view-section">
-        <div class="grading-dashboard-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); border-radius: var(--border-radius-lg); padding: 24px;">
-            <div class="grading-dashboard-header">
-                <h2><i class="fa-solid fa-square-check"></i> 개인 학습 통계 및 로그</h2>
-                <p class="grading-dashboard-subtitle">로그인된 사용자의 실시간 학습 기록 및 정답률 통계입니다.</p>
-            </div>
-
-            <!-- Sub Tab Navigation -->
-            <div class="sub-tab-container">
-                <button class="sub-tab-btn active" data-subtab="stats">채점</button>
-                <button class="sub-tab-btn" data-subtab="ranking">순위</button>
-            </div>
-
-            <!-- Tab 1: Stats & Logs -->
-            <div id="subtab-content-stats" class="subtab-content active">
-                <!-- Dashboard Stats Grid (Moved here) -->
-                <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 24px 0;">
-                    <div class="stat-card">
-                        <div class="stat-icon-wrapper purple">
-                            <i class="fa-solid fa-book-open"></i>
-                        </div>
-                        <div class="stat-info">
-                            <span class="stat-value" id="stats-total-solved">0</span>
-                            <span class="stat-label">푼 문제 수</span>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon-wrapper green">
-                            <i class="fa-solid fa-circle-check"></i>
-                        </div>
-                        <div class="stat-info">
-                            <span class="stat-value" id="stats-correct-rate">0%</span>
-                            <span class="stat-label">평균 정답률</span>
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon-wrapper blue">
-                            <i class="fa-solid fa-trophy"></i>
-                        </div>
-                        <div class="stat-info">
-                            <span class="stat-value" id="stats-passed-exams">0</span>
-                            <span class="stat-label">합격한 회차</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="user-dashboard-row">
-                    <!-- Last Solved Exam Card -->
-                    <div class="dashboard-box last-solved-box">
-                        <h3><i class="fa-solid fa-clock-rotate-left"></i> 마지막 풀었던 문제</h3>
-                        <div id="last-solved-info" class="last-solved-content">
-                            <p class="no-data-msg">최근 학습한 이력이 없습니다.</p>
-                        </div>
-                    </div>
-
-                    <!-- Activity Logs Card -->
-                    <div class="dashboard-box logs-box">
-                        <h3><i class="fa-solid fa-list-ul"></i> 최근 학습 활동 로그</h3>
-                        <div class="logs-container" id="user-activity-logs">
-                            <p class="no-data-msg">활동 로그가 없습니다.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab 2: Rankings -->
-            <div id="subtab-content-ranking" class="subtab-content">
-                <!-- User Ranking Leaderboard Card -->
-                <div class="dashboard-box ranking-box" style="margin-top: 16px;">
-                    <h3><i class="fa-solid fa-ranking-star"></i> 사용자 순위 (게임 스코어)</h3>
-                    <div class="ranking-container" id="leaderboard-list">
-                        <p class="no-data-msg">순위 정보가 없습니다.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 6. Settings Screen -->
-    <section id="settings-screen" class="view-section">
-        <div class="settings-card">
-            <h2 class="settings-title"><i class="fa-solid fa-gear"></i> 설정</h2>
-            <div class="settings-list">
-                <div class="settings-item">
-                    <div class="settings-info">
-                        <span class="settings-label">화면 테마 설정</span>
-                        <span class="settings-desc">라이트 모드와 다크 모드를 전환합니다.</span>
-                    </div>
-                    <button id="theme-toggle" class="icon-btn" aria-label="테마 변경">
-                        <i class="fa-solid fa-moon"></i>
-                    </button>
-                </div>
-                <div class="settings-item">
-                    <div class="settings-info">
-                        <span class="settings-label">자동 로그아웃 시간</span>
-                        <span class="settings-desc">마우스 이동 등 조작이 없을 때 안전을 위해 로그아웃되는 유휴 시간입니다.</span>
-                    </div>
-                    <select id="auto-logout-select" class="settings-select">
-                        <option value="10">10분</option>
-                        <option value="30" selected>30분</option>
-                        <option value="50">50분</option>
-                    </select>
-                </div>
-                <div class="settings-item">
-                    <div class="settings-info">
-                        <span class="settings-label">계정 관리</span>
-                        <span class="settings-desc">현재 계정에서 로그아웃합니다.</span>
-                    </div>
-                    <button class="btn btn-sm btn-outline" id="logout-btn">로그아웃</button>
-                </div>
-            </div>
-        </div>
-    </section>
+  
 
     <!-- Custom JavaScript -->
     <script src="js/app.js?v=1.1.8"></script>
