@@ -1909,7 +1909,7 @@ transform: scale(1.2);             /* 살짝 커지는 효과 */
    [최종 통합본] 모바일 터치 씹힘 및 투명 가림막 버그 완전 종결
    ========================================================================== */
 
-/* [1] 진짜 범인 검거: 꺼져 있는 계산기 모달의 터치 가로채기 원천 차단 */
+/* [2] 진짜 범인 검거: 꺼져 있는 계산기 모달의 터치 가로채기 원천 차단 */
 #calculator-modal {
     pointer-events: none !important; 
     visibility: hidden !important;
@@ -1924,13 +1924,13 @@ transform: scale(1.2);             /* 살짝 커지는 효과 */
     opacity: 1 !important;
 }
 
-/* [2] 보내주신 의견 반영: 버튼 내부 글자가 터치 씹는 현상 방지 */
+/* [3] 버튼 내부 글자가 터치 씹는 현상 방지 및 파란 박스 제거 */
 .btn,
 .choice-item,
 .nav-item {
   -webkit-user-select: none;
   user-select: none;  
-  -webkit-tap-highlight-color: transparent !important; /* 1cm짜리 얄미운 파란 박스 제거 */
+  -webkit-tap-highlight-color: transparent !important;
   pointer-events: auto !important;
 }
 
@@ -1938,46 +1938,40 @@ transform: scale(1.2);             /* 살짝 커지는 효과 */
 .btn *,
 .choice-item *,
 .nav-item * {
-  pointer-events: none !important; /* 글자만 1x1cm 크기로 씹히는 현상 최종 차단 */
+  pointer-events: none !important;
 }
 
 /* ==========================================================================
-   [최종 종결] 성적 대시보드 화면 상단 밀착 및 수직 중앙 배치 원인 제거
+   [최종 종결] 성적/순위/설정 화면 상단 밀착 및 수직 중앙 배치 원인 제거
    ========================================================================== */
 
-/* 1. 성적 화면 활성화 시 메인 컨텐츠 영역의 수직 중앙 정렬 경향 완전 해제 */
-.view-section.active-view#grading-screen {
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: flex-start !important; /* 위쪽(Top)부터 차곡차곡 정렬 */
-}
-
-/* 2. 대시보드 화면 자체의 기본 상단 여백 최소화 */
-#grading-screen {
-  margin-top: 0 !important;
-  padding-top: 0 !important;
-  width: 100% !important;
-}
-
-/* 3. 대시보드 타이틀 헤더와 서브 탭 컨테이너의 불필요한 위 마진 제거 */
+/* 1. 대시보드 타이틀 및 서브 탭 컨테이너의 불필요한 아래 여백 압축 */
 .grading-dashboard-header {
-  margin-top: 5px !important; /* 내비바 바로 아래 자연스럽게 안착 */
   margin-bottom: 12px !important;
 }
-
 .sub-tab-container {
   margin-top: 0 !important;
   margin-bottom: 12px !important;
 }
 
-/* 4. 데스크톱에서 내용이 가로(옆)로 배치될 때 위로 바짝 끌어올림 */
+/* 2. 데스크톱에서 내용이 가로(옆)로 배치될 때 위로 바짝 끌어올림 */
 .user-dashboard-row {
   margin-top: 10px !important;
   gap: 16px !important;
 }
 
-/* 5. 데이터가 없을 때 발생하는 마진 auto 버그(중앙 둥둥) 해제 및 상단 정렬 */
+/* 3. 데이터가 없을 때 발생하는 마진 auto 버그(중앙 둥둥) 해제 및 상단 정렬 */
 .no-data-msg {
-  margin: 20px auto !important;
+  margin: 20px auto 0 auto !important; /* 상하 auto를 풀어서 위로 바짝 당김 */
   padding: 20px 10px !important;
+}
+
+/* 4. 설정 화면의 거대한 윗쪽 추가 마진 제거 (문제 풀이 화면과 높이 완벽 통일) */
+.settings-card {
+    margin-top: 0 !important;
+}
+
+/* 5. 순위 탭 클릭 시 내용이 밑으로 푹 꺼지는 추가 윗여백 완벽 제거 */
+.ranking-container {
+    margin-top: 0 !important;
 }
