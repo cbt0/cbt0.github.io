@@ -1552,6 +1552,12 @@ body {
 }
 
 /* Grading Dashboard Screen Styles */
+/* 성적 대시보드 화면 중앙 정렬 및 최대 넓이 제한 */
+#grading-screen {
+    max-width: 1000px; /* 데스크톱에서 보기 좋은 쾌적한 넓이로 제한 */
+    margin: 0 auto;    /* 화면 정중앙에 배치 */
+    width: 100%;
+}
 .grading-dashboard-header {
     margin-bottom: 20px;
 }
