@@ -1940,3 +1940,20 @@ transform: scale(1.2);             /* 살짝 커지는 효과 */
 .nav-item * {
   pointer-events: none !important; /* 글자만 1x1cm 크기로 씹히는 현상 최종 차단 */
 }
+
+/* --- 성적 대시보드(순위 및 로그) 여백 최적화 및 Top 정렬 --- */
+
+/* 1. 서브 탭(활동 로그/순위) 버튼 아래의 불필요하게 넓은 여백 축소 */
+.sub-tab-container {
+  margin: 16px 0 12px 0 !important; /* 기존 24px에서 12px로 축소 */
+}
+
+/* 2. 순위 탭 클릭 시 추가로 벌어지는 윗쪽 여백 완벽 제거 */
+.ranking-container {
+  margin-top: 0 !important; /* 기존 12px 여백 제거 */
+}
+
+/* 3. 내용이 없을 때 정중앙에 수직 정렬되는 현상을 위쪽(Top) 정렬로 수정 */
+.no-data-msg {
+  margin: 20px auto 0 auto !important; /* margin: auto를 해제하고 위로 바짝 끌어올림 */
+}
