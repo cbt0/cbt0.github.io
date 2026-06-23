@@ -1665,3 +1665,42 @@ if (dom.calculatorHeader && dom.calculatorModal) {
     document.addEventListener('touchmove', dragMove, { passive: false });
     document.addEventListener('touchend', dragEnd);
 }
+// --- 상수 모달 제어 및 입력 로직 ---
+const calcConstantBtn = document.getElementById('calc-constant-btn');
+const constantModal = document.getElementById('constant-modal');
+const constantCloseBtn = document.getElementById('constant-close-btn');
+
+if (calcConstantBtn && constantModal) {
+    // 1. 상수(π) 버튼 클릭 시 팝업 열기
+    calcConstantBtn.addEventListener('click', (e) => {
+        constantModal.classList.add('active');
+    });
+
+    // 2. 닫기 버튼 클릭 시 팝업 닫기
+    if (constantCloseBtn) {
+        constantCloseBtn.addEventListener('click', () => {
+            constantModal.classList.remove('active');
+        });
+    }
+
+    // 3. 리스트에서 상수 선택 시 계산기에 입력하고 팝업 닫기
+    const constantItems = constantModal.querySelectorAll('.constant-item');
+    constantItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            const targetItem = e.currentTarget;
+            const val = targetItem.getAttribute('data-val');
+            const display = document.getElementById('calculator-display');
+            
+            if (val && display) {
+                let current = display.value || '';
+                // 에러 상태이거나 0만 있을 때는 지우고 입력
+                if (current === '0' || current === 'Error') {
+                    current = '';
+                }
+                display.value = current + val;
+            }
+            // 입력 완료 후 창 닫기
+            constantModal.classList.remove('active');
+        });
+    });
+}
