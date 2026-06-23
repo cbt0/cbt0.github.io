@@ -1957,3 +1957,49 @@ transform: scale(1.2);             /* 살짝 커지는 효과 */
 .no-data-msg {
   margin: 20px auto 0 auto !important; /* margin: auto를 해제하고 위로 바짝 끌어올림 */
 }
+/* ==========================================================================
+   성적 대시보드 최상단 위쪽 공백 완전 종결 및 레이아웃 당김 바인딩
+   ========================================================================== */
+
+/* 1. 성적 대시보드 진입 시 전체 화면 위쪽 여백 최소화 */
+#grading-screen {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* 2. 성적 대시보드가 활성화되었을 때 메인 컨테이너의 상단 패딩을 강제로 축소 */
+.view-section.active-view#grading-screen {
+  display: block;
+}
+#grading-screen ~ .app-content,
+body:has(#grading-screen.active-view) .app-content {
+  padding-top: 10px !important; /* 기존 30px에서 10px로 상단 여백 전면 축소 */
+}
+
+/* 3. 대시보드 헤더 자체의 상/하단 불필요한 여백 조절 */
+.grading-dashboard-header {
+  margin-top: 0 !important;
+  margin-bottom: 12px !important; /* 아래 요소와의 간격을 20px에서 12px로 정밀 축소 */
+}
+
+/* 4. 활동 로그 / 순위 서브 탭 컨테이너 주변 여백 최종 압축 */
+#grading-screen .sub-tab-container {
+  margin: 10px 0 8px 0 !important; /* 상단 16px -> 10px, 하단 12px -> 8px로 축소 */
+  padding-bottom: 4px !important;
+}
+
+/* 5. 모바일(768px 이하) 환경에서 화면이 쳐지는 현상 방지 대응 */
+@media (max-width: 768px) {
+  body:has(#grading-screen.active-view) .app-content {
+    padding-top: 4px !important; /* 모바일에서는 상단 여백을 극소화하여 꽉 차게 배치 */
+  }
+  
+  .grading-dashboard-header h2 {
+    font-size: 19px !important; /* 모바일 헤더 폰트 최적화로 공간 확보 */
+  }
+  
+  .user-dashboard-row {
+    margin-top: 12px !important; /* 그리드 윗여백을 24px에서 12px로 축소 */
+    gap: 16px !important;
+  }
+}
