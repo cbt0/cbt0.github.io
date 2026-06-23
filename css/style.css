@@ -2003,3 +2003,59 @@ body:has(#grading-screen.active-view) .app-content {
     gap: 16px !important;
   }
 }
+/* ==========================================================================
+   성적 대시보드 화면 상단 밀착 및 수직 정렬 전면 수정
+   ========================================================================== */
+
+/* 1. 성적 화면이 활성화될 때 메인 컨텐츠 영역의 수직 정렬을 Top(시작점)으로 강제 */
+.view-section.active-view#grading-screen {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important; /* 중앙 정렬 성향을 풀고 무조건 위로 정렬 */
+}
+
+/* 2. 성적 화면을 감싸는 상위 .app-content 패딩 압축 및 정렬 보정 */
+#grading-screen {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  width: 100% !important;
+}
+
+/* 3. 대시보드 헤더 타이틀의 불필요한 마진 제거 */
+.grading-dashboard-header {
+  margin-top: 5px !important; /* 내비바 바로 아래 예쁘게 안착 */
+  margin-bottom: 12px !important;
+}
+
+/* 4. 성적 대시보드 내부의 그리드 row 여백 및 높이 균형 조정 */
+.user-dashboard-row {
+  margin-top: 10px !important; /* 기존 24px에서 축소 */
+  gap: 16px !important;
+}
+
+/* 5. 데이터가 없을 때 발생하는 마진 auto 버그 해제 (위로 바짝 당김) */
+.no-data-msg {
+  margin: 20px auto !important; /* 상하 정중앙 정렬 풀기 */
+  padding: 20px 10px !important;
+}
+
+/* ==========================================================================
+   모바일(768px 이하) 환경 초정밀 상단 밀착 대응
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* 모바일 화면 진입 시 전체 여백을 제로에 가깝게 리셋 */
+  .view-section.active-view#grading-screen ~ .app-content,
+  #grading-screen {
+    margin-top: 0 !important;
+  }
+  
+  .grading-dashboard-header h2 {
+    font-size: 18px !important; /* 헤더 크기를 줄여 시각적 여백 확보 */
+    margin-bottom: 4px !important;
+  }
+  
+  .sub-tab-container {
+    margin: 8px 0 12px 0 !important; /* 서브 탭 주변 공백 최종 압축 */
+    padding-bottom: 4px !important;
+  }
+}
