@@ -1610,16 +1610,22 @@ function renderLeaderboard() {
     }).join('');
 }
 
-// --- 계산기 드래그 앤 드롭 이동 로직 ---
+
+// --- 계산기 드래그 앤 드롭 이동 로직 (PC 마우스 & 모바일 터치 통합) ---
 if (dom.calculatorHeader && dom.calculatorModal) {
     const calcCard = dom.calculatorModal.querySelector('.calculator-card');
     let isDragging = false;
     let startX, startY, initialLeft, initialTop;
 
-    dom.calculatorHeader.addEventListener('mousedown', (e) => {
+    // 공통 드래그 시작 함수
+    const dragStart = (e) => {
         isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
+        // 터치인지 마우스인지 구분하여 좌표 추출
+        const clientX = e.type.includes('touch') ? e.touches.clientX : e.clientX;
+        const clientY = e.type.includes('touch') ? e.touches.clientY : e.clientY;
+        
+        startX = clientX;
+        startY = clientY;
         const rect = calcCard.getBoundingClientRect();
         initialLeft = rect.left;
         initialTop = rect.top;
@@ -1627,18 +1633,35 @@ if (dom.calculatorHeader && dom.calculatorModal) {
         calcCard.style.top = initialTop + 'px';
         calcCard.style.right = 'auto'; // right 속성 해제
         calcCard.style.transform = 'none'; // 혹시 모를 충돌 방지
-    });
+    };
 
-    document.addEventListener('mousemove', (e) => {
+    // 공통 드래그 이동 함수
+    const dragMove = (e) => {
         if (!isDragging) return;
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
+        // 모바일에서 드래그할 때 화면이 같이 스크롤되는 현상 방지
+        if (e.type.includes('touch')) e.preventDefault(); 
+        
+        const clientX = e.type.includes('touch') ? e.touches.clientX : e.clientX;
+        const clientY = e.type.includes('touch') ? e.touches.clientY : e.clientY;
+
+        const dx = clientX - startX;
+        const dy = clientY - startY;
         calcCard.style.left = (initialLeft + dx) + 'px';
         calcCard.style.top = (initialTop + dy) + 'px';
-    });
+    };
 
-    document.addEventListener('mouseup', () => {
+    // 공통 드래그 종료 함수
+    const dragEnd = () => {
         isDragging = false;
-    });
+    };
 
+    // 🖱️ PC 마우스 이벤트 등록
+    dom.calculatorHeader.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', dragMove);
+    document.addEventListener('mouseup', dragEnd);
+
+    // 👆 모바일 터치 이벤트 등록
+    dom.calculatorHeader.addEventListener('touchstart', dragStart, { passive: false });
+    document.addEventListener('touchmove', dragMove, { passive: false });
+    document.addEventListener('touchend', dragEnd);
 }
