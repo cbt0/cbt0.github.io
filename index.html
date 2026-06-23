@@ -324,7 +324,8 @@
                     <button class="calculator-btn btn" data-value="ln(">ln</button>
                     <button class="calculator-btn btn" data-value="log(">log</button>
                     <button class="calculator-btn btn" data-value="^">x^y</button>
-                    <button class="calculator-btn btn" id="calc-constant-btn" style="color: var(--warning); border-color: rgba(251, 191, 36, 0.4);">상수</button>
+                    <!-- 🔥 '상수' 글자 대신 π 기호 적용 및 폰트 크기 살짝 확대 -->
+                    <button class="btn" id="calc-constant-btn" style="color: var(--warning); border-color
                     
                     <!-- 2행 -->
                     <button class="calculator-btn btn" data-value="7">7</button>
@@ -356,6 +357,7 @@
                 </div>
 
                 <!-- 🔥 상수 선택 모달 팝업 (계산기 그리드 바로 밑에 추가) -->
+                <!-- 🔥 상수 선택 모달 팝업 (내용 초간단 요약 버전) -->
                 <div id="constant-modal">
                     <div class="constant-header">
                         <span><i class="fa-solid fa-book"></i> 자주 쓰는 상수</span>
@@ -363,35 +365,36 @@
                     </div>
                     <div class="constant-body">
                         <div>
-                            <div class="constant-group-title">1. 기초 상수</div>
-                            <div class="constant-item" data-val="3.141592"><span class="constant-val">3.141592</span><span class="constant-desc">원주율 (π) - 배관 면적 및 실린더 부피 계산</span></div>
-                            <div class="constant-item" data-val="9.80665"><span class="constant-val">9.80665</span><span class="constant-desc">표준 중력가속도 (g, m/s²) - 위치에너지, 수두</span></div>
-                            <div class="constant-item" data-val="0.287"><span class="constant-val">0.287</span><span class="constant-desc">공기 기체상수 (R, kJ/kg·K) - 이상기체 상태방정식</span></div>
+                            <div class="constant-group-title">기초 상수</div>
+                            <div class="constant-item" data-val="3.141592"><span class="constant-val">3.141592</span><span class="constant-desc">원주율 (π)</span></div>
+                            <div class="constant-item" data-val="9.80665"><span class="constant-val">9.80665</span><span class="constant-desc">중력가속도 (g)</span></div>
+                            <div class="constant-item" data-val="0.287"><span class="constant-val">0.287</span><span class="constant-desc">공기 기체상수 (R)</span></div>
                         </div>
                         <div>
-                            <div class="constant-group-title">2. 열량 및 비열 (물/얼음/증기)</div>
-                            <div class="constant-item" data-val="4.186"><span class="constant-val">4.186</span><span class="constant-desc">물의 비열 (kJ/kg·K)</span></div>
-                            <div class="constant-item" data-val="2.093"><span class="constant-val">2.093</span><span class="constant-desc">얼음의 비열 (kJ/kg·K)</span></div>
-                            <div class="constant-item" data-val="1.996"><span class="constant-val">1.996</span><span class="constant-desc">증기의 비열 (kJ/kg·K)</span></div>
-                            <div class="constant-item" data-val="2257"><span class="constant-val">2257</span><span class="constant-desc">물의 증발잠열 (kJ/kg, 100℃ 기준)</span></div>
-                            <div class="constant-item" data-val="333.5"><span class="constant-val">333.5</span><span class="constant-desc">얼음의 융해잠열 (kJ/kg)</span></div>
+                            <div class="constant-group-title">비열 및 잠열</div>
+                            <div class="constant-item" data-val="4.186"><span class="constant-val">4.186</span><span class="constant-desc">물의 비열</span></div>
+                            <div class="constant-item" data-val="2.093"><span class="constant-val">2.093</span><span class="constant-desc">얼음의 비열</span></div>
+                            <div class="constant-item" data-val="1.996"><span class="constant-val">1.996</span><span class="constant-desc">증기의 비열</span></div>
+                            <div class="constant-item" data-val="2257"><span class="constant-val">2257</span><span class="constant-desc">물의 증발잠열</span></div>
+                            <div class="constant-item" data-val="333.5"><span class="constant-val">333.5</span><span class="constant-desc">얼음의 융해잠열</span></div>
                         </div>
                         <div>
-                            <div class="constant-group-title">3. 압력 환산 (표준대기압 1 atm 기준)</div>
-                            <div class="constant-item" data-val="101.325"><span class="constant-val">101.325</span><span class="constant-desc">1 atm → kPa 압력 변환</span></div>
-                            <div class="constant-item" data-val="1.01325"><span class="constant-val">1.01325</span><span class="constant-desc">1 atm → bar 압력 변환</span></div>
-                            <div class="constant-item" data-val="760"><span class="constant-val">760</span><span class="constant-desc">1 atm → mmHg 수은주 압력 변환</span></div>
-                            <div class="constant-item" data-val="10.332"><span class="constant-val">10.332</span><span class="constant-desc">1 atm → mH₂O (mAq) 수두 압력 변환</span></div>
+                            <div class="constant-group-title">압력 환산 (1 atm 기준)</div>
+                            <div class="constant-item" data-val="101.325"><span class="constant-val">101.325</span><span class="constant-desc">kPa</span></div>
+                            <div class="constant-item" data-val="1.01325"><span class="constant-val">1.01325</span><span class="constant-desc">bar</span></div>
+                            <div class="constant-item" data-val="760"><span class="constant-val">760</span><span class="constant-desc">mmHg</span></div>
+                            <div class="constant-item" data-val="10.332"><span class="constant-val">10.332</span><span class="constant-desc">mH₂O (mAq)</span></div>
                         </div>
                         <div>
-                            <div class="constant-group-title">4. 에너지 및 동력 단위 변환</div>
-                            <div class="constant-item" data-val="4.1868"><span class="constant-val">4.1868</span><span class="constant-desc">1 kcal → kJ 에너지 변환</span></div>
-                            <div class="constant-item" data-val="860"><span class="constant-val">860</span><span class="constant-desc">1 kWh → kcal 전열량 변환</span></div>
-                            <div class="constant-item" data-val="0.746"><span class="constant-val">0.746</span><span class="constant-desc">1 HP (영마력) → kW 동력 변환</span></div>
-                            <div class="constant-item" data-val="0.735"><span class="constant-val">0.735</span><span class="constant-desc">1 PS (불마력) → kW 동력 변환</span></div>
-                            <div class="constant-item" data-val="632.3"><span class="constant-val">632.3</span><span class="constant-desc">1 PS → kcal/h 시간당 열량 변환</span></div>
+                            <div class="constant-group-title">에너지 및 동력 변환</div>
+                            <div class="constant-item" data-val="4.1868"><span class="constant-val">4.1868</span><span class="constant-desc">1 kcal → kJ</span></div>
+                            <div class="constant-item" data-val="860"><span class="constant-val">860</span><span class="constant-desc">1 kWh → kcal</span></div>
+                            <div class="constant-item" data-val="0.746"><span class="constant-val">0.746</span><span class="constant-desc">1 HP → kW</span></div>
+                            <div class="constant-item" data-val="0.735"><span class="constant-val">0.735</span><span class="constant-desc">1 PS → kW</span></div>
+                            <div class="constant-item" data-val="632.3"><span class="constant-val">632.3</span><span class="constant-desc">1 PS → kcal/h</span></div>
                         </div>
                     </div>
+                </div>
                 </div>
             </div>
         </div>

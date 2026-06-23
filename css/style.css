@@ -1949,15 +1949,17 @@ transform: scale(1.2);             /* 살짝 커지는 효과 */
 .nav-item * {
   pointer-events: none !important;
 }
-/* --- 상수 모달창 스타일 (글래스모피즘) --- */
+
+/* --- 상수 모달창 스타일 (불투명 및 계산기 위 완벽 덮어쓰기) --- */
 #constant-modal {
-    position: absolute;
-    top: 5%; left: 3%; right: 3%; bottom: 5%;
-    background: rgba(18, 24, 36, 0.95);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--border-radius-md);
-    z-index: 2000;
+    position: absolute !important;
+    top: 0 !important; 
+    left: 0 !important; 
+    right: 0 !important; 
+    bottom: 0 !important; /* 계산기 카드 크기에 딱 맞게 100% 덮음 */
+    background: var(--bg-secondary) !important; /* 뒤가 비치지 않는 완전 불투명한 배경 */
+    border-radius: var(--border-radius-md) !important;
+    z-index: 9999 !important; /* 무조건 계산기 버튼들 위로 올라오게 강제 */
     display: flex;
     flex-direction: column;
     box-shadow: var(--shadow-lg);
@@ -1967,9 +1969,9 @@ transform: scale(1.2);             /* 살짝 커지는 효과 */
     transition: all 0.2s ease;
 }
 #constant-modal.active {
-    opacity: 1;
-    pointer-events: auto;
-    transform: scale(1);
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: scale(1) !important;
 }
 .constant-header {
     display: flex;
@@ -1977,9 +1979,11 @@ transform: scale(1.2);             /* 살짝 커지는 효과 */
     align-items: center;
     padding: 12px 16px;
     border-bottom: 1px solid var(--glass-border);
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--bg-tertiary); /* 헤더 영역도 불투명하게 처리 */
     color: var(--warning);
     font-weight: 700;
+    border-top-left-radius: var(--border-radius-md);
+    border-top-right-radius: var(--border-radius-md);
 }
 .constant-close-btn {
     background: none;
@@ -2005,7 +2009,7 @@ transform: scale(1.2);             /* 살짝 커지는 효과 */
     padding-bottom: 4px;
 }
 .constant-item {
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--glass-border);
     border-radius: var(--border-radius-sm);
     padding: 10px;
