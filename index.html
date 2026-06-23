@@ -363,35 +363,111 @@
                         <button id="constant-close-btn" class="constant-close-btn"><i class="fa-solid fa-xmark"></i></button>
                     </div>
                     <!-- 🔥 상수 모달 팝업 내부 (1줄 요약 버전) -->
+                    <!-- 🔥 상수 모달 팝업 내부 (kcal / kJ 분리 및 기호 완벽 추가) -->
                     <div class="constant-body">
+                        <!-- 1. 기초 상수 -->
                         <div>
                             <div class="constant-group-title">기초 상수</div>
-                            <div class="constant-item" data-val="3.141592"><span class="constant-desc">원주율 (π) :</span><span class="constant-val">3.141592</span></div>
-                            <div class="constant-item" data-val="9.80665"><span class="constant-desc">중력가속도 (g) :</span><span class="constant-val">9.80665</span></div>
-                            <div class="constant-item" data-val="0.287"><span class="constant-desc">공기 기체상수 (R) :</span><span class="constant-val">0.287</span></div>
+                            <div class="constant-item" data-val="3.141592">
+                                <span class="constant-desc">원주율 (π) :</span>
+                                <span class="constant-val">3.141592</span>
+                            </div>
+                            <div class="constant-item" data-val="9.80665">
+                                <span class="constant-desc">중력가속도 (g) :</span>
+                                <div><span class="constant-val">9.80665</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">m/s²</span></div>
+                            </div>
+                            <div class="constant-item" data-val="0.287">
+                                <span class="constant-desc">공기 기체상수 (R) :</span>
+                                <div><span class="constant-val">0.287</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">kJ/kg·K</span></div>
+                            </div>
                         </div>
+
+                        <!-- 2. 비열 (Specific Heat) -->
                         <div>
-                            <div class="constant-group-title">비열 및 잠열</div>
-                            <div class="constant-item" data-val="4.186"><span class="constant-desc">물의 비열 :</span><span class="constant-val">4.186</span></div>
-                            <div class="constant-item" data-val="2.093"><span class="constant-desc">얼음의 비열 :</span><span class="constant-val">2.093</span></div>
-                            <div class="constant-item" data-val="1.996"><span class="constant-desc">증기의 비열 :</span><span class="constant-val">1.996</span></div>
-                            <div class="constant-item" data-val="2257"><span class="constant-desc">물의 증발잠열 :</span><span class="constant-val">2257</span></div>
-                            <div class="constant-item" data-val="333.5"><span class="constant-desc">얼음의 융해잠열 :</span><span class="constant-val">333.5</span></div>
+                            <div class="constant-group-title">비열 (kJ / kcal)</div>
+                            <div class="constant-item" data-val="4.186">
+                                <span class="constant-desc">물 비열 (kJ) :</span>
+                                <div><span class="constant-val">4.186</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">kJ/kg·K</span></div>
+                            </div>
+                            <div class="constant-item" data-val="1">
+                                <span class="constant-desc">물 비열 (kcal) :</span>
+                                <div><span class="constant-val">1</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">kcal/kg·℃</span></div>
+                            </div>
+                            <div class="constant-item" data-val="2.093">
+                                <span class="constant-desc">얼음 비열 (kJ) :</span>
+                                <div><span class="constant-val">2.093</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">kJ/kg·K</span></div>
+                            </div>
+                            <div class="constant-item" data-val="0.5">
+                                <span class="constant-desc">얼음 비열 (kcal) :</span>
+                                <div><span class="constant-val">0.5</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">kcal/kg·℃</span></div>
+                            </div>
                         </div>
+
+                        <!-- 3. 잠열 (Latent Heat) -->
+                        <div>
+                            <div class="constant-group-title">잠열 (kJ / kcal)</div>
+                            <div class="constant-item" data-val="2257">
+                                <span class="constant-desc">물 증발잠열 (kJ) :</span>
+                                <div><span class="constant-val">2257</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">kJ/kg</span></div>
+                            </div>
+                            <div class="constant-item" data-val="539">
+                                <span class="constant-desc">물 증발잠열 (kcal) :</span>
+                                <div><span class="constant-val">539</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">kcal/kg</span></div>
+                            </div>
+                            <div class="constant-item" data-val="333.5">
+                                <span class="constant-desc">얼음 융해잠열 (kJ) :</span>
+                                <div><span class="constant-val">333.5</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">kJ/kg</span></div>
+                            </div>
+                            <div class="constant-item" data-val="79.68">
+                                <span class="constant-desc">얼음 융해잠열 (kcal) :</span>
+                                <div><span class="constant-val">79.68</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">kcal/kg</span></div>
+                            </div>
+                        </div>
+
+                        <!-- 4. 압력 환산 -->
                         <div>
                             <div class="constant-group-title">압력 환산 (1 atm)</div>
-                            <div class="constant-item" data-val="101.325"><span class="constant-desc">kPa :</span><span class="constant-val">101.325</span></div>
-                            <div class="constant-item" data-val="1.01325"><span class="constant-desc">bar :</span><span class="constant-val">1.01325</span></div>
-                            <div class="constant-item" data-val="760"><span class="constant-desc">mmHg :</span><span class="constant-val">760</span></div>
-                            <div class="constant-item" data-val="10.332"><span class="constant-desc">mH₂O (mAq) :</span><span class="constant-val">10.332</span></div>
+                            <div class="constant-item" data-val="101.325">
+                                <span class="constant-desc">대기압 :</span>
+                                <div><span class="constant-val">101.325</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">kPa</span></div>
+                            </div>
+                            <div class="constant-item" data-val="1.01325">
+                                <span class="constant-desc">대기압 :</span>
+                                <div><span class="constant-val">1.01325</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">bar</span></div>
+                            </div>
+                            <div class="constant-item" data-val="760">
+                                <span class="constant-desc">수은주 :</span>
+                                <div><span class="constant-val">760</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">mmHg</span></div>
+                            </div>
+                            <div class="constant-item" data-val="10.332">
+                                <span class="constant-desc">수두 :</span>
+                                <div><span class="constant-val">10.332</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">mH₂O</span></div>
+                            </div>
                         </div>
+
+                        <!-- 5. 에너지 변환 -->
                         <div>
                             <div class="constant-group-title">에너지 및 동력 변환</div>
-                            <div class="constant-item" data-val="4.1868"><span class="constant-desc">1 kcal → kJ :</span><span class="constant-val">4.1868</span></div>
-                            <div class="constant-item" data-val="860"><span class="constant-desc">1 kWh → kcal :</span><span class="constant-val">860</span></div>
-                            <div class="constant-item" data-val="0.746"><span class="constant-desc">1 HP → kW :</span><span class="constant-val">0.746</span></div>
-                            <div class="constant-item" data-val="0.735"><span class="constant-desc">1 PS → kW :</span><span class="constant-val">0.735</span></div>
-                            <div class="constant-item" data-val="632.3"><span class="constant-desc">1 PS → kcal/h :</span><span class="constant-val">632.3</span></div>
+                            <div class="constant-item" data-val="4.1868">
+                                <span class="constant-desc">1 kcal :</span>
+                                <div><span class="constant-val">4.1868</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">kJ</span></div>
+                            </div>
+                            <div class="constant-item" data-val="860">
+                                <span class="constant-desc">1 kWh :</span>
+                                <div><span class="constant-val">860</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">kcal</span></div>
+                            </div>
+                            <div class="constant-item" data-val="0.746">
+                                <span class="constant-desc">1 HP :</span>
+                                <div><span class="constant-val">0.746</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">kW</span></div>
+                            </div>
+                            <div class="constant-item" data-val="0.735">
+                                <span class="constant-desc">1 PS :</span>
+                                <div><span class="constant-val">0.735</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">kW</span></div>
+                            </div>
+                            <div class="constant-item" data-val="632.3">
+                                <span class="constant-desc">1 PS :</span>
+                                <div><span class="constant-val">632.3</span><span style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">kcal/h</span></div>
+                            </div>
                         </div>
                     </div>
 
