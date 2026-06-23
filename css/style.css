@@ -1942,40 +1942,52 @@ transform: scale(1.2);             /* 살짝 커지는 효과 */
 }
 
 /* ==========================================================================
-   성적 대시보드 상단 공백 제거 및 무조건 위쪽(Top) 정렬 최종 패치
+   성적 대시보드(#score-screen) 상단 공백 제거 및 무조건 위쪽(Top) 정렬
    ========================================================================== */
 
-/* 1. 성적 화면 활성화 시 메인 영역의 수직 중앙 정렬을 해제하고 위로 밀착 */
-.view-section.active-view#grading-screen {
+/* 1. 성적 화면이 활성화될 때 메인 컨텐츠(.app-content)의 수직 중앙 정렬 성향을 완전 파괴 */
+.app-content:has(#score-screen.active-view),
+body:has(#score-screen.active-view) .app-content {
   display: flex !important;
   flex-direction: column !important;
-  justify-content: flex-start !important; /* 수직 중앙 정렬 성향을 전면 파괴 */
+  justify-content: flex-start !important; /* 위쪽(Top) 밀착 정렬 */
+  padding-top: 10px !important; /* 상단 기본 패딩 30px에서 10px로 축소 */
 }
 
-/* 2. 대시보드 자체의 윗여백 및 데이터가 없을 때 생기는 마진 auto 버그 박멸 */
-#grading-screen {
+/* 2. 성적 화면(#score-screen) 자체의 윗여백 및 너비 밸런스 조정 */
+#score-screen {
   margin-top: 0 !important;
   padding-top: 0 !important;
   width: 100% !important;
 }
 
+/* 3. 대시보드 상단 타이틀 마진 축소 */
 .grading-dashboard-header {
-  margin-top: 5px !important; /* 상단 내비바 바로 밑에 예쁘게 안착 */
+  margin-top: 5px !important;
   margin-bottom: 12px !important;
 }
 
+/* 4. 데이터가 없을 때 정중앙에 배치되도록 강제하는 margin: auto 속성 완벽 해제 */
 .no-data-msg {
-  margin: 20px auto 0 auto !important; /* 상하 auto 정렬을 풀고 위로 당김 */
+  margin: 20px auto 0 auto !important; /* 위쪽 마진만 남기고 아래 수직 중앙정렬 해제 */
   padding: 20px 10px !important;
 }
 
-/* 3. 모바일 환경에서 휑하게 뜨는 윗공간 초정밀 압축 */
+/* 5. 활동 로그 / 순위 서브 탭 컨테이너 하단 여백 축소 */
+.sub-tab-container {
+  margin-bottom: 12px !important; /* 기존 24px에서 12px로 축소 */
+}
+
+/* ==========================================================================
+   모바일(768px 이하) 환경 초정밀 상단 밀착 대응
+   ========================================================================== */
 @media (max-width: 768px) {
-  .view-section.active-view#grading-screen ~ .app-content,
-  #grading-screen {
-    margin-top: 0 !important;
+  body:has(#score-screen.active-view) .app-content {
+    padding-top: 5px !important; /* 모바일은 상단 여백을 극소화 */
   }
-  .sub-tab-container {
-    margin: 8px 0 12px 0 !important; /* 활동로그/순위 버튼 주변 공백 압축 */
+  
+  .grading-dashboard-header h2 {
+    font-size: 18px !important;
+    margin-bottom: 4px !important;
   }
 }
