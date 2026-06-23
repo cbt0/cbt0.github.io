@@ -1167,9 +1167,9 @@ body {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: var(--border-radius-lg);
-    padding: 40px;
+    padding: 10px;
     max-width: 600px;
-    margin: 40px auto;
+    margin: 10px auto; /* 🔥 상단 여백을 10px로 확 줄임 */
     box-shadow: var(--shadow-md);
 }
 .settings-title {
@@ -1271,7 +1271,7 @@ body {
     }
     
     .settings-card {
-        margin: 20px auto;
+        margin: 0 auto; /* 🔥 모바일은 상하 마진을 아예 0으로 없앰 */
         padding: 24px;
     }
 }
@@ -1562,7 +1562,7 @@ body {
     width: 100%;
 }
 .grading-dashboard-header {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 
 .grading-dashboard-header h2 {
@@ -1586,7 +1586,7 @@ body {
 .user-dashboard-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 24px;
+    gap: 12px;
     margin-top: 12px;
 }
 
@@ -1707,7 +1707,7 @@ body {
 
 .no-data-msg {
     text-align: center;
-    padding: 30px 10px;
+    padding: 10px 10px;
     color: var(--text-muted);
     font-size: 14px;
     margin: auto;
@@ -2053,39 +2053,4 @@ transform: scale(1.2);             /* 살짝 커지는 효과 */
 .constant-desc {
     font-size: 13px; /* 11px에서 13px로 키움 */
     color: var(--text-secondary);
-}
-
-/* ==========================================================================
-   [최종 종결] 성적/순위/설정 화면 상단 밀착 및 수직 중앙 배치 원인 제거
-   ========================================================================== */
-
-/* 1. 대시보드 타이틀 및 서브 탭 컨테이너의 불필요한 아래 여백 압축 */
-.grading-dashboard-header {
-  margin-bottom: 12px !important;
-}
-.sub-tab-container {
-  margin-top: 0 !important;
-  margin-bottom: 12px !important;
-}
-
-/* 2. 데스크톱에서 내용이 가로(옆)로 배치될 때 위로 바짝 끌어올림 */
-.user-dashboard-row {
-  margin-top: 10px !important;
-  gap: 16px !important;
-}
-
-/* 3. 데이터가 없을 때 발생하는 마진 auto 버그(중앙 둥둥) 해제 및 상단 정렬 */
-.no-data-msg {
-  margin: 20px auto 0 auto !important; /* 상하 auto를 풀어서 위로 바짝 당김 */
-  padding: 20px 10px !important;
-}
-
-/* 4. 설정 화면의 거대한 윗쪽 추가 마진 제거 (문제 풀이 화면과 높이 완벽 통일) */
-.settings-card {
-    margin-top: 0 !important;
-}
-
-/* 5. 순위 탭 클릭 시 내용이 밑으로 푹 꺼지는 추가 윗여백 완벽 제거 */
-.ranking-container {
-    margin-top: 0 !important;
 }
