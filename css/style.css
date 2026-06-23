@@ -1942,23 +1942,26 @@ transform: scale(1.2);             /* 살짝 커지는 효과 */
 }
 
 /* ==========================================================================
-   성적 대시보드(#score-screen) 상단 공백 제거 및 무조건 위쪽(Top) 정렬
+   성적 대시보드(#grading-screen) 상단 공백 제거 및 무조건 위쪽(Top) 정렬
    ========================================================================== */
 
 /* 1. 성적 화면이 활성화될 때 메인 컨텐츠(.app-content)의 수직 중앙 정렬 성향을 완전 파괴 */
-.app-content:has(#score-screen.active-view),
-body:has(#score-screen.active-view) .app-content {
+.app-content:has(#grading-screen.active-view),
+body:has(#grading-screen.active-view) .app-content {
   display: flex !important;
   flex-direction: column !important;
   justify-content: flex-start !important; /* 위쪽(Top) 밀착 정렬 */
   padding-top: 10px !important; /* 상단 기본 패딩 30px에서 10px로 축소 */
 }
 
-/* 2. 성적 화면(#score-screen) 자체의 윗여백 및 너비 밸런스 조정 */
-#score-screen {
+/* 2. 성적 화면(#grading-screen) 자체의 윗여백 및 너비 밸런스 조정 */
+#grading-screen {
   margin-top: 0 !important;
   padding-top: 0 !important;
   width: 100% !important;
+  max-width: 1000px !important; /* 데스크톱 화면에서 쾌적한 넓이 유지 */
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 /* 3. 대시보드 상단 타이틀 마진 축소 */
@@ -1982,7 +1985,8 @@ body:has(#score-screen.active-view) .app-content {
    모바일(768px 이하) 환경 초정밀 상단 밀착 대응
    ========================================================================== */
 @media (max-width: 768px) {
-  body:has(#score-screen.active-view) .app-content {
+  .app-content:has(#grading-screen.active-view),
+  body:has(#grading-screen.active-view) .app-content {
     padding-top: 5px !important; /* 모바일은 상단 여백을 극소화 */
   }
   
