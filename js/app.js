@@ -939,18 +939,10 @@ function router() {
             quizScreen.classList.remove('show-quiz-sidebar');
         }
     } else if (hash === '#grading') {
+        // 🔥 수정된 부분: 문제 풀이 중이든 아니든 무조건 성적 대시보드를 엽니다.
         switchTabStyles('grading');
-        if (state.activeRound) {
-            showView('quiz');
-            const quizScreen = document.getElementById('quiz-screen');
-            if (quizScreen) {
-                quizScreen.classList.add('show-quiz-sidebar');
-                quizScreen.classList.remove('show-quiz-main');
-            }
-        } else {
-            showView('grading');
-            renderGradingDashboard();
-        }
+        showView('grading');
+        renderGradingDashboard();
     } else if (hash === '#settings') {
         switchTabStyles('settings');
         showView('settings');
