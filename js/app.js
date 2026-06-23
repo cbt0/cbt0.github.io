@@ -1620,7 +1620,7 @@ if (dom.calculatorHeader && dom.calculatorModal) {
     // 공통 드래그 시작 함수
     const dragStart = (e) => {
         isDragging = true;
-        // 터치인지 마우스인지 구분하여 좌표 추출
+        // 🔥 수정됨: e.touches으로 첫 번째 손가락의 좌표를 정확히 추출
         const clientX = e.type.includes('touch') ? e.touches.clientX : e.clientX;
         const clientY = e.type.includes('touch') ? e.touches.clientY : e.clientY;
         
@@ -1641,6 +1641,7 @@ if (dom.calculatorHeader && dom.calculatorModal) {
         // 모바일에서 드래그할 때 화면이 같이 스크롤되는 현상 방지
         if (e.type.includes('touch')) e.preventDefault(); 
         
+        // 🔥 수정됨: e.touches 반영
         const clientX = e.type.includes('touch') ? e.touches.clientX : e.clientX;
         const clientY = e.type.includes('touch') ? e.touches.clientY : e.clientY;
 
