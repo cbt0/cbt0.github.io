@@ -245,7 +245,11 @@ const dom = {
     resultMsgText: document.getElementById('result-msg-text'),
     resultReviewBtn: document.getElementById('result-review-btn'),
     resultCloseBtn: document.getElementById('result-close-btn'),
-    scoreRingBar: document.getElementById('score-ring-bar')
+    scoreRingBar: document.getElementById('score-ring-bar'),
+    // (기존 코드) Modal Result elements 부근 아래에 추가
+    questionJumpModal: document.getElementById('question-jump-modal'),
+    questionJumpGrid: document.getElementById('question-jump-grid'),
+    questionJumpCloseBtn: document.getElementById('question-jump-close-btn') // 맨 마지막 항목은 쉼
 };
 
 // Subject mapping details
@@ -845,7 +849,26 @@ function registerEventListeners() {
         dom.resultModal.classList.remove('active');
         navigateTo(state.activeSubject);
     });
+    // --- 문제 번호 뱃지 클릭 시 이동 모달 띄우기 ---
+    if (dom.questionNum) {
+        dom.questionNum.addEventListener('click', openQuestionJumpModal);
+    }
 
+    // --- 문제 이동 모달 닫기 ---
+    if (dom.questionJumpCloseBtn) {
+        dom.questionJumpCloseBtn.addEventListener('click', () => {
+        if (dom.questionJumpModal) dom.questionJumpModal.classList.remove('active');
+        });
+    }
+
+    // --- 문제 이동 모달 바깥 영역(어두운 배경) 클릭 시 닫기 ---
+    if (dom.questionJumpModal) {
+        dom.questionJumpModal.addEventListener('click', (e) => {
+        if (e.target === dom.questionJumpModal) {
+            dom.questionJumpModal.classList.remove('active');
+        }
+        });
+    }
     // Hash Routing Listeners
     window.addEventListener('hashchange', router);
     window.addEventListener('load', router);

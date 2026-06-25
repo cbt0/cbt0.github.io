@@ -797,14 +797,22 @@ body {
 }
 
 .question-num-badge {
-    background: var(--primary);
-    color: white;
-    font-family: 'Outfit', sans-serif;
-    font-weight: 800;
-    font-size: 15px;
-    padding: 6px 12px;
-    border-radius: 8px;
-    flex-shrink: 0;
+  background: var(--primary);
+  color: white;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  cursor: pointer; /* 👈 마우스를 올렸을 때 클릭 가능한 손가락 모양으로 변경 */
+  transition: all var(--transition-fast); /* 👈 부드러운 애니메이션 효과 */
+}
+
+/* 추가: 마우스를 올렸을 때 살짝 커지며 빛나는 효과 */
+.question-num-badge:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-glow);
 }
 
 .question-text {

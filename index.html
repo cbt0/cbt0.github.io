@@ -593,6 +593,22 @@
         </div>
     </div>
 
+    <!-- 문제 이동 모달 -->
+    <div id="question-jump-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 400px; padding: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 20px;">
+        <h3 style="margin: 0; font-size: 18px; color: var(--text-primary);">문제 이동</h3>
+        <button id="question-jump-close-btn" style="background: none; border: none; color: var(--danger); font-size: 20px; cursor: pointer;">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        </div>
+        <!-- 기존 사이드바의 마킹 그리드 디자인 클래스 재활용 -->
+        <div id="question-jump-grid" class="marking-grid" style="max-height: 60vh; overflow-y: auto; padding-right: 4px;">
+        <!-- 문제 번호 버튼들이 JS로 렌더링됨 -->
+        </div>
+    </div>
+    </div>
+
   
 
     <!-- Custom JavaScript -->
