@@ -6493,7 +6493,7 @@
         "answer": 1
       },
       {
-        "num": 55,
+        "num": 57,
         "question": "다음과 같은 [데이터]에서 5개월 단순이동 평균법에 의하여 6월의 수요를 예측한 값은 얼마인가? (단, 여유시간은 없다고 가정한다)<table class=\"nested-table\"><tr><th>월</th><td>1월</td><td>2월</td><td>3월</td><td>4월</td><td>5월</td></tr><tr><th>판매량</th><td>100대</td><td>110대</td><td>120대</td><td>130대</td><td>140대</td></tr></table>",
         "options": [
           "120대",
