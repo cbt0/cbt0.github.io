@@ -1636,58 +1636,58 @@ function renderLeaderboard() {
 
 // --- 계산기 드래그 앤 드롭 이동 로직 (PC 마우스 & 모바일 터치 통합) ---
 if (dom.calculatorHeader && dom.calculatorModal) {
-    const calcCard = dom.calculatorModal.querySelector('.calculator-card');
-    let isDragging = false;
-    let startX, startY, initialLeft, initialTop;
+  const calcCard = dom.calculatorModal.querySelector('.calculator-card');
+  let isDragging = false;
+  let startX, startY, initialLeft, initialTop;
 
-    // 공통 드래그 시작 함수
-    const dragStart = (e) => {
-        isDragging = true;
-        // 🔥 수정됨: e.touches으로 첫 번째 손가락의 좌표를 정확히 추출
-        const clientX = e.type.includes('touch') ? e.touches.clientX : e.clientX;
-        const clientY = e.type.includes('touch') ? e.touches.clientY : e.clientY;
-        
-        startX = clientX;
-        startY = clientY;
-        const rect = calcCard.getBoundingClientRect();
-        initialLeft = rect.left;
-        initialTop = rect.top;
-        calcCard.style.left = initialLeft + 'px';
-        calcCard.style.top = initialTop + 'px';
-        calcCard.style.right = 'auto'; // right 속성 해제
-        calcCard.style.transform = 'none'; // 혹시 모를 충돌 방지
-    };
+  // 공통 드래그 시작 함수
+  const dragStart = (e) => {
+    isDragging = true;
+    // 🐛 버그 수정: e.touches을 사용하여 첫 번째 손가락의 좌표를 정확히 추출
+    const clientX = e.type.includes('touch') ? e.touches.clientX : e.clientX;
+    const clientY = e.type.includes('touch') ? e.touches.clientY : e.clientY;
+    
+    startX = clientX;
+    startY = clientY;
+    const rect = calcCard.getBoundingClientRect();
+    initialLeft = rect.left;
+    initialTop = rect.top;
+    calcCard.style.left = initialLeft + 'px';
+    calcCard.style.top = initialTop + 'px';
+    calcCard.style.right = 'auto'; // right 속성 해제
+    calcCard.style.transform = 'none'; // 혹시 모를 충돌 방지
+  };
 
-    // 공통 드래그 이동 함수
-    const dragMove = (e) => {
-        if (!isDragging) return;
-        // 모바일에서 드래그할 때 화면이 같이 스크롤되는 현상 방지
-        if (e.type.includes('touch')) e.preventDefault(); 
-        
-        // 🔥 수정됨: e.touches 반영
-        const clientX = e.type.includes('touch') ? e.touches.clientX : e.clientX;
-        const clientY = e.type.includes('touch') ? e.touches.clientY : e.clientY;
+  // 공통 드래그 이동 함수
+  const dragMove = (e) => {
+    if (!isDragging) return;
+    // 모바일에서 드래그할 때 화면이 같이 스크롤되는 현상 방지
+    if (e.type.includes('touch')) e.preventDefault();
+    
+    // 🐛 버그 수정: e.touches 적용
+    const clientX = e.type.includes('touch') ? e.touches.clientX : e.clientX;
+    const clientY = e.type.includes('touch') ? e.touches.clientY : e.clientY;
+    
+    const dx = clientX - startX;
+    const dy = clientY - startY;
+    calcCard.style.left = (initialLeft + dx) + 'px';
+    calcCard.style.top = (initialTop + dy) + 'px';
+  };
 
-        const dx = clientX - startX;
-        const dy = clientY - startY;
-        calcCard.style.left = (initialLeft + dx) + 'px';
-        calcCard.style.top = (initialTop + dy) + 'px';
-    };
+  // 공통 드래그 종료 함수
+  const dragEnd = () => {
+    isDragging = false;
+  };
 
-    // 공통 드래그 종료 함수
-    const dragEnd = () => {
-        isDragging = false;
-    };
+  // 🖱 PC 마우스 이벤트 등록
+  dom.calculatorHeader.addEventListener('mousedown', dragStart);
+  document.addEventListener('mousemove', dragMove);
+  document.addEventListener('mouseup', dragEnd);
 
-    // 🖱️ PC 마우스 이벤트 등록
-    dom.calculatorHeader.addEventListener('mousedown', dragStart);
-    document.addEventListener('mousemove', dragMove);
-    document.addEventListener('mouseup', dragEnd);
-
-    // 👆 모바일 터치 이벤트 등록
-    dom.calculatorHeader.addEventListener('touchstart', dragStart, { passive: false });
-    document.addEventListener('touchmove', dragMove, { passive: false });
-    document.addEventListener('touchend', dragEnd);
+  // 👆 모바일 터치 이벤트 등록
+  dom.calculatorHeader.addEventListener('touchstart', dragStart, { passive: false });
+  document.addEventListener('touchmove', dragMove, { passive: false });
+  document.addEventListener('touchend', dragEnd);
 }
 
 // --- [최종 완벽판] 상수 모달 제어 및 입력 로직 (이벤트 위임 방식) ---
