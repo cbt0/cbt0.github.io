@@ -1404,7 +1404,7 @@
         "answer": 3
       },
       {
-        "num": 59,
+        "num": 57,
         "question": "어떤 공장에서 작업을 하는데 있어서 소요되는 기간과 비용이 다음 표와 같을 때 비용구배는? (단, 활동시간의 단위는 일로 계산한다)<table class=\"nested-table\"><tr><th colspan=\"2\">정상 작업</th><th colspan=\"2\">특급 작업</th></tr><tr><th>기간</th><th>비용</th><th>기간</th><th>비용</th></tr><tr><td>15일</td><td>150만원</td><td>10일</td><td>200만원</td></tr></table>",
         "options": [
           "50,000원",
@@ -9414,7 +9414,7 @@
       },
       {
         "num": 58,
-        "question": "다음 [표]를 참조하여 5개월 단순이동평균법으로 7월의 수요를 예측하면 몇 개인가?",
+        "question": "다음 [표]를 참조하여 5개월 단순이동평균법으로 7월의 수요를 예측하면 몇 개인가?<table class=\"nested-table\"><tr><th>월</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td></tr><tr><th>판매실적</th><td>48</td><td>50</td><td>53</td><td>60</td><td>64</td><td>68</td></tr></table>",
         "options": [
           "55개",
           "57개",
@@ -11740,7 +11740,7 @@
         "answer": 2
       },
       {
-        "num": 57,
+        "num": 55,
         "question": "다음과 같은 [데이터]에서 5개월 이동평균법에 의하여 8월의 수요를 예측한 값은 얼마인가?<table class=\"nested-table\"><tr><th>월</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr><tr><th>판매실적</th><td>100</td><td>90</td><td>110</td><td>100</td><td>115</td><td>110</td><td>100</td></tr></table>",
         "options": [
           "103",
