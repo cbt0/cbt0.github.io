@@ -1724,3 +1724,59 @@ document.addEventListener('click', (e) => {
         if (constantModal) constantModal.classList.remove('active');
     }
 });
+
+// ==========================================
+// 문제 이동 팝업 제어 함수
+// ==========================================
+function openQuestionJumpModal() {
+  if (!state.currentQuestions || state.currentQuestions.length === 0) return;
+  if (!dom.questionJumpGrid || !dom.questionJumpModal) return;
+
+  // 기존 내용을 비우고 새로 그림
+  dom.questionJumpGrid.innerHTML = '';
+  
+  state.currentQuestions.forEach((q, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'marking-btn';
+    btn.innerText = q.num;
+    
+    // 1. 필터 조건(틀린 문제만 보기 등)에 맞지 않으면 숨김
+    if (!doesQuestionMatchFilter(idx)) {
+      btn.style.display = 'none';
+    }
+    
+    // 2. 현재 화면에 띄워진 문제 번호 하이라이트
+    if (state.activeQuestionIndex === idx) {
+      btn.classList.add('active');
+    }
+    
+    // 3. 풀이 모드 vs 리뷰 모드에 따른 색상 처리
+    if (state.quizMode === 'solving') {
+      // 푼 문제는 회색 불 들어오게
+      if (state.userAnswers[idx] !== undefined) {
+        btn.classList.add('solved');
+      }
+    } else if (state.quizMode === 'review') {
+      // 리뷰 모드에서는 정답/오답 색상 표시
+      const userAnswer = state.userAnswers[idx];
+      const correctAnswer = q.answer;
+      if (userAnswer === correctAnswer) {
+        btn.classList.add('correct');
+      } else if (userAnswer !== undefined) {
+        btn.classList.add('wrong');
+      }
+    }
+    
+    // 4. 클릭 시 해당 문제로 점프하고 모달 닫기
+    btn.addEventListener('click', () => {
+      state.activeQuestionIndex = idx;
+      renderActiveQuestion();
+      dom.questionJumpModal.classList.remove('active');
+    });
+    
+    dom.questionJumpGrid.appendChild(btn);
+  });
+  
+  // 모달 화면에 표시
+  dom.questionJumpModal.classList.add('active');
+}
