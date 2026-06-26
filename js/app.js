@@ -1205,12 +1205,12 @@ function renderActiveQuestion() {
     dom.questionNum.innerText = String(q.num).padStart(2, '0');
     dom.questionText.innerHTML = q.question;
     
-    // Options text binding
+    // Options HTML binding
     dom.choices.forEach((btn, idx) => {
         const choiceNum = idx + 1;
         const textSpan = btn.querySelector('.choice-text');
         
-        textSpan.innerText = q.options[idx] || '';
+        textSpan.innerHTML = q.options[idx] || '';
         
         // Reset option styles
         btn.className = 'choice-item';
