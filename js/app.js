@@ -5,6 +5,25 @@
 
 // Global Idle Timer for Auto-Logout
 let idleTimer;
+// ==========================================
+// 🚨 글로벌 에러 및 통신 끊김 추적 로거
+// ==========================================
+window.addEventListener('error', function(event) {
+    const errorMsg = `[시스템 에러] ${event.message} (Line: ${event.lineno})`;
+    console.error(errorMsg);
+    // 로그인 상태라면 대시보드 활동 로그에 즉시 기록
+    if (state.currentUser) {
+        logUserActivity(errorMsg);
+    }
+});
+
+window.addEventListener('unhandledrejection', function(event) {
+    const errorMsg = `[통신/비동기 에러] 네트워크 불안정 또는 파일 로드 실패`;
+    console.error(errorMsg, event.reason);
+    if (state.currentUser) {
+        logUserActivity(errorMsg);
+    }
+});
 
 // Application Global State
 const state = {
@@ -823,11 +842,17 @@ function registerEventListeners() {
     }
     
     // Manual Toggle Hint
-    dom.hintBtn.addEventListener('click', toggleHintBox);
+    //dom.hintBtn.addEventListener('click', toggleHintBox);
+    // Manual Toggle Hint (화면 튕김 방지 적용)
+    dom.hintBtn.addEventListener('click', (e) => {
+        e.preventDefault(); // 👈 [핵심] 버튼 본연의 새로고침/이동 속성을 완벽히 차단합니다.
+        toggleHintBox();
+    });
     
-    // Choice selection buttons
+\   // Choice selection buttons (화면 튕김 방지 적용)
     dom.choices.forEach(btn => {
         btn.addEventListener('click', (e) => {
+            e.preventDefault(); // 👈 [핵심] 클릭 시 1번 문제나 홈으로 튕기는 현상 차단
             const choiceNum = parseInt(e.currentTarget.getAttribute('data-choice'));
             handleSelectAnswer(choiceNum);
         });
