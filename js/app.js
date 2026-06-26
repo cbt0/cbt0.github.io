@@ -849,7 +849,7 @@ function registerEventListeners() {
         toggleHintBox();
     });
     
-\   // Choice selection buttons (화면 튕김 방지 적용)
+    // Choice selection buttons (화면 튕김 방지 적용)
     dom.choices.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault(); // 👈 [핵심] 클릭 시 1번 문제나 홈으로 튕기는 현상 차단
