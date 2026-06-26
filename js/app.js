@@ -798,9 +798,15 @@ function registerEventListeners() {
     // Back Button in Round Selector
     dom.roundsBackBtn.addEventListener('click', () => navigateTo('home'));
     
-    // Quiz navigation buttons
-    dom.prevBtn.addEventListener('click', prevQuestion);
-    dom.nextBtn.addEventListener('click', nextQuestion);
+    // Quiz navigation buttons (화면 튕김 방지 적용)
+    dom.prevBtn.addEventListener('click', (e) => {
+        e.preventDefault(); // 👈 [핵심] 이전 버튼 클릭 시 1번으로 튕기는 현상 완벽 차단
+        prevQuestion();
+    });
+    dom.nextBtn.addEventListener('click', (e) => {
+        e.preventDefault(); // 👈 [핵심] 다음 버튼 클릭 시 튕김 방지
+        nextQuestion();
+    });
     
     // Question filter select
     if (dom.questionFilter) {
