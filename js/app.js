@@ -701,7 +701,8 @@ function registerEventListeners() {
     
     // Login Button on Dashboard
     if (dom.loginSubmitBtn) {
-        dom.loginSubmitBtn.addEventListener('click', () => {
+        dom.loginSubmitBtn.addEventListener('click', (e) => {
+            e.preventDefault(); // 👈 [핵심] 로그인 시 화면 강제 새로고침 완벽 차단
             login();
         });
     }
@@ -780,6 +781,7 @@ function registerEventListeners() {
     if (dom.loginPw) {
         dom.loginPw.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
+                e.preventDefault(); // 👈 [핵심] 엔터키 입력 시 화면 강제 새로고침 완벽 차단
                 login();
             }
         });
