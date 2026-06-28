@@ -1,3 +1,6 @@
+<!-- ======================================================= -->
+<!-- CBT 웹 앱 Version: V1.961                                 -->
+<!-- ======================================================= -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -132,22 +135,22 @@
                 </div>
             </div>
         </section>
-
-        <!-- 2. Rounds Selection Screen -->
+        <!-- ========================================== -->
+        <!-- 2. 과목별 회차 선택 화면 (Rounds Screen)   -->
+        <!-- ========================================== -->
         <section id="rounds-screen" class="view-section">
+            <!-- 뒤로가기 버튼 영역 (기존 유지) -->
             <div class="back-nav">
                 <button class="back-btn" id="rounds-back-btn">
                     <i class="fa-solid fa-arrow-left"></i> 홈으로 돌아가기
                 </button>
             </div>
-            <div class="rounds-header">
-                <h2 id="rounds-title" class="rounds-subject-title">가스기능사</h2>
-                <p class="rounds-subtitle">풀어볼 기출문제의 회차를 선택해 주세요.</p>
-                <button id="btn-review-wrong" class="btn btn-warning">🔥 오답 모아 풀기</button>
-            </div>
-            
-            <div class="rounds-grid" id="rounds-list">
-                <!-- Dynamically generated rounds card list -->
+
+            <!-- 🔥 [V1.961 신규] 여러 시리즈(기출, 모의 등)가 동적으로 생성될 뼈대 컨테이너 -->
+            <!-- 주의: 기존의 고정된 제목(h2), 오답버튼, rounds-list는 지워야 합니다. -->
+            <div id="series-container">
+                <!-- app.js가 JSON 데이터를 읽어들여 이곳에 자동으로 
+                     [시리즈 제목 : 오답풀기] + [회차버튼 그리드] 세트를 반복해서 만들어냅니다. -->
             </div>
         </section>
 
