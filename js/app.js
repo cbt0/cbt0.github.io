@@ -1,5 +1,5 @@
 /**
- * Antigravity CBT - Core Application Script
+ * Antigravity CBT - Core Application Script V1.961
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
 
@@ -1009,11 +1009,14 @@ function router() {
 }
 
 // Render available rounds grid
+// Render available rounds grid (V1.961 다중 시리즈 그룹핑 적용)
+// Render available rounds grid (V1.961 다중 시리즈 그룹핑 및 기존 디자인 완벽 복원)
 function renderRoundsList(subject) {
-    const details = subjectDetails[subject];
-    dom.roundsTitle.innerText = details.name;
-    dom.roundsList.innerHTML = '';
-    
+    const seriesContainer = document.getElementById('series-container');
+    if (!seriesContainer) return;
+
+    seriesContainer.innerHTML = ''; // 화면 초기화
+
     let roundsData = [];
     if (subject === 'gas') {
         roundsData = state.exams.gas || [];
@@ -1024,48 +1027,117 @@ function renderRoundsList(subject) {
     } else {
         roundsData = mockExams[subject] || [];
     }
-    
+
+    // 데이터 로딩 지연 처리
     if (roundsData.length === 0) {
-        dom.roundsList.innerHTML = `
-            <div class="no-data-msg" style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">
-                <i class="fa-solid fa-spinner fa-spin" style="font-size: 32px; margin-bottom: 15px; display: block; color: var(--primary);"></i>
-                기출문제 데이터를 로딩하고 있습니다. 잠시만 기다려주세요...
-            </div>
-        `;
-        // Try again in 500ms
+        seriesContainer.innerHTML = `<div class="no-data-msg" style="text-align: center; padding: 40px; color: var(--text-muted);">
+            <i class="fa-solid fa-spinner fa-spin" style="font-size: 32px; margin-bottom: 15px; display: block; color: var(--primary);"></i>
+            기출문제 데이터를 로딩하고 있습니다. 잠시만 기다려주세요...
+        </div>`;
         setTimeout(() => renderRoundsList(subject), 500);
         return;
     }
-    
-    roundsData.forEach((round, index) => {
-        const card = document.createElement('div');
-        card.className = 'round-card';
-        
-        // Load stats from localStorage
-        const progressKey = `cbt_progress_${state.currentUser ? state.currentUser + '_' : ''}${subject}_${round.year}_${round.round}`;
-        const progress = JSON.parse(localStorage.getItem(progressKey)) || { score: 0, total: 0, completed: false };
-        
-        let completedText = '';
-        if (progress.completed) {
-            completedText = `<span class="round-complete-status">풀이완료 (${progress.score}/${progress.total})</span>`;
+
+    // 🔥 1. JSON 데이터를 '시리즈 제목(round.subject)' 기준으로 그룹화
+    const groupedRounds = {};
+    roundsData.forEach(round => {
+        // [안전장치]: 과목명이 비어있을 경우 기존 설정된 이름으로 대처하여 앱 멈춤 방지
+        const seriesName = round.subject || (subjectDetails[subject] ? subjectDetails[subject].name : '기출문제');
+        if (!groupedRounds[seriesName]) {
+            groupedRounds[seriesName] = [];
         }
-        
-        card.innerHTML = `
-            <div class="round-info-line">
-                <span class="round-title">${round.year ? `${round.year}년 ` : ''}${round.round}</span>
-                <span class="round-desc">(${round.questions.length}문제)</span>
-                ${completedText}
-            </div>
-        `;
-        
-        card.addEventListener('click', () => {
-            startQuiz(round);
+        groupedRounds[seriesName].push(round);
+    });
+
+    // 🔥 2. 그룹별로 UI 블록 반복 생성 (선생님의 기존 디자인 100% 복원)
+    Object.keys(groupedRounds).forEach(seriesName => {
+        const seriesData = groupedRounds[seriesName];
+
+        // A. 시리즈 전체를 감싸는 래퍼 박스
+        const seriesWrapper = document.createElement('div');
+        seriesWrapper.className = 'series-wrapper';
+        seriesWrapper.style.marginBottom = '50px'; // 시리즈 간 넉넉한 간격 유지
+
+        // B. 상단 헤더 영역 (기존 rounds-header 스타일 완벽 적용)
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'rounds-header';
+        headerDiv.style.display = 'flex';
+        headerDiv.style.alignItems = 'center';
+        headerDiv.style.justifyContent = 'space-between';
+        headerDiv.style.borderBottom = '1px solid var(--glass-border)';
+        headerDiv.style.paddingBottom = '15px';
+        headerDiv.style.marginBottom = '20px';
+
+        // B-1. 제목과 부제목을 묶어주는 뼈대
+        const titleBox = document.createElement('div');
+
+        const titleH2 = document.createElement('h2');
+        titleH2.className = 'rounds-subject-title';
+        titleH2.innerText = seriesName;
+        titleH2.style.margin = '0';
+        titleH2.style.fontSize = '26px';
+
+        // [복구 완료] 날려먹었던 부제목 텍스트 원상복구
+        const subTitleP = document.createElement('p');
+        subTitleP.className = 'rounds-subtitle';
+        subTitleP.innerText = '풀어볼 기출문제의 회차를 선택해 주세요.';
+        subTitleP.style.margin = '5px 0 0 0';
+        subTitleP.style.fontSize = '14px';
+
+        titleBox.appendChild(titleH2);
+        titleBox.appendChild(subTitleP);
+
+        // B-2. 오답 모아 풀기 버튼 [복구 완료] (기존 btn-warning 불꽃 디자인 원상복구)
+        const reviewBtn = document.createElement('button');
+        reviewBtn.className = 'btn btn-warning'; 
+        reviewBtn.innerHTML = '🔥 오답 모아 풀기';
+        reviewBtn.addEventListener('click', () => {
+            reviewWrongAnswers();
         });
-        
-        dom.roundsList.appendChild(card);
+
+        headerDiv.appendChild(titleBox);
+        headerDiv.appendChild(reviewBtn);
+
+        // C. 하단 회차 단추들을 담을 그리드 영역
+        const gridDiv = document.createElement('div');
+        gridDiv.className = 'rounds-grid';
+
+        seriesData.forEach(round => {
+            const card = document.createElement('div');
+            card.className = 'round-card';
+
+            // 진행도(score/total) 표시 가져오기
+            const progressKey = `cbt_progress_${state.currentUser ? state.currentUser + '_' : ''}${subject}_${round.year}_${round.round}`;
+            const progress = JSON.parse(localStorage.getItem(progressKey)) || { score: 0, total: 0, completed: false };
+
+            let completedText = '';
+            if (progress.completed) {
+                completedText = `<span class="round-complete-status">풀이완료 (${progress.score}/${progress.total})</span>`;
+            }
+
+            // V8.4에서 수정한 "2017년 1회" 또는 "실전모의 1회" 단추 렌더링
+            card.innerHTML = `
+                <div class="round-info-line">
+                    <span class="round-title">${round.year ? `${round.year}년 ` : ''}${round.round}</span>
+                    <span class="round-desc">(${round.questions.length}문제)</span>
+                    ${completedText}
+                </div>
+            `;
+
+            // 클릭 시 해당 회차 퀴즈 시작
+            card.addEventListener('click', () => {
+                startQuiz(round);
+            });
+
+            gridDiv.appendChild(card);
+        });
+
+        // D. 뼈대에 조립하여 최종 부착
+        seriesWrapper.appendChild(headerDiv);
+        seriesWrapper.appendChild(gridDiv);
+        seriesContainer.appendChild(seriesWrapper);
     });
 }
-
 // Start Quiz Session
 function startQuiz(round, isResume = false) {
     state.activeRound = round;
