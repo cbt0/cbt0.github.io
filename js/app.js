@@ -1,5 +1,5 @@
 /**
- * Antigravity CBT - Core Application Script V1.98
+ * Antigravity CBT - Core Application Script V1.99
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
 

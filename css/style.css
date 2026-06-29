@@ -1468,7 +1468,7 @@ body {
     
     .choice-item {
         font-size: 18px; /* 보기 폰트 확대 */
-        padding: 10px 10px; /* 좌우 여백 최적화 */
+        padding: 0; /* 이중 패딩 제거로 수직 간격 정상화 */
         text-align: left;
     }
     
