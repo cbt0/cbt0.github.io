@@ -13,13 +13,14 @@
     --primary-glow: rgba(99, 102, 241, 0.35);
     
     --success: #10b981;
-    --success-bg: rgba(16, 185, 129, 0.15);
+    --success-bg: rgba(16, 185, 129, 0.25); /* 연한 녹색 조금 더 진하게 (0.15 -> 0.25) */
     --success-border: rgba(16, 185, 129, 0.4);
     
     --danger: #ff4444; /* 핑크빛을 없앤 선명한 빨간색 */
     --danger-bg: rgba(255, 68, 68, 0.2); /* 배경을 살짝 더 진하게 (0.15 -> 0.2) */
     --danger-border: rgba(255, 68, 68, 0.6); /* 테두리를 더 또렷하게 (0.4 -> 0.6) */
     --wrong: #f97316; /* 오답을 나타내는 주황색 */
+    --wrong-bg: rgba(249, 115, 22, 0.25); /* 연한 주황도 동일한 비율(0.25)로 조금 더 진하게 설정 */
     --wrong-hover: #ea580c; /* 오답 호버 시 조금 더 어두운 주황색 */
     
     --warning: #fbbf24;
@@ -734,13 +735,13 @@ body {
 }
 
 .marking-btn.wrong {
-    background: var(--wrong) !important;
-    color: #ffffff !important;
+    background: var(--wrong-bg) !important;
+    color: var(--wrong) !important;
     border-color: var(--wrong) !important;
 }
 .marking-btn.wrong:hover {
-    background: var(--wrong-hover) !important;
-    border-color: var(--wrong-hover) !important;
+    background: var(--wrong) !important;
+    border-color: #ffffff !important;
     color: #ffffff !important;
 }
 
@@ -914,14 +915,14 @@ body {
 }
 
 .choice-item.wrong {
-    background: var(--wrong) !important;
+    background: var(--wrong-bg) !important;
     border-color: var(--wrong) !important;
-    color: #ffffff !important;
+    color: var(--wrong) !important;
 }
 
 .choice-item.wrong .choice-num,
 .choice-item.wrong .choice-status-icon {
-    color: #ffffff !important;
+    color: var(--wrong) !important;
 }
 
 /* reveal correct answer even if not selected */
