@@ -366,16 +366,22 @@ function autoSaveSession() {
     if (!state.currentUser || !state.activeRound || state.quizMode !== 'solving') return;
     if (state.activeRound.sessionType === 'wrong-review') return; // 👈 오답 복습 회차는 자동저장 생략
     
-    const key = `cbt_${state.currentUser}_autosave_session`;
     const sessionData = {
         subject: state.activeSubject,
         activeRound: state.activeRound,
         activeQuestionIndex: state.activeQuestionIndex,
         userAnswers: state.userAnswers,
-        timeSpentSeconds: state.timeSpentSeconds
+        timeSpentSeconds: state.timeSpentSeconds,
+        timestamp: Date.now()
     };
     
-    localStorage.setItem(key, JSON.stringify(sessionData));
+    // 1. 전체 마지막 이어하기 세션 저장
+    const globalKey = `cbt_${state.currentUser}_autosave_session`;
+    localStorage.setItem(globalKey, JSON.stringify(sessionData));
+    
+    // 2. 해당 과목별 이어하기 세션 저장
+    const subjectKey = `cbt_${state.currentUser}_autosave_session_${state.activeSubject}`;
+    localStorage.setItem(subjectKey, JSON.stringify(sessionData));
 }
 
 // Reset Idle Timeout Auto-Logout Timer
@@ -1064,7 +1070,7 @@ function renderRoundsList(subject) {
         seriesWrapper.className = 'series-wrapper';
         seriesWrapper.style.marginBottom = '50px'; // 시리즈 간 넉넉한 간격 유지
 
-        // B. 상단 헤더 영역 (기존 rounds-header 스타일 완벽 적용)
+        // B. 상단 헤더 영역 (과목명, 이어하기, 오답풀기 3개 단추 배치)
         const headerDiv = document.createElement('div');
         headerDiv.className = 'rounds-header';
         headerDiv.style.display = 'flex';
@@ -1073,35 +1079,73 @@ function renderRoundsList(subject) {
         headerDiv.style.borderBottom = '1px solid var(--glass-border)';
         headerDiv.style.paddingBottom = '15px';
         headerDiv.style.marginBottom = '20px';
+        headerDiv.style.gap = '8px'; // 단추 간 좁은 모바일 화면 대응 간격
 
-        // B-1. 제목과 부제목을 묶어주는 뼈대
-        const titleBox = document.createElement('div');
+        // B-1. 과목명 단추 (클릭 시 홈으로 이동)
+        const subjectBtn = document.createElement('button');
+        subjectBtn.className = 'btn btn-outline';
+        subjectBtn.innerText = seriesName;
+        subjectBtn.style.flex = '1';
+        subjectBtn.style.textAlign = 'center';
+        subjectBtn.style.whiteSpace = 'nowrap';
+        subjectBtn.style.overflow = 'hidden';
+        subjectBtn.style.textOverflow = 'ellipsis';
+        subjectBtn.style.fontSize = '14px';
+        subjectBtn.style.padding = '8px 4px'; // 좁은 화면 대비 패딩 축소
+        subjectBtn.addEventListener('click', () => {
+            window.location.hash = '#home';
+        });
 
-        const titleH2 = document.createElement('h2');
-        titleH2.className = 'rounds-subject-title';
-        titleH2.innerText = seriesName;
-        titleH2.style.margin = '0';
-        titleH2.style.fontSize = '26px';
+        // B-2. 과목별 이어하기 단추
+        const resumeBtn = document.createElement('button');
+        resumeBtn.className = 'btn btn-primary';
+        resumeBtn.innerText = '이어하기';
+        resumeBtn.style.flex = '1';
+        resumeBtn.style.fontSize = '14px';
+        resumeBtn.style.padding = '8px 4px';
+        
+        const sessionKey = `cbt_${state.currentUser}_autosave_session_${subject}`;
+        const sessionStr = localStorage.getItem(sessionKey);
+        
+        if (!sessionStr) {
+            resumeBtn.disabled = true;
+            resumeBtn.style.opacity = '0.5';
+            resumeBtn.style.cursor = 'not-allowed';
+        } else {
+            resumeBtn.addEventListener('click', () => {
+                try {
+                    const session = JSON.parse(sessionStr);
+                    if (session && session.activeRound && Array.isArray(session.activeRound.questions) && session.activeRound.questions.length > 0) {
+                        state.activeSubject = session.subject;
+                        state.activeRound = session.activeRound;
+                        state.activeQuestionIndex = session.activeQuestionIndex;
+                        state.userAnswers = session.userAnswers || {};
+                        state.timeSpentSeconds = session.timeSpentSeconds || 0;
+                        
+                        startQuiz(session.activeRound, true);
+                    } else {
+                        alert('이어할 수 있는 유효한 풀이 세션이 없습니다.');
+                    }
+                } catch (e) {
+                    console.error('Error resuming session:', e);
+                    alert('이어하기 중 오류가 발생했습니다.');
+                }
+            });
+        }
 
-        // [복구 완료] 날려먹었던 부제목 텍스트 원상복구
-        const subTitleP = document.createElement('p');
-        subTitleP.className = 'rounds-subtitle';
-        subTitleP.innerText = '풀어볼 기출문제의 회차를 선택해 주세요.';
-        subTitleP.style.margin = '5px 0 0 0';
-        subTitleP.style.fontSize = '14px';
-
-        titleBox.appendChild(titleH2);
-        titleBox.appendChild(subTitleP);
-
-        // B-2. 오답 모아 풀기 버튼 [복구 완료] (기존 btn-warning 불꽃 디자인 원상복구)
+        // B-3. 오답풀기 단추 (불필요한 이모지 제거하여 단축폭 축소)
         const reviewBtn = document.createElement('button');
         reviewBtn.className = 'btn btn-warning'; 
-        reviewBtn.innerHTML = '🔥 오답 모아 풀기';
+        reviewBtn.innerText = '오답풀기';
+        reviewBtn.style.flex = '1';
+        reviewBtn.style.fontSize = '14px';
+        reviewBtn.style.padding = '8px 4px';
         reviewBtn.addEventListener('click', () => {
             reviewWrongAnswers();
         });
 
-        headerDiv.appendChild(titleBox);
+        headerDiv.appendChild(subjectBtn);
+        headerDiv.appendChild(resumeBtn);
         headerDiv.appendChild(reviewBtn);
 
         // C. 하단 회차 단추들을 담을 그리드 영역
@@ -1503,6 +1547,7 @@ function submitExam() {
         saveLeaderboardEntry(gameScore, Math.round(baseScore), state.timeSpentSeconds);
         localStorage.removeItem(`cbt_${state.currentUser}_last_solved`);
         localStorage.removeItem(`cbt_${state.currentUser}_autosave_session`);
+        localStorage.removeItem(`cbt_${state.currentUser}_autosave_session_${state.activeSubject}`);
         updateHomeResumeButton();
     }
     
