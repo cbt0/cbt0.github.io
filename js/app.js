@@ -1,5 +1,5 @@
 /**
- * Antigravity CBT - Core Application Script V1.97
+ * Antigravity CBT - Core Application Script V1.98
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
 
@@ -193,7 +193,6 @@ const dom = {
         grading: document.getElementById('nav-grading'),
         settings: document.getElementById('nav-settings')
     },
-    navBack: document.getElementById('nav-back'),
     themeToggle: document.getElementById('theme-toggle'),
     loginSubmitBtn: document.getElementById('login-submit-btn'),
     
@@ -702,16 +701,7 @@ function registerEventListeners() {
         });
     });
     
-    // Back Button Click -> Go Back
-    if (dom.navBack) {
-        dom.navBack.addEventListener('click', () => {
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                navigateTo('home');
-            }
-        });
-    }
+
     
     // Theme Toggle
     if (dom.themeToggle) {
