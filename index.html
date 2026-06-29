@@ -366,6 +366,22 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- 시스템 로그 아코디언 카드 -->
+            <div class="settings-card" style="margin-top: 24px;">
+                <h2 class="settings-title" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px; margin-bottom: 16px;">
+                    <span><i class="fa-solid fa-terminal"></i> 시스템 로그</span>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="clear-logs-btn" class="btn btn-sm btn-outline" style="font-size: 11px; padding: 4px 8px; height: auto;">지우기</button>
+                        <button id="copy-logs-btn" class="btn btn-sm btn-primary" style="font-size: 11px; padding: 4px 8px; height: auto;">복사</button>
+                    </div>
+                </h2>
+                <div class="settings-list">
+                    <div id="system-logs-container" style="max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: var(--border-radius-sm); padding: 12px; font-family: 'Courier New', Courier, monospace; font-size: 11px; line-height: 1.5; color: var(--text-secondary);">
+                        <div style="color: var(--text-muted); text-align: center; padding: 20px;">로그 내역이 없습니다.</div>
+                    </div>
+                </div>
+            </div>
         </section>
     </main>
 

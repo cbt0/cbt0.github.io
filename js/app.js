@@ -656,6 +656,7 @@ async function loadQuestions() {
         }
     } catch (error) {
         console.error('가스기능사 기출문제 파일 로드 에러:', error);
+        logSystem('ERROR', '가스기능사 기출문제 파일 로드 실패', error.stack || error.message || error);
         state.exams.gas = [];
     }
 
@@ -670,6 +671,7 @@ async function loadQuestions() {
         }
     } catch (error) {
         console.error('에너지관리기능장 기출문제 파일 로드 에러:', error);
+        logSystem('ERROR', '에너지관리기능장 기출문제 파일 로드 실패', error.stack || error.message || error);
         state.exams.energy_master = [];
     }
 
@@ -684,6 +686,7 @@ async function loadQuestions() {
         }
     } catch (error) {
         console.error('에너지관리산업기사 기출문제 파일 로드 에러:', error);
+        logSystem('ERROR', '에너지관리산업기사 기출문제 파일 로드 실패', error.stack || error.message || error);
         state.exams.energy_industrial = [];
     }
 }
@@ -782,6 +785,7 @@ function registerEventListeners() {
                 }
             } catch (e) {
                 console.error('Error resuming session:', e);
+                logSystem('ERROR', '홈 화면 이어하기 세션 복원 오류', e.stack || e.message || e);
                 localStorage.removeItem(key);
                 if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
                 alert('이어하기 중 오류가 발생했습니다.');
@@ -914,6 +918,40 @@ function registerEventListeners() {
         }
         });
     }
+    
+    // 시스템 로그 지우기 / 복사 이벤트 등록
+    const clearLogsBtn = document.getElementById('clear-logs-btn');
+    if (clearLogsBtn) {
+        clearLogsBtn.addEventListener('click', () => {
+            if (confirm('모든 시스템 로그를 삭제하시겠습니까?')) {
+                const user = state.currentUser || 'GUEST';
+                localStorage.removeItem(`cbt_${user}_system_logs`);
+                renderSystemLogs();
+            }
+        });
+    }
+    
+    const copyLogsBtn = document.getElementById('copy-logs-btn');
+    if (copyLogsBtn) {
+        copyLogsBtn.addEventListener('click', () => {
+            const user = state.currentUser || 'GUEST';
+            let logs = [];
+            try {
+                logs = JSON.parse(localStorage.getItem(`cbt_${user}_system_logs`)) || [];
+            } catch (e) {
+                logs = [];
+            }
+            if (logs.length === 0) {
+                alert('복사할 로그가 없습니다.');
+                return;
+            }
+            const text = logs.map(l => `[${l.timestamp}] [${l.level}] ${l.message}\n${l.details}\n----------------------------------`).join('\n');
+            navigator.clipboard.writeText(text)
+                .then(() => alert('로그가 클립보드에 복사되었습니다.'))
+                .catch(err => alert('복사 실패: ' + err));
+        });
+    }
+
     // Hash Routing Listeners
     window.addEventListener('hashchange', router);
     window.addEventListener('load', router);
@@ -1014,6 +1052,7 @@ function router() {
     } else if (hash === '#settings') {
         switchTabStyles('settings');
         showView('settings');
+        renderSystemLogs();
     } else {
         // Fallback for unknown hashes
         window.location.hash = '#home';
@@ -1128,6 +1167,7 @@ function renderRoundsList(subject) {
                     }
                 } catch (e) {
                     console.error('Error resuming session:', e);
+                    logSystem('ERROR', `과목 상세(${subject}) 이어하기 세션 복원 오류`, e.stack || e.message || e);
                     alert('이어하기 중 오류가 발생했습니다.');
                 }
             });
@@ -1969,6 +2009,119 @@ function openQuestionJumpModal() {
     dom.questionJumpGrid.appendChild(btn);
   });
   
-  // 모달 화면에 표시
+    // 모달 화면에 표시
   dom.questionJumpModal.classList.add('active');
 }
+
+// ==========================================
+// 시스템 로그 시스템 (강력한 로깅 및 상세 조회)
+// ==========================================
+
+// 시스템 로그 기록
+function logSystem(level, message, details = '') {
+    const user = state.currentUser || 'GUEST';
+    
+    let logs = [];
+    try {
+        logs = JSON.parse(localStorage.getItem(`cbt_${user}_system_logs`)) || [];
+    } catch (e) {
+        logs = [];
+    }
+    
+    if (!Array.isArray(logs)) logs = [];
+    
+    const newLog = {
+        timestamp: new Date().toLocaleString(),
+        level: level.toUpperCase(),
+        message: message,
+        details: details
+    };
+    
+    logs.unshift(newLog);
+    if (logs.length > 300) { // 성능을 위해 최근 300개만 유지
+        logs.length = 300;
+    }
+    
+    try {
+        localStorage.setItem(`cbt_${user}_system_logs`, JSON.stringify(logs));
+    } catch (e) {
+        console.error('Failed to save system logs:', e);
+    }
+    
+    // 설정 화면에 있는 경우 즉시 반영
+    if (window.location.hash === '#settings') {
+        renderSystemLogs();
+    }
+}
+
+// 시스템 로그 렌더링
+function renderSystemLogs() {
+    const container = document.getElementById('system-logs-container');
+    if (!container) return;
+    
+    const user = state.currentUser || 'GUEST';
+    let logs = [];
+    try {
+        logs = JSON.parse(localStorage.getItem(`cbt_${user}_system_logs`)) || [];
+    } catch (e) {
+        logs = [];
+    }
+    
+    if (!Array.isArray(logs) || logs.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">로그 내역이 없습니다.</div>';
+        return;
+    }
+    
+    container.innerHTML = '';
+    logs.forEach((log, idx) => {
+        const item = document.createElement('div');
+        item.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
+        item.style.padding = '8px 4px';
+        item.style.cursor = 'pointer';
+        item.style.transition = 'background-color 0.2s';
+        
+        let levelColor = '#94a3b8'; // info
+        if (log.level === 'ERROR') levelColor = '#ff4444';
+        if (log.level === 'WARNING') levelColor = '#fbbf24';
+        
+        item.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                <span style="color: ${levelColor}; font-weight: bold; min-width: 60px;">[${log.level}]</span>
+                <span style="flex: 1; word-break: break-all; color: var(--text-primary);">${log.message}</span>
+                <span style="color: var(--text-muted); font-size: 10px; white-space: nowrap;">${log.timestamp}</span>
+            </div>
+            <div id="log-detail-${idx}" style="display: none; background: rgba(0, 0, 0, 0.25); border-left: 2px solid ${levelColor}; padding: 8px; margin-top: 6px; white-space: pre-wrap; word-break: break-all; font-size: 11px; color: var(--text-secondary);">
+                ${log.details ? log.details : '상세 정보가 없습니다.'}
+            </div>
+        `;
+        
+        item.addEventListener('mouseover', () => {
+            item.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+        });
+        item.addEventListener('mouseout', () => {
+            item.style.backgroundColor = 'transparent';
+        });
+        item.addEventListener('click', () => {
+            const detail = item.querySelector(`#log-detail-${idx}`);
+            if (detail) {
+                const isHidden = detail.style.display === 'none';
+                detail.style.display = isHidden ? 'block' : 'none';
+            }
+        });
+        
+        container.appendChild(item);
+    });
+}
+
+// 전역 에러 핸들러 등록
+window.onerror = function (message, source, lineno, colno, error) {
+    const details = `Source: ${source}\nLine: ${lineno}:${colno}\nStack: ${error ? error.stack : 'N/A'}\nActive Subject: ${state.activeSubject}\nQuiz Mode: ${state.quizMode}\nRound: ${state.activeRound ? state.activeRound.round : 'N/A'}`;
+    logSystem('ERROR', `전역 스크립트 오류: ${message}`, details);
+    return false; // 콘솔에도 나오게 함
+};
+
+window.onunhandledrejection = function (event) {
+    const error = event.reason;
+    const details = `Stack: ${error && error.stack ? error.stack : 'N/A'}\nReason: ${error}\nActive Subject: ${state.activeSubject}\nQuiz Mode: ${state.quizMode}`;
+    logSystem('ERROR', `비동기 거부 오류: ${error ? error.message : 'N/A'}`, details);
+};
