@@ -2074,6 +2074,8 @@ transform: scale(1.2);             /* 살짝 커지는 효과 */
 /* [3] 버튼 내부 글자가 터치 씹는 현상 방지 및 파란 박스 제거 */
 .btn,
 .choice-item,
+.choice-num-btn,
+.choice-text-btn,
 .nav-item {
   -webkit-user-select: none;
   user-select: none;  
@@ -2083,9 +2085,10 @@ transform: scale(1.2);             /* 살짝 커지는 효과 */
 
 /* 버튼 내부 아이콘 및 글자의 터치 가로채기 방지 */
 .btn *,
-.choice-item *,
+.choice-num-btn *,
+.choice-text-btn *,
 .nav-item * {
-  pointer-events: none !important;
+  pointer-events: none !important; /* 글자만 1x1cm 크기로 씹히는 현상 최종 차단 */
 }
 
 /* --- 상수 모달창 스타일 (불투명 및 계산기 위 완벽 덮어쓰기) --- */
