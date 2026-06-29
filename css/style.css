@@ -676,9 +676,9 @@ body {
 
 .marking-btn {
     aspect-ratio: 1;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--glass-border);
-    color: var(--text-secondary);
+    background: rgba(56, 189, 248, 0.12); /* 미선택: 연한 하늘색 */
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    color: #38bdf8; /* 하늘색 */
     font-size: 13px;
     font-weight: 600;
     border-radius: 50%;
@@ -690,57 +690,51 @@ body {
 }
 
 .marking-btn:hover {
-    border-color: var(--text-primary);
-    color: var(--text-primary);
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.25);
+    color: #ffffff;
 }
 
 .marking-btn.active {
-    border-color: var(--primary);
-    color: var(--text-primary);
-    box-shadow: 0 0 10px var(--primary-glow);
+    border-color: #ffffff;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
 }
 
-.marking-btn.correct.active {
-    border-color: var(--primary);
-    color: var(--text-primary);
+/* 정답 (일반 마킹 / 채점 결과 정답) -> 녹색 */
+.marking-btn.correct,
+.marking-btn.solved {
+    background: var(--success) !important;
+    color: #ffffff !important;
+    border-color: var(--success) !important;
 }
-
-.marking-btn.wrong.active {
-    border-color: var(--primary) !important;
+.marking-btn.correct:hover,
+.marking-btn.solved:hover {
+    background: #059669 !important; /* 조금 진한 녹색 */
+    border-color: #ffffff !important;
     color: #ffffff !important;
 }
 
-.marking-btn.active:not(.correct):not(.wrong) {
-    background: var(--bg-primary);
+/* 체크 (검토 필요) -> 주황색 */
+.marking-btn.checked {
+    background: #f97316 !important; /* 주황색 */
+    color: #ffffff !important;
+    border-color: #f97316 !important;
+}
+.marking-btn.checked:hover {
+    background: #ea580c !important; /* 조금 진한 주황색 */
+    border-color: #ffffff !important;
+    color: #ffffff !important;
 }
 
-.marking-btn.solved {
-    background: var(--primary-glow);
-    color: var(--text-primary);
-    border-color: rgba(99, 102, 241, 0.4);
-}
-.marking-btn.solved:hover {
-    border-color: var(--text-primary) !important;
-    color: var(--text-primary) !important;
-}
-
-.marking-btn.correct {
-    background: var(--success-bg);
-    color: var(--success);
-    border-color: var(--success);
-}
-.marking-btn.correct:hover {
-    border-color: var(--text-primary) !important;
-    color: var(--text-primary) !important;
-}
-
+/* 오답 (채점 결과 오답) -> 빨간색 */
 .marking-btn.wrong {
-    background: var(--wrong-bg) !important;
-    color: var(--wrong) !important;
-    border-color: var(--wrong) !important;
+    background: var(--danger) !important; /* 빨간색 */
+    color: #ffffff !important;
+    border-color: var(--danger) !important;
 }
 .marking-btn.wrong:hover {
-    background: var(--wrong) !important;
+    background: #dc2626 !important; /* 조금 진한 빨간색 */
     border-color: #ffffff !important;
     color: #ffffff !important;
 }
@@ -844,6 +838,38 @@ body {
   box-shadow: var(--shadow-glow);
 }
 
+/* 추가: 문제 번호 배지 상태별 색상 (맞춘 건 녹색, 틀린 건 빨간색) */
+.question-num-badge.correct {
+    background: var(--success) !important;
+    border: 1px solid transparent;
+}
+.question-num-badge.correct:hover {
+    border-color: var(--text-primary) !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+.question-num-badge.wrong {
+    background: var(--danger) !important;
+    border: 1px solid transparent;
+}
+.question-num-badge.wrong:hover {
+    border-color: var(--text-primary) !important;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.4);
+}
+
+/* 추가: 리뷰 모드 시 보기 버튼 호버 색상 조절 */
+.choice-item.correct .choice-text-btn:hover,
+.choice-item.reveal-correct .choice-text-btn:hover {
+    background: rgba(16, 185, 129, 0.3) !important;
+    border-color: var(--success) !important;
+}
+
+.choice-item.wrong .choice-text-btn:hover {
+    background: var(--danger) !important;
+    border-color: var(--danger) !important;
+    color: #ffffff !important;
+}
+
 .question-text {
     font-size: 20px;
     font-weight: 500;
@@ -859,79 +885,141 @@ body {
     margin-bottom: 35px;
 }
 
+/* 개편된 보기 문항 (.choice-item) 디자인 */
 .choice-item {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--border-radius-md);
-    padding: 12px 12px;
-    color: var(--text-primary);
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 20px;
-    text-align: left;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 15px;
+    gap: 12px;
+    width: 100%;
+}
+
+/* 1. 번호 버튼 (.choice-num-btn) */
+.choice-num-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(56, 189, 248, 0.12); /* 미선택: 연한 하늘색 */
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    color: #38bdf8; /* 하늘색 */
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
     outline: none;
     transition: all var(--transition-fast);
 }
 
-.choice-item:hover {
+.choice-num-btn:hover {
+    background: rgba(249, 115, 22, 0.15); /* 호버 시 주황색 기운 (체크 유도) */
+    border-color: rgba(249, 115, 22, 0.4);
+    color: #f97316;
+}
+
+/* 2. 내용 지문 버튼 (.choice-text-btn) */
+.choice-text-btn {
+    flex-grow: 1;
+    min-height: 48px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-md);
+    padding: 10px 16px;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 18px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    outline: none;
+    transition: all var(--transition-fast);
+}
+
+.choice-text-btn:hover {
     border-color: var(--primary);
     background: rgba(255, 255, 255, 0.02);
 }
 
-.choice-num {
-    font-weight: 700;
-    font-size: 18px;
-    color: var(--primary);
+/* 3. 체크 오버레이 아이콘 */
+.choice-num-btn .check-overlay {
+    display: none; /* 기본 비활성화 */
 }
 
-.choice-text {
-    flex-grow: 1;
-}
-
-.choice-status-icon {
-    font-size: 14px;
-    color: var(--text-muted);
-}
-
-/* Choice States */
-.choice-item.selected {
+/* 4. 선택(마킹) 상태 스타일 (.selected) */
+/* 4-1) 지문 선택됨 */
+.choice-item.selected .choice-text-btn {
     border-color: var(--primary);
     background: rgba(99, 102, 241, 0.06);
 }
+/* 4-2) 번호 선택됨 -> 녹색 */
+.choice-item.selected .choice-num-btn {
+    background: var(--success) !important;
+    color: #ffffff !important;
+    border-color: var(--success) !important;
+}
 
-.choice-item.correct {
+/* 5. 체크(검토 필요) 상태 스타일 (.checked) */
+/* 5-1) 번호 선택됨 -> 녹색 */
+.choice-item.checked .choice-num-btn {
+    background: var(--success) !important;
+    color: #ffffff !important;
+    border-color: var(--success) !important;
+}
+/* 5-2) 지문도 미세한 활성화 */
+.choice-item.checked .choice-text-btn {
+    border-color: rgba(249, 115, 22, 0.4);
+    background: rgba(249, 115, 22, 0.03);
+}
+/* 5-3) 주황색 체크 기호 오버레이 활성화 */
+.choice-item.checked .choice-num-btn .check-overlay {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #f97316 !important; /* 선명한 주황색 */
+    font-size: 20px;
+    font-weight: 900;
+    -webkit-text-stroke: 1px #ffffff; /* 가독성을 위한 흰색 테두리 */
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+}
+
+/* 6. 제출 후 채점 스타일 (리뷰 모드) */
+/* 6-1) 맞춘 문항 (.correct) -> 녹색 */
+.choice-item.correct .choice-num-btn {
+    background: var(--success) !important;
+    color: #ffffff !important;
+    border-color: var(--success) !important;
+}
+.choice-item.correct .choice-text-btn {
     background: var(--success-bg) !important;
     border-color: var(--success) !important;
     color: var(--success) !important;
 }
-
-.choice-item.correct .choice-num,
-.choice-item.correct .choice-status-icon {
+/* 6-2) 내가 쓴 오답 (.wrong) -> 빨간색 */
+.choice-item.wrong .choice-num-btn {
+    background: var(--danger) !important;
+    color: #ffffff !important;
+    border-color: var(--danger) !important;
+}
+.choice-item.wrong .choice-text-btn {
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: var(--danger) !important;
+    color: var(--danger) !important;
+}
+/* 6-3) 실제 정답 미선택 문항 (.reveal-correct) -> 테두리 녹색 */
+.choice-item.reveal-correct .choice-num-btn {
+    border-color: var(--success) !important;
     color: var(--success) !important;
+    background: rgba(16, 185, 129, 0.1) !important;
 }
-
-.choice-item.wrong {
-    background: var(--wrong-bg) !important;
-    border-color: var(--wrong) !important;
-    color: var(--wrong) !important;
-}
-
-.choice-item.wrong .choice-num,
-.choice-item.wrong .choice-status-icon {
-    color: var(--wrong) !important;
-}
-
-/* reveal correct answer even if not selected */
-.choice-item.reveal-correct {
-  border-color: var(--success);
-  background: rgba(16, 185, 129, 0.15); /* 🔥 0.05 -> 0.15로 올려서 눈에 띄게 변경 */
-}
-.choice-item.reveal-correct .choice-num {
-    color: var(--success);
+.choice-item.reveal-correct .choice-text-btn {
+    border-color: var(--success) !important;
+    background: rgba(16, 185, 129, 0.1) !important;
 }
 
 /* Action block below choices */

@@ -32,6 +32,7 @@ const state = {
     activeRound: null,      // Active round object
     activeQuestionIndex: 0, // 0 to 59
     userAnswers: {},        // {questionIndex: selectedOption}
+    checkedQuestions: {},   // {questionIndex: true/false} (체크 마킹 여부)
     quizMode: 'solving',    // 'solving' (active test), 'review' (checking answers after submission)
     timerInterval: null,
     timeSpentSeconds: 0,
@@ -370,6 +371,7 @@ function autoSaveSession() {
         activeRound: state.activeRound,
         activeQuestionIndex: state.activeQuestionIndex,
         userAnswers: state.userAnswers,
+        checkedQuestions: state.checkedQuestions,
         timeSpentSeconds: state.timeSpentSeconds,
         timestamp: Date.now()
     };
@@ -781,6 +783,7 @@ function registerEventListeners() {
                     state.activeRound = session.activeRound;
                     state.activeQuestionIndex = session.activeQuestionIndex;
                     state.userAnswers = session.userAnswers || {};
+                    state.checkedQuestions = session.checkedQuestions || {};
                     state.timeSpentSeconds = session.timeSpentSeconds || 0;
                     
                     // Call startQuiz with isResume = true
@@ -877,13 +880,24 @@ function registerEventListeners() {
         toggleHintBox();
     });
     
-    // Choice selection buttons (화면 튕김 방지 적용)
-    dom.choices.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault(); // 👈 [핵심] 클릭 시 1번 문제나 홈으로 튕기는 현상 차단
-            const choiceNum = parseInt(e.currentTarget.getAttribute('data-choice'));
-            handleSelectAnswer(choiceNum);
-        });
+    // Choice selection buttons (화면 튕김 방지 및 번호/지문 클릭 분리)
+    document.querySelectorAll('.choice-item').forEach(item => {
+        const numBtn = item.querySelector('.choice-num-btn');
+        const textBtn = item.querySelector('.choice-text-btn');
+        const choiceNum = parseInt(item.getAttribute('data-choice'));
+        
+        if (numBtn) {
+            numBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                handleSelectAnswer(choiceNum, true); // 번호 클릭 -> 체크 모드
+            });
+        }
+        if (textBtn) {
+            textBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                handleSelectAnswer(choiceNum, false); // 지문 클릭 -> 일반 마킹 모드
+            });
+        }
     });
     
     // Submit Exam
@@ -1161,6 +1175,7 @@ function renderRoundsList(subject) {
                         state.activeRound = session.activeRound;
                         state.activeQuestionIndex = session.activeQuestionIndex;
                         state.userAnswers = session.userAnswers || {};
+                        state.checkedQuestions = session.checkedQuestions || {};
                         state.timeSpentSeconds = session.timeSpentSeconds || 0;
                         
                         startQuiz(session.activeRound, true);
@@ -1252,6 +1267,7 @@ function startQuiz(round, isResume = false) {
     if (!isResume) {
         state.activeQuestionIndex = 0;
         state.userAnswers = {};
+        state.checkedQuestions = {};
         state.timeSpentSeconds = 0;
         state.questionFilter = 'all';
         if (dom.questionFilter) {
@@ -1328,6 +1344,9 @@ function doesQuestionMatchFilter(index) {
     if (state.questionFilter === 'unanswered') {
         return userAnswer === undefined;
     }
+    if (state.questionFilter === 'checked') {
+        return state.checkedQuestions[index] === true;
+    }
     return true;
 }
 
@@ -1362,14 +1381,24 @@ function updateMarkingStatus() {
         btn.className = 'marking-btn';
         btn.style.display = doesQuestionMatchFilter(idx) ? 'inline-flex' : 'none';
         
-        // Correct/Incorrect colored background for both solving and review modes
         const userAnswer = state.userAnswers[idx];
         if (userAnswer !== undefined && userAnswer !== null) {
-            const correctAnswer = q.answer;
-            if (Number(userAnswer) === Number(correctAnswer)) {
-                btn.classList.add('correct');
-            } else {
-                btn.classList.add('wrong');
+            if (state.quizMode === 'solving') {
+                // 풀이 도중에는 정답/오답 유출 없이, 일반 마킹(solved=녹색) vs 체크 마킹(checked=주황색) 구분
+                const isChecked = state.checkedQuestions[idx] === true;
+                if (isChecked) {
+                    btn.classList.add('checked');
+                } else {
+                    btn.classList.add('solved');
+                }
+            } else if (state.quizMode === 'review') {
+                // 리뷰 모드일 때만 채점 결과(correct=녹색, wrong=빨간색) 반영
+                const correctAnswer = q.answer;
+                if (Number(userAnswer) === Number(correctAnswer)) {
+                    btn.classList.add('correct');
+                } else {
+                    btn.classList.add('wrong');
+                }
             }
         }
         
@@ -1417,26 +1446,60 @@ function renderActiveQuestion() {
     dom.questionNum.innerText = String(q.num).padStart(2, '0');
     dom.questionText.innerHTML = q.question;
     
+    // Sync active question num badge color based on grading (맞춘 건 녹색, 틀린 건 빨간색, 안 푼 건 하늘색/파란색)
+    if (dom.questionNum) {
+        dom.questionNum.className = 'question-num-badge'; // 기본화
+        const userAnswer = state.userAnswers[state.activeQuestionIndex];
+        if (userAnswer !== undefined && userAnswer !== null) {
+            const isCorrect = Number(userAnswer) === Number(q.answer);
+            if (isCorrect) {
+                dom.questionNum.classList.add('correct');
+            } else {
+                dom.questionNum.classList.add('wrong');
+            }
+        }
+    }
+    
     // Options HTML binding
-    dom.choices.forEach((btn, idx) => {
+    dom.choices.forEach((item, idx) => {
         const choiceNum = idx + 1;
-        const textSpan = btn.querySelector('.choice-text');
-        
-        textSpan.innerHTML = q.options[idx] || '';
+        const textBtn = item.querySelector('.choice-text-btn');
+        if (textBtn) {
+            textBtn.innerHTML = q.options[idx] || '';
+        }
         
         // Reset option styles
-        btn.className = 'choice-item';
+        item.className = 'choice-item';
         
-        // If question was already answered
         const userAnswer = state.userAnswers[state.activeQuestionIndex];
         const correctAnswer = q.answer;
         
-        if (userAnswer !== undefined) {
-            // Apply correct/wrong decoration
-            if (choiceNum === correctAnswer) {
-                btn.classList.add('correct');
-            } else if (choiceNum === userAnswer) {
-                btn.classList.add('wrong');
+        if (userAnswer !== undefined && userAnswer !== null) {
+            if (state.quizMode === 'solving') {
+                // 1) 풀이 모드: 정오답 유출 방지 및 selected/checked 표시
+                if (choiceNum === userAnswer) {
+                    const isChecked = state.checkedQuestions[state.activeQuestionIndex] === true;
+                    if (isChecked) {
+                        item.classList.add('checked');
+                    } else {
+                        item.classList.add('selected');
+                    }
+                }
+            } else if (state.quizMode === 'review') {
+                // 2) 리뷰 모드: 채점 결과 데코레이션
+                if (Number(userAnswer) === Number(correctAnswer)) {
+                    // 맞춘 문항: 정답 보기만 초록색으로 칠함
+                    if (choiceNum === correctAnswer) {
+                        item.classList.add('correct');
+                    }
+                } else {
+                    // 틀린 문항: 고른 답은 빨강, 실제 정답은 reveal-correct로 칠함
+                    if (choiceNum === correctAnswer) {
+                        item.classList.add('reveal-correct');
+                    } else if (choiceNum === userAnswer) {
+                        item.classList.add('wrong');
+                    }
+                }
             }
         }
     });
@@ -1445,11 +1508,10 @@ function renderActiveQuestion() {
     dom.explanationText.innerHTML = q.hint || '이 문제에 대한 별도 해설 정보가 없습니다.';
     
     const userAnswer = state.userAnswers[state.activeQuestionIndex];
-    if (userAnswer !== undefined) {
-        // Automatically open the hint box when answered!
+    // 리뷰 모드일 때만 이미 푼 문제의 해설 박스를 자동으로 열어줌! (풀이 중엔 닫음)
+    if (userAnswer !== undefined && state.quizMode === 'review') {
         dom.explanationBox.classList.remove('collapsed');
     } else {
-        // Keep collapsed for new questions
         dom.explanationBox.classList.add('collapsed');
     }
     
@@ -1464,18 +1526,51 @@ function renderActiveQuestion() {
     autoSaveSession();
 }
 
-// Choice Click logic
-function handleSelectAnswer(choiceNum) {
-    // If in review mode or already answered, block selection
+// Choice Click logic (번호 클릭 시 체크 모드 토글, 지문 클릭 시 일반 마킹으로 전이)
+function handleSelectAnswer(choiceNum, isCheckMode = false) {
     if (state.quizMode === 'review') return;
-    if (state.userAnswers[state.activeQuestionIndex] !== undefined) return;
     
-    // Save answer
-    state.userAnswers[state.activeQuestionIndex] = choiceNum;
+    const activeIdx = state.activeQuestionIndex;
+    const currentAnswer = state.userAnswers[activeIdx];
+    const isCurrentlyChecked = state.checkedQuestions[activeIdx] === true;
     
-    // Render current question updates (apply colors, open hint box)
-    // (⚠️ 내부에서 updateMarkingStatus()를 트리거하여 OMR판의 정/오답 색상도 함께 동기화됩니다.)
+    if (isCheckMode) {
+        // [번호 버튼 클릭 시 -> 체크 검토 정답 상태로]
+        if (currentAnswer === choiceNum) {
+            if (isCurrentlyChecked) {
+                // 이미 체크 상태이면 토글하여 마킹 전체 해제
+                delete state.userAnswers[activeIdx];
+                delete state.checkedQuestions[activeIdx];
+            } else {
+                // 일반 마킹 상태였다면 체크 상태로 전이
+                state.checkedQuestions[activeIdx] = true;
+            }
+        } else {
+            // 아직 아무 마킹도 없었거나 다른 번호가 마킹된 상태라면
+            state.userAnswers[activeIdx] = choiceNum;
+            state.checkedQuestions[activeIdx] = true;
+        }
+    } else {
+        // [지문(내용) 버튼 클릭 시 -> 확신 정답 마킹 상태로]
+        if (currentAnswer === choiceNum) {
+            if (!isCurrentlyChecked) {
+                // 이미 확신 상태라면 토글하여 마킹 전체 해제
+                delete state.userAnswers[activeIdx];
+                delete state.checkedQuestions[activeIdx];
+            } else {
+                // 체크 상태였다면 확신(일반) 마킹 상태로 전이 (체크 해제)
+                state.checkedQuestions[activeIdx] = false;
+            }
+        } else {
+            // 아직 아무 마킹도 없었거나 다른 번호가 마킹된 상태라면
+            state.userAnswers[activeIdx] = choiceNum;
+            state.checkedQuestions[activeIdx] = false;
+        }
+    }
+    
+    // Render current question updates (apply colors, OMR sync)
     renderActiveQuestion();
+    updateMarkingStatus();
     
     // Auto-save session
     autoSaveSession();
@@ -1483,7 +1578,6 @@ function handleSelectAnswer(choiceNum) {
     // Check if ALL questions solved (Auto-submit suggestion)
     const answeredCount = Object.keys(state.userAnswers).length;
     if (answeredCount === state.currentQuestions.length) {
-        // Tiny timeout to let the user see the current question's result
         setTimeout(() => {
             if (confirm("마지막 문제까지 모두 풀었습니다!\n시험지를 제출하고 최종 결과를 확인하시겠습니까?")) {
                 submitExam();

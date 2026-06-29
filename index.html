@@ -178,6 +178,7 @@
                                     <option value="all">전체</option>
                                     <option value="wrong">오답</option>
                                     <option value="unanswered">미제출</option>
+                                    <option value="checked">체크한 문제</option>
                                 </select>
                             </div>
                             <div class="quiz-timer">
@@ -199,22 +200,34 @@
 
                         <!-- Choices List -->
                         <div class="choices-list" id="choices-container">
-                            <button class="choice-item" data-choice="1">
-                                <span class="choice-num">①</span>
-                                <span class="choice-text">보기 1 내용</span>
-                            </button>
-                            <button class="choice-item" data-choice="2">
-                                <span class="choice-num">②</span>
-                                <span class="choice-text">보기 2 내용</span>
-                            </button>
-                            <button class="choice-item" data-choice="3">
-                                <span class="choice-num">③</span>
-                                <span class="choice-text">보기 3 내용</span>
-                            </button>
-                            <button class="choice-item" data-choice="4">
-                                <span class="choice-num">④</span>
-                                <span class="choice-text">보기 4 내용</span>
-                            </button>
+                            <div class="choice-item" data-choice="1">
+                                <button class="choice-num-btn" data-choice="1">
+                                    ①
+                                    <i class="fa-solid fa-check check-overlay"></i>
+                                </button>
+                                <button class="choice-text-btn" data-choice="1">보기 1 내용</button>
+                            </div>
+                            <div class="choice-item" data-choice="2">
+                                <button class="choice-num-btn" data-choice="2">
+                                    ②
+                                    <i class="fa-solid fa-check check-overlay"></i>
+                                </button>
+                                <button class="choice-text-btn" data-choice="2">보기 2 내용</button>
+                            </div>
+                            <div class="choice-item" data-choice="3">
+                                <button class="choice-num-btn" data-choice="3">
+                                    ③
+                                    <i class="fa-solid fa-check check-overlay"></i>
+                                </button>
+                                <button class="choice-text-btn" data-choice="3">보기 3 내용</button>
+                            </div>
+                            <div class="choice-item" data-choice="4">
+                                <button class="choice-num-btn" data-choice="4">
+                                    ④
+                                    <i class="fa-solid fa-check check-overlay"></i>
+                                </button>
+                                <button class="choice-text-btn" data-choice="4">보기 4 내용</button>
+                            </div>
                         </div>
 
                         <!-- Interactive Action Buttons -->
