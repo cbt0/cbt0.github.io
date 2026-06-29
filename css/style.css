@@ -1442,6 +1442,19 @@ body {
         padding: 12px 10px; /* 좌우 마진 최소화 */
     }
     
+    .hero-section {
+        padding: 20px 16px 20px 16px; /* 모바일에서 위아래 패딩 축소 */
+    }
+    
+    .welcome-box {
+        margin: 10px auto; /* 모바일에서 위아래 마진 축소 */
+        gap: 12px;
+    }
+    
+    .features-section {
+        margin-top: 10px; /* 모바일에서 위 마진 축소 */
+    }
+    
     .hero-title {
         font-size: 28px;
     }
