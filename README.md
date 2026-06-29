@@ -1,7 +1,7 @@
 # 🎓 CBT Web App (최강 CBT 스타일 문제풀이 서비스)
 
 > **프로젝트 URL**: [https://cbt0.github.io](https://cbt0.github.io)  
-> **현재 버전**: `CBT V1.5`  
+> **현재 버전**: `CBT V1.961`  
 > **주요 대상 과목**: 에너지관리기능장, 에너지관리산업기사, 가스기능사, 에너지기능사, 공조냉동기계기능사
 
 이 웹 애플리케이션은 국가기술자격증(에너지, 가스, 공조 분야) 필기 기출문제를 효율적으로 학습하고 실전처럼 모의고사를 치를 수 있도록 돕는 **반응형 모바일 우선(Mobile-First) SPA(Single Page Application) 웹 서비스**입니다.
@@ -73,7 +73,10 @@ const state = {
     quizMode: 'solving',    // 퀴즈 진행 모드 ('solving': 풀이 중, 'review': 제출 후 검토)
     timerInterval: null,    // 초 시계 갱신 타이머 인터벌
     timeSpentSeconds: 0,    // 누적 풀이 소요 시간 (초 단위)
-    currentQuestions: []    // 현재 회차의 60개 문제 객체 세트
+    currentQuestions: [],   // 현재 회차의 문제 객체 세트
+    questionFilter: 'all',  // 문제 목록 필터링 상태 ('all', 'wrong', 'unanswered')
+    currentUser: null,      // 로그인된 사용자 ID
+    autoLogoutMinutes: 30   // 자동 로그아웃 시간(분)
 };
 ```
 
