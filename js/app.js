@@ -1125,6 +1125,7 @@ function renderRoundsList(subject) {
         subjectBtn.className = 'btn btn-outline';
         subjectBtn.innerText = seriesName;
         subjectBtn.style.flex = '1';
+        subjectBtn.style.maxWidth = '180px'; // 데스크탑에서 너무 커지지 않도록 폭 제한
         subjectBtn.style.textAlign = 'center';
         subjectBtn.style.whiteSpace = 'nowrap';
         subjectBtn.style.overflow = 'hidden';
@@ -1140,6 +1141,7 @@ function renderRoundsList(subject) {
         resumeBtn.className = 'btn btn-primary';
         resumeBtn.innerText = '이어하기';
         resumeBtn.style.flex = '1';
+        resumeBtn.style.maxWidth = '180px'; // 데스크탑에서 너무 커지지 않도록 폭 제한
         resumeBtn.style.fontSize = '14px';
         resumeBtn.style.padding = '8px 4px';
         
@@ -1178,6 +1180,7 @@ function renderRoundsList(subject) {
         reviewBtn.className = 'btn btn-warning'; 
         reviewBtn.innerText = '오답풀기';
         reviewBtn.style.flex = '1';
+        reviewBtn.style.maxWidth = '180px'; // 데스크탑에서 너무 커지지 않도록 폭 제한
         reviewBtn.style.fontSize = '14px';
         reviewBtn.style.padding = '8px 4px';
         reviewBtn.addEventListener('click', () => {
