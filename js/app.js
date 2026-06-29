@@ -364,6 +364,7 @@ function updateHomeResumeButton() {
 // Auto Save Quiz Session State to LocalStorage
 function autoSaveSession() {
     if (!state.currentUser || !state.activeRound || state.quizMode !== 'solving') return;
+    if (state.activeRound.sessionType === 'wrong-review') return; // 👈 오답 복습 회차는 자동저장 생략
     
     const key = `cbt_${state.currentUser}_autosave_session`;
     const sessionData = {
@@ -758,20 +759,25 @@ function registerEventListeners() {
             
             try {
                 const session = JSON.parse(sessionStr);
-                if (session && session.activeRound) {
+                if (session && session.activeRound && Array.isArray(session.activeRound.questions) && session.activeRound.questions.length > 0) {
                     // Restore state variables
                     state.activeSubject = session.subject;
                     state.activeRound = session.activeRound;
-                    state.currentQuestions = session.activeRound.questions;
                     state.activeQuestionIndex = session.activeQuestionIndex;
                     state.userAnswers = session.userAnswers || {};
                     state.timeSpentSeconds = session.timeSpentSeconds || 0;
                     
                     // Call startQuiz with isResume = true
                     startQuiz(session.activeRound, true);
+                } else {
+                    localStorage.removeItem(key);
+                    if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
+                    alert('이어할 수 있는 유효한 풀이 세션이 없습니다.');
                 }
             } catch (e) {
                 console.error('Error resuming session:', e);
+                localStorage.removeItem(key);
+                if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
                 alert('이어하기 중 오류가 발생했습니다.');
             }
         });
@@ -1138,10 +1144,24 @@ function renderRoundsList(subject) {
         seriesContainer.appendChild(seriesWrapper);
     });
 }
-// Start Quiz Session
 function startQuiz(round, isResume = false) {
     state.activeRound = round;
-    state.currentQuestions = round.questions;
+    
+    // Inject source metadata cleanly without mutating the original questions list
+    const subject = state.activeSubject;
+    const year = round.year || '';
+    const roundName = round.round;
+    const roundKey = `${subject}_${year}_${roundName}`;
+    
+    state.currentQuestions = (round.questions || []).map(q => {
+        const sourceRoundKey = q.sourceRoundKey || roundKey;
+        return {
+            ...q,
+            sourceRoundKey,
+            sourceQuestionKey: q.sourceQuestionKey || `${sourceRoundKey}_${q.num}`
+        };
+    });
+
     if (!isResume) {
         state.activeQuestionIndex = 0;
         state.userAnswers = {};
@@ -1577,25 +1597,47 @@ function abbreviateText(subject, round) {
 
 function saveWrongHistory() {
     if (!state.currentUser || !state.activeRound) return;
-    const historyKey = `cbt_${state.currentUser}_past_sessions_${state.activeSubject}`;
-    const stored = JSON.parse(localStorage.getItem(historyKey)) || [];
+    const dbKey = `cbt_${state.currentUser}_wrong_db`;
+    const wrongDb = JSON.parse(localStorage.getItem(dbKey)) || {};
     
-    const wrongQuestions = state.currentQuestions
-        .filter((q, idx) => state.userAnswers[idx] !== undefined && state.userAnswers[idx] !== q.answer)
-        .map(q => ({ ...q }));
+    let hasChanges = false;
     
-    if (wrongQuestions.length === 0) return;
-    
-    stored.unshift({
-        timestamp: Date.now(),
-        subject: state.activeSubject,
-        round: state.activeRound.round,
-        year: state.activeRound.year,
-        wrongQuestions
+    state.currentQuestions.forEach((q, idx) => {
+        const selected = state.userAnswers[idx];
+        const isAnswered = selected !== undefined && selected !== null;
+        
+        if (isAnswered) {
+            const isCorrect = Number(selected) === Number(q.answer);
+            if (!isCorrect) {
+                // Save/update wrong question with minimal fields
+                const prev = wrongDb[q.sourceQuestionKey];
+                wrongDb[q.sourceQuestionKey] = {
+                    subject: state.activeSubject,
+                    sourceRoundKey: q.sourceRoundKey,
+                    sourceQuestionKey: q.sourceQuestionKey,
+                    num: q.num,
+                    question: q.question,
+                    options: q.options,
+                    answer: q.answer,
+                    hint: q.hint || '',
+                    selectedAnswer: selected,
+                    wrongCount: prev ? (prev.wrongCount || 0) + 1 : 1,
+                    lastWrongAt: Date.now()
+                };
+                hasChanges = true;
+            } else {
+                // If it is in the database and user answered it correctly, delete it
+                if (wrongDb[q.sourceQuestionKey]) {
+                    delete wrongDb[q.sourceQuestionKey];
+                    hasChanges = true;
+                }
+            }
+        }
     });
-
-    if (stored.length > 20) stored.length = 20;
-    localStorage.setItem(historyKey, JSON.stringify(stored));
+    
+    if (hasChanges) {
+        localStorage.setItem(dbKey, JSON.stringify(wrongDb));
+    }
 }
 
 function handleCalculatorInput(value) {
@@ -1655,20 +1697,24 @@ function evaluateCalculatorExpression(expr) {
 
 function gatherWrongReviewQuestions() {
     if (!state.currentUser || !state.activeSubject) return [];
-    const historyKey = `cbt_${state.currentUser}_past_sessions_${state.activeSubject}`;
-    const sessions = JSON.parse(localStorage.getItem(historyKey)) || [];
-    const questionMap = new Map();
-
-    sessions.forEach(session => {
-        (session.wrongQuestions || []).forEach(question => {
-            const key = `${question.num}-${question.question}`;
-            if (!questionMap.has(key)) {
-                questionMap.set(key, { ...question });
-            }
-        });
-    });
-
-    return Array.from(questionMap.values());
+    const dbKey = `cbt_${state.currentUser}_wrong_db`;
+    const wrongDb = JSON.parse(localStorage.getItem(dbKey)) || {};
+    
+    // Filter questions by current active subject and sort by lastWrongAt descending
+    const wrongQuestions = Object.values(wrongDb)
+        .filter(item => item.subject === state.activeSubject)
+        .sort((a, b) => b.lastWrongAt - a.lastWrongAt)
+        .map(item => ({
+            num: item.num,
+            question: item.question,
+            options: item.options,
+            answer: item.answer,
+            hint: item.hint || '',
+            sourceRoundKey: item.sourceRoundKey,
+            sourceQuestionKey: item.sourceQuestionKey
+        }));
+        
+    return wrongQuestions;
 }
 
 function reviewWrongAnswers() {
@@ -1686,6 +1732,7 @@ function reviewWrongAnswers() {
         subject: subjectDetails[state.activeSubject]?.name || '오답 복습 회차',
         year: new Date().getFullYear(),
         round: '오답 복습 회차',
+        sessionType: 'wrong-review',
         questions: wrongQuestions
     };
     state.questionFilter = 'all';
