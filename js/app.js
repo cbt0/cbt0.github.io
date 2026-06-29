@@ -192,7 +192,6 @@ const dom = {
         grading: document.getElementById('nav-grading'),
         settings: document.getElementById('nav-settings')
     },
-    logo: document.getElementById('logo-btn'),
     navBack: document.getElementById('nav-back'),
     themeToggle: document.getElementById('theme-toggle'),
     loginSubmitBtn: document.getElementById('login-submit-btn'),
@@ -701,19 +700,15 @@ function registerEventListeners() {
         });
     });
     
-    // Logo(Version) & Back Button Click -> Go Back
-    const goBack = () => {
-        if (window.history.length > 1) {
-            window.history.back();
-        } else {
-            navigateTo('home');
-        }
-    };
-    if (dom.logo) {
-        dom.logo.addEventListener('click', goBack);
-    }
+    // Back Button Click -> Go Back
     if (dom.navBack) {
-        dom.navBack.addEventListener('click', goBack);
+        dom.navBack.addEventListener('click', () => {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                navigateTo('home');
+            }
+        });
     }
     
     // Theme Toggle
