@@ -1903,19 +1903,13 @@ function openQuestionJumpModal() {
       btn.classList.add('active');
     }
     
-    // 3. 풀이 모드 vs 리뷰 모드에 따른 색상 처리
-    if (state.quizMode === 'solving') {
-      // 푼 문제는 회색 불 들어오게
-      if (state.userAnswers[idx] !== undefined) {
-        btn.classList.add('solved');
-      }
-    } else if (state.quizMode === 'review') {
-      // 리뷰 모드에서는 정답/오답 색상 표시
-      const userAnswer = state.userAnswers[idx];
+    // 3. 풀이 모드 및 리뷰 모드 모두 정답/오답 색상 표시 (사이드바 OMR 마킹판과 동일하게 처리)
+    const userAnswer = state.userAnswers[idx];
+    if (userAnswer !== undefined && userAnswer !== null) {
       const correctAnswer = q.answer;
-      if (userAnswer === correctAnswer) {
+      if (Number(userAnswer) === Number(correctAnswer)) {
         btn.classList.add('correct');
-      } else if (userAnswer !== undefined) {
+      } else {
         btn.classList.add('wrong');
       }
     }

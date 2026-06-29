@@ -19,6 +19,8 @@
     --danger: #ff4444; /* 핑크빛을 없앤 선명한 빨간색 */
     --danger-bg: rgba(255, 68, 68, 0.2); /* 배경을 살짝 더 진하게 (0.15 -> 0.2) */
     --danger-border: rgba(255, 68, 68, 0.6); /* 테두리를 더 또렷하게 (0.4 -> 0.6) */
+    --wrong: #f97316; /* 오답을 나타내는 주황색 */
+    --wrong-hover: #ea580c; /* 오답 호버 시 조금 더 어두운 주황색 */
     
     --warning: #fbbf24;
     --warning-bg: rgba(251, 191, 36, 0.12);
@@ -732,13 +734,13 @@ body {
 }
 
 .marking-btn.wrong {
-    background: var(--danger) !important;
+    background: var(--wrong) !important;
     color: #ffffff !important;
-    border-color: var(--danger) !important;
+    border-color: var(--wrong) !important;
 }
 .marking-btn.wrong:hover {
-    background: #f97316 !important;
-    border-color: #f97316 !important;
+    background: var(--wrong-hover) !important;
+    border-color: var(--wrong-hover) !important;
     color: #ffffff !important;
 }
 
@@ -912,8 +914,8 @@ body {
 }
 
 .choice-item.wrong {
-    background: var(--danger) !important;
-    border-color: var(--danger) !important;
+    background: var(--wrong) !important;
+    border-color: var(--wrong) !important;
     color: #ffffff !important;
 }
 
