@@ -193,6 +193,7 @@ const dom = {
         settings: document.getElementById('nav-settings')
     },
     logo: document.getElementById('logo-btn'),
+    navBack: document.getElementById('nav-back'),
     themeToggle: document.getElementById('theme-toggle'),
     loginSubmitBtn: document.getElementById('login-submit-btn'),
     
@@ -700,8 +701,20 @@ function registerEventListeners() {
         });
     });
     
-    // Logo Click
-    dom.logo.addEventListener('click', () => navigateTo('home'));
+    // Logo(Version) & Back Button Click -> Go Back
+    const goBack = () => {
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            navigateTo('home');
+        }
+    };
+    if (dom.logo) {
+        dom.logo.addEventListener('click', goBack);
+    }
+    if (dom.navBack) {
+        dom.navBack.addEventListener('click', goBack);
+    }
     
     // Theme Toggle
     if (dom.themeToggle) {
@@ -973,11 +986,7 @@ function switchTabStyles(tabName) {
 
 function switchTab(tabName) {
     if (tabName === 'home') {
-        if (state.activeSubject && state.activeSubject !== 'home') {
-            window.location.hash = `#rounds/${state.activeSubject}`;
-        } else {
-            window.location.hash = '#home';
-        }
+        window.location.hash = '#home';
     } else {
         window.location.hash = `#${tabName}`;
     }
