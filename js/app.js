@@ -222,7 +222,6 @@ const dom = {
     // Rounds screen elements
     roundsTitle: document.getElementById('rounds-title'),
     roundsList: document.getElementById('rounds-list'),
-    roundsBackBtn: document.getElementById('rounds-back-btn'),
     
     // Quiz screen elements
     quizSubjectName: document.getElementById('quiz-subject-name'),
@@ -810,9 +809,6 @@ function registerEventListeners() {
             navigateTo(subject);
         });
     });
-    
-    // Back Button in Round Selector
-    dom.roundsBackBtn.addEventListener('click', () => navigateTo('home'));
     
     // Quiz navigation buttons (화면 튕김 방지 적용)
     dom.prevBtn.addEventListener('click', (e) => {
