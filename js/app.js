@@ -1,5 +1,5 @@
 /**
- * Antigravity CBT - Core Application Script V1.961
+ * Antigravity CBT - Core Application Script V1.97
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
 
@@ -1146,6 +1146,10 @@ function startQuiz(round, isResume = false) {
         state.activeQuestionIndex = 0;
         state.userAnswers = {};
         state.timeSpentSeconds = 0;
+        state.questionFilter = 'all';
+        if (dom.questionFilter) {
+            dom.questionFilter.value = 'all';
+        }
     }
     state.quizMode = 'solving';
     
@@ -1251,25 +1255,20 @@ function updateMarkingStatus() {
         btn.className = 'marking-btn';
         btn.style.display = doesQuestionMatchFilter(idx) ? 'inline-flex' : 'none';
         
-        // Active highlight
-        if (state.activeQuestionIndex === idx) {
-            btn.classList.add('active');
-        }
-        
-        if (state.quizMode === 'solving') {
-            // Check if solved
-            if (state.userAnswers[idx] !== undefined) {
-                btn.classList.add('solved');
-            }
-        } else if (state.quizMode === 'review') {
-            // Correct/Incorrect colored dots
-            const userAnswer = state.userAnswers[idx];
+        // Correct/Incorrect colored background for both solving and review modes
+        const userAnswer = state.userAnswers[idx];
+        if (userAnswer !== undefined && userAnswer !== null) {
             const correctAnswer = q.answer;
-            if (userAnswer === correctAnswer) {
+            if (Number(userAnswer) === Number(correctAnswer)) {
                 btn.classList.add('correct');
             } else {
                 btn.classList.add('wrong');
             }
+        }
+        
+        // Active highlight (border and shadow)
+        if (state.activeQuestionIndex === idx) {
+            btn.classList.add('active');
         }
     });
     
@@ -1286,7 +1285,8 @@ function initializeQuestionFilter() {
 
 // Render active question to view pane
 function renderActiveQuestion() {
-    applyQuestionFilter();
+    // ⚠️ 주의: 이 함수는 state를 변경하지 않습니다 (Read-Only View).
+    //         인덱스 변경은 nextQuestion/prevQuestion/filter 핸들러에서만 수행되어야 합니다.
     const q = state.currentQuestions[state.activeQuestionIndex];
     if (!q) return;
     
@@ -1367,6 +1367,7 @@ function handleSelectAnswer(choiceNum) {
     state.userAnswers[state.activeQuestionIndex] = choiceNum;
     
     // Render current question updates (apply colors, open hint box)
+    // (⚠️ 내부에서 updateMarkingStatus()를 트리거하여 OMR판의 정/오답 색상도 함께 동기화됩니다.)
     renderActiveQuestion();
     
     // Auto-save session

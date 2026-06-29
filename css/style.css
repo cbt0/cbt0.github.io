@@ -695,6 +695,15 @@ body {
     border-color: var(--primary);
     color: var(--text-primary);
     box-shadow: 0 0 10px var(--primary-glow);
+}
+
+.marking-btn.correct.active,
+.marking-btn.wrong.active {
+    border-color: var(--primary);
+    color: var(--text-primary);
+}
+
+.marking-btn.active:not(.correct):not(.wrong) {
     background: var(--bg-primary);
 }
 
