@@ -697,10 +697,14 @@ body {
     box-shadow: 0 0 10px var(--primary-glow);
 }
 
-.marking-btn.correct.active,
-.marking-btn.wrong.active {
+.marking-btn.correct.active {
     border-color: var(--primary);
     color: var(--text-primary);
+}
+
+.marking-btn.wrong.active {
+    border-color: var(--primary) !important;
+    color: #ffffff !important;
 }
 
 .marking-btn.active:not(.correct):not(.wrong) {
@@ -712,17 +716,30 @@ body {
     color: var(--text-primary);
     border-color: rgba(99, 102, 241, 0.4);
 }
+.marking-btn.solved:hover {
+    border-color: var(--text-primary) !important;
+    color: var(--text-primary) !important;
+}
 
 .marking-btn.correct {
     background: var(--success-bg);
     color: var(--success);
     border-color: var(--success);
 }
+.marking-btn.correct:hover {
+    border-color: var(--text-primary) !important;
+    color: var(--text-primary) !important;
+}
 
 .marking-btn.wrong {
-    background: var(--danger-bg);
-    color: var(--danger);
-    border-color: var(--danger);
+    background: var(--danger) !important;
+    color: #ffffff !important;
+    border-color: var(--danger) !important;
+}
+.marking-btn.wrong:hover {
+    background: #f97316 !important;
+    border-color: #f97316 !important;
+    color: #ffffff !important;
 }
 
 .sidebar-footer {
@@ -895,14 +912,14 @@ body {
 }
 
 .choice-item.wrong {
-    background: var(--danger-bg) !important;
+    background: var(--danger) !important;
     border-color: var(--danger) !important;
-    color: var(--danger) !important;
+    color: #ffffff !important;
 }
 
 .choice-item.wrong .choice-num,
 .choice-item.wrong .choice-status-icon {
-    color: var(--danger) !important;
+    color: #ffffff !important;
 }
 
 /* reveal correct answer even if not selected */
