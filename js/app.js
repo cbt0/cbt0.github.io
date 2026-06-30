@@ -9,7 +9,7 @@ let idleTimer;
 let sessionBaseTime = parseInt(localStorage.getItem('session_base_time')) || null;
 
 // --- [추가] 앱 버전 관리 (업데이트 시 이 숫자를 올려주세요!) ---
-const APP_VERSION = "1.9918"; 
+const APP_VERSION = "1.9919"; 
 
 function checkAppUpdate() {
     const storedVersion = localStorage.getItem('cbt_app_version');
@@ -1958,6 +1958,9 @@ function handleSelectAnswer(choiceNum, isCheckMode = false) {
     const currentAnswer = state.userAnswers[activeIdx];
     const isCurrentlyChecked = state.checkedQuestions[activeIdx] === true;
     
+    const q = state.currentQuestions[activeIdx];
+    const hasJudgment = state.permanentlyCorrect[activeIdx] === true || state.permanentlyWrong[activeIdx] === true;
+    
     if (isCheckMode) {
         // [번호 버튼 클릭 시 -> 체크 검토 정답 상태로]
         if (currentAnswer === choiceNum) {
@@ -1968,17 +1971,28 @@ function handleSelectAnswer(choiceNum, isCheckMode = false) {
             } else {
                 // 일반 마킹 상태였다면 체크 상태로 전이
                 state.checkedQuestions[activeIdx] = true;
+                if (!hasJudgment && q) {
+                    if (Number(choiceNum) === Number(q.answer)) {
+                        state.permanentlyCorrect[activeIdx] = true;
+                    } else {
+                        state.permanentlyWrong[activeIdx] = true;
+                    }
+                }
             }
         } else {
             // 아직 아무 마킹도 없었거나 다른 번호가 마킹된 상태라면
             state.userAnswers[activeIdx] = choiceNum;
             state.checkedQuestions[activeIdx] = true;
+            if (!hasJudgment && q) {
+                if (Number(choiceNum) === Number(q.answer)) {
+                    state.permanentlyCorrect[activeIdx] = true;
+                } else {
+                    state.permanentlyWrong[activeIdx] = true;
+                }
+            }
         }
     } else {
         // [지문(내용) 버튼 클릭 시 -> 확신 정답 마킹 상태로]
-        const q = state.currentQuestions[activeIdx];
-        const hasJudgment = state.permanentlyCorrect[activeIdx] === true || state.permanentlyWrong[activeIdx] === true;
-        
         if (currentAnswer === choiceNum) {
             if (!isCurrentlyChecked) {
                 // 이미 확신 상태라면 토글하여 마킹 전체 해제
@@ -2587,15 +2601,31 @@ function openQuestionJumpModal() {
       btn.classList.add('active');
     }
     
-    // 3. 풀이 모드 및 리뷰 모드 모두 정답/오답 색상 표시 (사이드바 OMR 마킹판과 동일하게 처리)
+    // 3. 풀이 모드 및 리뷰 모드 모두 정답/오답 색상 표시 (사이드바 OMR 마킹판 및 문제번호 배지와 연동)
     const userAnswer = state.userAnswers[idx];
-    if (userAnswer !== undefined && userAnswer !== null) {
-      const correctAnswer = q.answer;
-      if (Number(userAnswer) === Number(correctAnswer)) {
+    const isPermanentlyCorrect = state.permanentlyCorrect[idx] === true;
+    const isPermanentlyWrong = state.permanentlyWrong[idx] === true;
+    
+    if (isPermanentlyCorrect) {
         btn.classList.add('correct');
-      } else {
+    } else if (isPermanentlyWrong) {
         btn.classList.add('wrong');
-      }
+    } else if (userAnswer !== undefined && userAnswer !== null) {
+        if (state.quizMode === 'solving') {
+            const isChecked = state.checkedQuestions[idx] === true;
+            if (isChecked) {
+                btn.classList.add('checked');
+            } else {
+                btn.classList.add('solved');
+            }
+        } else if (state.quizMode === 'review') {
+            const correctAnswer = q.answer;
+            if (Number(userAnswer) === Number(correctAnswer)) {
+                btn.classList.add('correct');
+            } else {
+                btn.classList.add('wrong');
+            }
+        }
     }
     
     // 4. 클릭 시 해당 문제로 점프하고 모달 닫기
