@@ -5,6 +5,9 @@
 
 // Global Idle Timer for Auto-Logout
 let idleTimer;
+// Base Time for Delta-encoding log system
+let sessionBaseTime = parseInt(localStorage.getItem('session_base_time')) || null;
+
 // ==========================================
 // 🚨 글로벌 에러 및 통신 끊김 추적 로거
 // ==========================================
@@ -454,6 +457,12 @@ function login() {
     localStorage.setItem('cbt_current_user', username);
     state.currentUser = username;
     
+    // Base time initialization at login
+    const now = Date.now();
+    localStorage.setItem('session_base_time', now.toString());
+    sessionBaseTime = now;
+    logSystem('L01', 'OK', username);
+    
     // UI transition
     dom.loginFormContainer.classList.add('hidden');
     dom.subjectSelectionSection.classList.remove('hidden');
@@ -480,8 +489,11 @@ function login() {
 function logout() {
     if (state.currentUser) {
         logUserActivity('로그아웃');
+        logSystem('L02', 'OK', `로그아웃 시간: ${new Date().toLocaleString()}`);
     }
     localStorage.removeItem('cbt_current_user');
+    localStorage.removeItem('session_base_time');
+    sessionBaseTime = null;
     state.currentUser = null;
     dom.loginId.value = '';
     dom.loginPw.value = '';
@@ -953,9 +965,9 @@ function registerEventListeners() {
         });
     }
     
-    const copyLogsBtn = document.getElementById('copy-logs-btn');
-    if (copyLogsBtn) {
-        copyLogsBtn.addEventListener('click', () => {
+    const copyKoLogsBtn = document.getElementById('copy-ko-logs-btn');
+    if (copyKoLogsBtn) {
+        copyKoLogsBtn.addEventListener('click', () => {
             const user = state.currentUser || 'GUEST';
             let logs = [];
             try {
@@ -967,9 +979,126 @@ function registerEventListeners() {
                 alert('복사할 로그가 없습니다.');
                 return;
             }
-            const text = logs.map(l => `[${l.timestamp}] [${l.level}] ${l.message}\n${l.details}\n----------------------------------`).join('\n');
+            const text = logs.map(log => {
+                if (typeof log === 'string') {
+                    const parts = log.split('|');
+                    const offset = parts[0] || '+0';
+                    const actionCode = parts[1] || '???';
+                    const status = parts[2] || 'OK';
+                    const stateInfo = parts.slice(3).join('|') || '';
+                    
+                    let absoluteTimeStr = '';
+                    if (sessionBaseTime) {
+                        const offsetSecs = parseInt(offset.replace('+', ''));
+                        if (!isNaN(offsetSecs)) {
+                            const absTime = new Date(sessionBaseTime + offsetSecs * 1000);
+                            absoluteTimeStr = `${absTime.getFullYear()}-${String(absTime.getMonth() + 1).padStart(2, '0')}-${String(absTime.getDate()).padStart(2, '0')} ` +
+                                              `${String(absTime.getHours()).padStart(2, '0')}:${String(absTime.getMinutes()).padStart(2, '0')}:${String(absTime.getSeconds()).padStart(2, '0')}`;
+                        }
+                    }
+                    const timeDisplay = absoluteTimeStr ? `${absoluteTimeStr} (${offset}초)` : `${offset}초`;
+                    
+                    let actionName = actionCode;
+                    let detailParsed = '';
+                    switch (actionCode) {
+                        case 'L01':
+                            actionName = '로그인 완료';
+                            detailParsed = `사용자 ID: ${stateInfo}`;
+                            break;
+                        case 'L02':
+                            actionName = '로그아웃 완료';
+                            detailParsed = stateInfo;
+                            break;
+                        case 'S01':
+                            actionName = '시험 시작';
+                            if (stateInfo.startsWith('START:')) {
+                                detailParsed = `신규 시험 시작 - 회차: ${stateInfo.substring(6)}`;
+                            } else if (stateInfo.startsWith('RESUME:')) {
+                                detailParsed = `시험 이어 풀기 시작 - 회차: ${stateInfo.substring(7)}`;
+                            } else {
+                                detailParsed = `회차 정보: ${stateInfo}`;
+                            }
+                            break;
+                        case 'A01':
+                            actionName = '답안 마킹';
+                            const aMatch = stateInfo.match(/^Q(\d+):(.*)$/);
+                            if (aMatch) {
+                                const ans = aMatch[2];
+                                detailParsed = `${aMatch[1]}번 문제 정답 선택 (선택 번호: ${ans === '_' ? '없음/취소' : ans + '번'})`;
+                            } else {
+                                detailParsed = `마킹 정보: ${stateInfo}`;
+                            }
+                            break;
+                        case 'H01':
+                            actionName = '해설 토글';
+                            const hMatch = stateInfo.match(/^Q(\d+):(COLLAPSED|EXPANDED)$/);
+                            if (hMatch) {
+                                detailParsed = `${hMatch[1]}번 문제 해설창 ${hMatch[2] === 'COLLAPSED' ? '닫음' : '엶'}`;
+                            } else {
+                                detailParsed = `해설 토글 상태: ${stateInfo}`;
+                            }
+                            break;
+                        case 'N01':
+                            actionName = '문제 이동';
+                            const nMatch = stateInfo.match(/^Q(\d+)$/);
+                            if (nMatch) {
+                                detailParsed = `${nMatch[1]}번 문제로 화면 이동`;
+                            } else {
+                                detailParsed = `이동 문제: ${stateInfo}`;
+                            }
+                            break;
+                        case 'E01':
+                            actionName = '시스템 오류';
+                            if (stateInfo.startsWith('ERR:')) {
+                                detailParsed = `오류 상세 내용: ${stateInfo.substring(4)}`;
+                            } else {
+                                detailParsed = `오류 내용: ${stateInfo}`;
+                            }
+                            break;
+                        default:
+                            actionName = `이벤트(${actionCode})`;
+                            detailParsed = stateInfo;
+                    }
+                    const level = (actionCode === 'E01' || status.includes('ERR')) ? 'ERROR' : (status.includes('WARN') ? 'WARNING' : 'INFO');
+                    const message = `${actionName} (상태: ${status})`;
+                    return `[${timeDisplay}] [${level}] ${message}\n상세 정보: ${detailParsed}\n----------------------------------`;
+                } else {
+                    return `[${log.timestamp}] [${log.level}] ${log.message}\n${log.details}\n----------------------------------`;
+                }
+            }).join('\n');
             navigator.clipboard.writeText(text)
-                .then(() => alert('로그가 클립보드에 복사되었습니다.'))
+                .then(() => alert('한글 번역 로그가 클립보드에 복사되었습니다.'))
+                .catch(err => alert('복사 실패: ' + err));
+        });
+    }
+
+    const copyRawLogsBtn = document.getElementById('copy-raw-logs-btn');
+    if (copyRawLogsBtn) {
+        copyRawLogsBtn.addEventListener('click', () => {
+            const user = state.currentUser || 'GUEST';
+            let logs = [];
+            try {
+                logs = JSON.parse(localStorage.getItem(`cbt_${user}_system_logs`)) || [];
+            } catch (e) {
+                logs = [];
+            }
+            if (logs.length === 0) {
+                alert('복사할 로그가 없습니다.');
+                return;
+            }
+            const text = logs.map(log => {
+                if (typeof log === 'string') {
+                    return log;
+                } else {
+                    const offset = log.timestamp || '+0';
+                    const code = log.level === 'ERROR' ? 'E01' : 'U01';
+                    const status = log.level || 'INFO';
+                    const details = log.message + (log.details ? ' : ' + log.details : '');
+                    return `${offset}|${code}|${status}|${details.replace(/[\r\n|]+/g, ' ')}`;
+                }
+            }).join('\n');
+            navigator.clipboard.writeText(text)
+                .then(() => alert('압축된 원본 로그가 클립보드에 복사되었습니다.'))
                 .catch(err => alert('복사 실패: ' + err));
         });
     }
@@ -1282,6 +1411,13 @@ function startQuiz(round, isResume = false) {
     
     logUserActivity(`${round.subject} ${round.round} 시험 시작` + (isResume ? ' (이어하기)' : ''));
     
+    if (!localStorage.getItem('session_base_time')) {
+        const now = Date.now();
+        localStorage.setItem('session_base_time', now.toString());
+        sessionBaseTime = now;
+    }
+    logSystem('S01', 'OK', (isResume ? 'RESUME:' : 'START:') + roundKey);
+    
     // Set Header titles
     dom.quizSubjectName.innerText = round.subject;
     dom.quizRoundName.innerText = round.year ? `${round.year}년 ${round.round}` : round.round;
@@ -1329,6 +1465,7 @@ function renderMarkingSheet() {
             state.activeQuestionIndex = idx;
             renderActiveQuestion();
             switchTab('quiz'); // Switch view tab to quiz
+            logSystem('N01', 'OK', 'Q' + (idx + 1));
         });
         
         dom.markingSheet.appendChild(btn);
@@ -1579,6 +1716,8 @@ function handleSelectAnswer(choiceNum, isCheckMode = false) {
     // Auto-save session
     autoSaveSession();
     
+    logSystem('A01', 'OK', 'Q' + (activeIdx + 1) + ':' + (state.userAnswers[activeIdx] || '_'));
+    
     // Check if ALL questions solved (Auto-submit suggestion)
     const answeredCount = Object.keys(state.userAnswers).length;
     if (answeredCount === state.currentQuestions.length) {
@@ -1596,6 +1735,7 @@ function prevQuestion() {
     if (prevIndex !== null) {
         state.activeQuestionIndex = prevIndex;
         renderActiveQuestion();
+        logSystem('N01', 'OK', 'Q' + (prevIndex + 1));
     }
 }
 
@@ -1604,12 +1744,15 @@ function nextQuestion() {
     if (nextIndex !== null) {
         state.activeQuestionIndex = nextIndex;
         renderActiveQuestion();
+        logSystem('N01', 'OK', 'Q' + (nextIndex + 1));
     }
 }
 
 // Manual Toggle Explanation Box
 function toggleHintBox() {
     dom.explanationBox.classList.toggle('collapsed');
+    const isCollapsed = dom.explanationBox.classList.contains('collapsed');
+    logSystem('H01', 'OK', 'Q' + (state.activeQuestionIndex + 1) + ':' + (isCollapsed ? 'COLLAPSED' : 'EXPANDED'));
 }
 
 // Grading Engine & Result Modal
@@ -2105,6 +2248,7 @@ function openQuestionJumpModal() {
       state.activeQuestionIndex = idx;
       renderActiveQuestion();
       dom.questionJumpModal.classList.remove('active');
+      logSystem('N01', 'OK', 'Q' + (idx + 1));
     });
     
     dom.questionJumpGrid.appendChild(btn);
@@ -2118,9 +2262,64 @@ function openQuestionJumpModal() {
 // 시스템 로그 시스템 (강력한 로깅 및 상세 조회)
 // ==========================================
 
-// 시스템 로그 기록
-function logSystem(level, message, details = '') {
+// 델타 인코딩 로그 시간 계산기
+function getLogOffsetSeconds() {
+    if (!sessionBaseTime) {
+        sessionBaseTime = parseInt(localStorage.getItem('session_base_time'));
+        if (!sessionBaseTime) {
+            sessionBaseTime = Date.now();
+            localStorage.setItem('session_base_time', sessionBaseTime.toString());
+        }
+    }
+    const diffMs = Date.now() - sessionBaseTime;
+    return Math.floor(diffMs / 1000);
+}
+
+// 상태 스냅샷 압축 함수
+function getAppStateDetails(customDetails = '') {
+    const activeIdx = state.activeQuestionIndex;
+    const qNum = activeIdx + 1;
+    const answer = state.userAnswers[activeIdx] !== undefined ? state.userAnswers[activeIdx] : '_';
+    
+    // 기본 상태 코드 예시: Q9:3 (9번 문제에 3번 마킹 상태)
+    let stateStr = `Q${qNum}:${answer}`;
+    
+    // 에러나 커스텀 정보가 제공되면 추가
+    if (customDetails) {
+        let clean = customDetails.toString()
+            .replace(/[\r\n]+/g, ' ')
+            .replace(/\s+/g, '')
+            .substring(0, 100);
+        return `ERR:${clean}`;
+    }
+    
+    return stateStr;
+}
+
+// 시스템 로그 기록 (Delta Encoding 적용)
+function logSystem(actionCode, status, details = '') {
     const user = state.currentUser || 'GUEST';
+    
+    let code = actionCode;
+    let stat = status;
+    let det = details;
+    
+    // 하위 호환성을 위해 기존 ERROR/WARNING 레벨 매핑
+    if (actionCode === 'ERROR') {
+        code = 'E01';
+        stat = 'ERR';
+        det = status + (details ? ' | ' + details : '');
+    } else if (actionCode === 'WARNING') {
+        code = 'E01';
+        stat = 'WARN';
+        det = status + (details ? ' | ' + details : '');
+    }
+    
+    const offset = getLogOffsetSeconds();
+    const offsetStr = `+${offset}`;
+    
+    const stateSnapshot = getAppStateDetails(code === 'E01' ? det : '');
+    const newLogStr = `${offsetStr}|${code}|${stat}|${stateSnapshot}`;
     
     let logs = [];
     try {
@@ -2131,15 +2330,8 @@ function logSystem(level, message, details = '') {
     
     if (!Array.isArray(logs)) logs = [];
     
-    const newLog = {
-        timestamp: new Date().toLocaleString(),
-        level: level.toUpperCase(),
-        message: message,
-        details: details
-    };
-    
-    logs.unshift(newLog);
-    if (logs.length > 300) { // 성능을 위해 최근 300개만 유지
+    logs.unshift(newLogStr);
+    if (logs.length > 300) {
         logs.length = 300;
     }
     
@@ -2149,7 +2341,6 @@ function logSystem(level, message, details = '') {
         console.error('Failed to save system logs:', e);
     }
     
-    // 설정 화면에 있는 경우 즉시 반영
     if (window.location.hash === '#settings') {
         renderSystemLogs();
     }
@@ -2181,18 +2372,117 @@ function renderSystemLogs() {
         item.style.cursor = 'pointer';
         item.style.transition = 'background-color 0.2s';
         
-        let levelColor = '#94a3b8'; // info
-        if (log.level === 'ERROR') levelColor = '#ff4444';
-        if (log.level === 'WARNING') levelColor = '#fbbf24';
+        let level = 'INFO';
+        let message = '';
+        let timestamp = '';
+        let details = '';
+        
+        if (typeof log === 'string') {
+            const parts = log.split('|');
+            const offset = parts[0] || '+0';
+            const actionCode = parts[1] || '???';
+            const status = parts[2] || 'OK';
+            const stateInfo = parts.slice(3).join('|') || '';
+            
+            // 1. 오프셋을 절대 시간으로 복원 계산
+            let absoluteTimeStr = '';
+            if (sessionBaseTime) {
+                const offsetSecs = parseInt(offset.replace('+', ''));
+                if (!isNaN(offsetSecs)) {
+                    const absTime = new Date(sessionBaseTime + offsetSecs * 1000);
+                    absoluteTimeStr = `${absTime.getFullYear()}-${String(absTime.getMonth() + 1).padStart(2, '0')}-${String(absTime.getDate()).padStart(2, '0')} ` +
+                                      `${String(absTime.getHours()).padStart(2, '0')}:${String(absTime.getMinutes()).padStart(2, '0')}:${String(absTime.getSeconds()).padStart(2, '0')}`;
+                }
+            }
+            timestamp = absoluteTimeStr ? `${absoluteTimeStr} (${offset}초)` : `${offset}초`;
+            
+            // 2. 액션 코드 해석 (사람이 읽을 수 있게 상세히 표기)
+            let actionName = actionCode;
+            let detailParsed = '';
+            
+            switch (actionCode) {
+                case 'L01':
+                    actionName = '로그인 완료';
+                    detailParsed = `사용자 ID: ${stateInfo}`;
+                    break;
+                case 'L02':
+                    actionName = '로그아웃 완료';
+                    detailParsed = stateInfo; // Contains timestamp inside details
+                    break;
+                case 'S01':
+                    actionName = '시험 시작';
+                    if (stateInfo.startsWith('START:')) {
+                        detailParsed = `신규 시험 시작 - 회차: ${stateInfo.substring(6)}`;
+                    } else if (stateInfo.startsWith('RESUME:')) {
+                        detailParsed = `시험 이어 풀기 시작 - 회차: ${stateInfo.substring(7)}`;
+                    } else {
+                        detailParsed = `회차 정보: ${stateInfo}`;
+                    }
+                    break;
+                case 'A01':
+                    actionName = '답안 마킹';
+                    const aMatch = stateInfo.match(/^Q(\d+):(.*)$/);
+                    if (aMatch) {
+                        const ans = aMatch[2];
+                        detailParsed = `${aMatch[1]}번 문제 정답 선택 (선택 번호: ${ans === '_' ? '없음/취소' : ans + '번'})`;
+                    } else {
+                        detailParsed = `마킹 정보: ${stateInfo}`;
+                    }
+                    break;
+                case 'H01':
+                    actionName = '해설 토글';
+                    const hMatch = stateInfo.match(/^Q(\d+):(COLLAPSED|EXPANDED)$/);
+                    if (hMatch) {
+                        detailParsed = `${hMatch[1]}번 문제 해설창 ${hMatch[2] === 'COLLAPSED' ? '닫음' : '엶'}`;
+                    } else {
+                        detailParsed = `해설 토글 상태: ${stateInfo}`;
+                    }
+                    break;
+                case 'N01':
+                    actionName = '문제 이동';
+                    const nMatch = stateInfo.match(/^Q(\d+)$/);
+                    if (nMatch) {
+                        detailParsed = `${nMatch[1]}번 문제로 화면 이동`;
+                    } else {
+                        detailParsed = `이동 문제: ${stateInfo}`;
+                    }
+                    break;
+                case 'E01':
+                    actionName = '시스템 오류';
+                    if (stateInfo.startsWith('ERR:')) {
+                        detailParsed = `오류 상세 내용: ${stateInfo.substring(4)}`;
+                    } else {
+                        detailParsed = `오류 내용: ${stateInfo}`;
+                    }
+                    break;
+                default:
+                    actionName = `이벤트(${actionCode})`;
+                    detailParsed = stateInfo;
+            }
+            
+            level = (actionCode === 'E01' || status.includes('ERR')) ? 'ERROR' : (status.includes('WARN') ? 'WARNING' : 'INFO');
+            message = `${actionName} (상태: ${status})`;
+            details = detailParsed;
+        } else {
+            // 구 버전 호환용
+            level = log.level || 'INFO';
+            message = log.message || '';
+            timestamp = log.timestamp || '';
+            details = log.details || '';
+        }
+        
+        let levelColor = '#94a3b8';
+        if (level === 'ERROR') levelColor = '#ff4444';
+        if (level === 'WARNING') levelColor = '#fbbf24';
         
         item.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-                <span style="color: ${levelColor}; font-weight: bold; min-width: 60px;">[${log.level}]</span>
-                <span style="flex: 1; word-break: break-all; color: var(--text-primary);">${log.message}</span>
-                <span style="color: var(--text-muted); font-size: 10px; white-space: nowrap;">${log.timestamp}</span>
+                <span style="color: ${levelColor}; font-weight: bold; min-width: 60px;">[${level}]</span>
+                <span style="flex: 1; word-break: break-all; color: var(--text-primary);">${message}</span>
+                <span style="color: var(--text-muted); font-size: 10px; white-space: nowrap;">${timestamp}</span>
             </div>
             <div id="log-detail-${idx}" style="display: none; background: rgba(0, 0, 0, 0.25); border-left: 2px solid ${levelColor}; padding: 8px; margin-top: 6px; white-space: pre-wrap; word-break: break-all; font-size: 11px; color: var(--text-secondary);">
-                ${log.details ? log.details : '상세 정보가 없습니다.'}
+                ${details ? details : '상세 정보가 없습니다.'}
             </div>
         `;
         
