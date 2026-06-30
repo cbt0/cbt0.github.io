@@ -639,6 +639,8 @@ function resumeLastSolved(lastSolved) {
         }, 1000);
         
         logUserActivity(`${matchedRound.subject} ${matchedRound.round} ${lastSolved.questionNum}번부터 이어 풀기 시작`);
+        const roundKey = `${matchedRound.subject}_${matchedRound.year || ''}_${matchedRound.round}`;
+        logSystem('S01', 'OK', 'RESUME:' + roundKey + ':Q' + (lastSolved.questionIndex + 1));
         switchTab('quiz');
     } else {
         alert('해당 시험 데이터를 로드할 수 없습니다.');
@@ -1110,6 +1112,7 @@ function registerEventListeners() {
 
 // SPA Navigation Control
 function navigateTo(subject) {
+    logSystem('N01', 'OK', 'NavTo:' + subject);
     if (subject === 'home' || !subject) {
         window.location.hash = '#home';
     } else {
@@ -1127,6 +1130,7 @@ function switchTabStyles(tabName) {
 }
 
 function switchTab(tabName) {
+    logSystem('N01', 'OK', 'SwitchTab:' + tabName);
     if (tabName === 'home') {
         window.location.hash = '#home';
     } else {
@@ -1148,6 +1152,7 @@ function showView(viewName) {
 
 // SPA Hash Router Implementation
 function router() {
+    logSystem('N01', 'OK', 'Route:' + (window.location.hash || '#home'));
     const hash = window.location.hash || '#home';
     
     // Login Session Protection: Intercept unauthenticated hash changes
@@ -1476,7 +1481,7 @@ function renderMarkingSheet() {
             state.activeQuestionIndex = idx;
             renderActiveQuestion();
             switchTab('quiz'); // Switch view tab to quiz
-            logSystem('N01', 'OK', 'Q' + (idx + 1));
+            logSystem('J01', 'OK', 'JumpQ:' + (idx + 1));
         });
         
         dom.markingSheet.appendChild(btn);
@@ -1855,6 +1860,7 @@ function submitExam() {
 
 // Enter post-submission review mode
 function enterReviewMode() {
+    logSystem('M01', 'OK', 'ReviewMode');
     state.quizMode = 'review';
     state.activeQuestionIndex = 0;
     renderMarkingSheet();
@@ -2077,6 +2083,7 @@ function reviewWrongAnswers() {
     };
     state.questionFilter = 'all';
     if (dom.questionFilter) dom.questionFilter.value = 'all';
+    logSystem('M02', 'OK', 'ReviewWrong:' + wrongQuestions.length + 'Q');
     startQuiz(customRound);
 }
 
@@ -2259,7 +2266,7 @@ function openQuestionJumpModal() {
       state.activeQuestionIndex = idx;
       renderActiveQuestion();
       dom.questionJumpModal.classList.remove('active');
-      logSystem('N01', 'OK', 'Q' + (idx + 1));
+      logSystem('J01', 'OK', 'JumpQ:' + (idx + 1));
     });
     
     dom.questionJumpGrid.appendChild(btn);
