@@ -849,15 +849,20 @@ function registerEventListeners() {
         nextQuestion();
     });
     
-    // Question filter select
-    if (dom.questionFilter) {
-        dom.questionFilter.addEventListener('change', (e) => {
-            state.questionFilter = e.target.value;
+    // 마킹 필터 버튼 클릭 이벤트 바인딩
+    const filterBtns = document.querySelectorAll('.marking-filter-btn');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const filterValue = btn.getAttribute('data-filter');
+            state.questionFilter = filterValue;
+            
+            syncFilterButtonsUI();
             applyQuestionFilter();
             renderMarkingSheet();
             renderActiveQuestion();
         });
-    }
+    });
 
     // Review wrong answer button
     if (dom.reviewWrongBtn) {
@@ -1528,6 +1533,7 @@ function startQuiz(round, isResume = false) {
         }
     }
     state.quizMode = 'solving';
+    syncFilterButtonsUI();
     
     logUserActivity(`${round.subject} ${round.round} 시험 시작` + (isResume ? ' (이어하기)' : ''));
     
@@ -1622,6 +1628,33 @@ function getAdjacentFilteredIndex(direction) {
     return null;
 }
 
+function syncFilterButtonsUI() {
+    const filterBtns = document.querySelectorAll('.marking-filter-btn');
+    filterBtns.forEach(btn => {
+        if (btn.getAttribute('data-filter') === state.questionFilter) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // 상단 헤더의 필터 모드 배지 상태 업데이트
+    const statusBadge = document.getElementById('filter-status-badge');
+    if (statusBadge) {
+        statusBadge.className = 'filter-badge'; // 기본화
+        if (state.questionFilter === 'all') {
+            statusBadge.innerText = '전체';
+            statusBadge.classList.add('badge-all');
+        } else if (state.questionFilter === 'wrong') {
+            statusBadge.innerText = '오답';
+            statusBadge.classList.add('badge-wrong');
+        } else if (state.questionFilter === 'checked') {
+            statusBadge.innerText = '체크';
+            statusBadge.classList.add('badge-checked');
+        }
+    }
+}
+
 function applyQuestionFilter() {
     if (!doesQuestionMatchFilter(state.activeQuestionIndex)) {
         const firstMatch = state.currentQuestions.findIndex((_, idx) => doesQuestionMatchFilter(idx));
@@ -1632,6 +1665,7 @@ function applyQuestionFilter() {
             alert('조건에 맞는 문제가 없습니다. 전체 문제 보기로 되돌립니다.');
         }
     }
+    syncFilterButtonsUI();
 }
 
 function updateMarkingStatus() {

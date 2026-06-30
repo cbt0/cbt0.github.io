@@ -2249,3 +2249,67 @@ transform: scale(1.2);             /* 살짝 커지는 효과 */
     font-size: 13px; /* 11px에서 13px로 키움 */
     color: var(--text-secondary);
 }
+
+/* --- OMR 필터 버튼 그룹 --- */
+.marking-filter-group {
+    display: flex;
+    gap: 6px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--glass-border);
+    margin-bottom: 12px;
+}
+
+.marking-filter-btn {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--border-radius-sm, 6px);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    outline: none;
+}
+
+.marking-filter-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+.marking-filter-btn.active {
+    background: var(--primary) !important;
+    color: white !important;
+    border-color: var(--primary) !important;
+}
+
+/* --- 상단 헤더 필터 상태 표시 배지 --- */
+.filter-badge {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    transition: all var(--transition-fast);
+}
+
+/* 전체 모드: 하늘색/인디고 */
+.filter-badge.badge-all {
+    background: rgba(99, 102, 241, 0.15) !important;
+    color: #818cf8 !important;
+    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+}
+
+/* 오답 모드: 빨간색 */
+.filter-badge.badge-wrong {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: var(--danger) !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+/* 체크 모드: 주황색 */
+.filter-badge.badge-checked {
+    background: rgba(249, 115, 22, 0.15) !important;
+    color: var(--warning) !important;
+    border: 1px solid rgba(249, 115, 22, 0.3) !important;
+}

@@ -145,6 +145,12 @@
                         <span class="sidebar-progress" id="quiz-progress-text">0 / 60</span>
                     </div>
                     
+                    <div class="marking-filter-group" id="marking-filter-group">
+                        <button class="marking-filter-btn active" data-filter="all">전체</button>
+                        <button class="marking-filter-btn" data-filter="wrong">오답</button>
+                        <button class="marking-filter-btn" data-filter="checked">체크</button>
+                    </div>
+                    
                     <div class="marking-grid" id="marking-sheet">
                         <!-- Dynamically generated marking buttons 1 to 60 -->
                     </div>
@@ -164,15 +170,7 @@
                             <span class="round-tag" id="quiz-round-name">2017년 1회</span>
                         </div>
                         <div class="quiz-header-right">
-                                <div class="question-filter" style="margin-right: 12px; display: flex; align-items: center; gap: 8px;">
-                                <label for="question-filter" style="font-size: 13px; color: var(--text-muted);">필터</label>
-                                <select id="question-filter" class="select-filter">
-                                    <option value="all">전체</option>
-                                    <option value="wrong">오답</option>
-                                    <option value="unanswered">미제출</option>
-                                    <option value="checked">체크한 문제</option>
-                                </select>
-                            </div>
+                            <span id="filter-status-badge" class="filter-badge badge-all" style="margin-right: 12px;">전체</span>
                             <div class="quiz-timer">
                                 <i class="fa-regular fa-clock"></i> <span id="timer-text">00:00</span>
                             </div>
