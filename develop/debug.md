@@ -112,101 +112,14 @@ function renderActiveQuestion() {
 
 ---
 
-## 💻 5. 코드 변경 사항 (Git Diff)
+## 💻 5. 코드 변경 사항 (Git Commit Reference)
 
-아래는 버그 수정을 통해 적용된 소스 코드의 실제 변경 내역입니다.
+이 버그 수정에 대한 실제 소스 코드 변경 내역은 Git 커밋 내역에 안전하게 영구 기록되어 있습니다. 상세한 코드 Diff는 아래 커밋 해시를 통해 확인하실 수 있습니다:
 
-```diff
-diff --git a/css/style.css b/css/style.css
-index 9463f85..2dbec64 100644
---- a/css/style.css
-+++ b/css/style.css
-@@ -695,6 +695,15 @@ body {
-     border-color: var(--primary);
-     color: var(--text-primary);
-     box-shadow: 0 0 10px var(--primary-glow);
-+}
-+
-+.marking-btn.correct.active,
-+.marking-btn.wrong.active {
-+    border-color: var(--primary);
-+    color: var(--text-primary);
-+}
-+
-+.marking-btn.active:not(.correct):not(.wrong) {
-     background: var(--bg-primary);
- }
- 
-diff --git a/js/app.js b/js/app.js
-index bde2f3b..7eaef7a 100644
---- a/js/app.js
-+++ b/js/app.js
-@@ -1146,6 +1146,10 @@ function startQuiz(round, isResume = false) {
-         state.activeQuestionIndex = 0;
-         state.userAnswers = {};
-         state.timeSpentSeconds = 0;
-+        state.questionFilter = 'all';
-+        if (dom.questionFilter) {
-+            dom.questionFilter.value = 'all';
-+        }
-     }
-     state.quizMode = 'solving';
-     
-@@ -1251,26 +1255,21 @@ function updateMarkingStatus() {
-         btn.className = 'marking-btn';
-         btn.style.display = doesQuestionMatchFilter(idx) ? 'inline-flex' : 'none';
-         
--        // Active highlight
--        if (state.activeQuestionIndex === idx) {
--            btn.classList.add('active');
--        }
--        
--        if (state.quizMode === 'solving') {
--            // Check if solved
--            if (state.userAnswers[idx] !== undefined) {
--                btn.classList.add('solved');
--            }
--        } else if (state.quizMode === 'review') {
--            // Correct/Incorrect colored dots
--            const userAnswer = state.userAnswers[idx];
-+        // Correct/Incorrect colored background for both solving and review modes
-+        const userAnswer = state.userAnswers[idx];
-+        if (userAnswer !== undefined && userAnswer !== null) {
-             const correctAnswer = q.answer;
--            if (userAnswer === correctAnswer) {
-+            if (Number(userAnswer) === Number(correctAnswer)) {
-                 btn.classList.add('correct');
-             } else {
-                 btn.classList.add('wrong');
-             }
-         }
-+        
-+        // Active highlight (border and shadow)
-+        if (state.activeQuestionIndex === idx) {
-+            btn.classList.add('active');
-+        }
-     });
-     
-     // Progress counter
-@@ -1286,7 +1285,8 @@ function initializeQuestionFilter() {
- 
- // Render active question to view pane
- function renderActiveQuestion() {
--    applyQuestionFilter();
-+    // ⚠️ 주의: 이 함수는 state를 변경하지 않습니다 (Read-Only View).
-+    //         인덱스 변경은 nextQuestion/prevQuestion/filter 핸들러에서만 수행되어야 합니다.
-     const q = state.currentQuestions[state.activeQuestionIndex];
-     if (!q) return;
-     
-@@ -1367,6 +1367,7 @@ function handleSelectAnswer(choiceNum) {
-     state.userAnswers[state.activeQuestionIndex] = choiceNum;
-     
-     // Render current question updates (apply colors, open hint box)
-+    // (⚠️ 내부에서 updateMarkingStatus()를 트리거하여 OMR판의 정/오답 색상도 함께 동기화됩니다.)
-     renderActiveQuestion();
-     
-     // Auto-save session
-```
+- **커밋 해시**: [`aab1c88b83301838bed92b50a608d03b5635bf11`](https://github.com/cbt0/cbt0.github.io/commit/aab1c88b83301838bed92b50a608d03b5635bf11)
+- **주요 수정 파일**:
+  - [js/app.js](file:///D:/git/cbt0.github.io/js/app.js) (bouncing 버그 해결 및 전역 에러 로그 핸들러 추가)
+  - [css/style.css](file:///D:/git/cbt0.github.io/css/style.css) (OMR 마킹 버튼의 활성화 특정성 가중치 수정)
 
 ---
 
