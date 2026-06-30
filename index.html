@@ -366,8 +366,9 @@
                 <h2 class="settings-title" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px; margin-bottom: 16px;">
                     <span><i class="fa-solid fa-terminal"></i> 시스템 로그</span>
                     <div style="display: flex; gap: 8px;">
+                        <button id="view-logs-btn" class="btn btn-sm btn-primary" style="font-size: 11px; padding: 4px 8px; height: auto;"><i class="fa-solid fa-expand"></i> 크게보기</button>
                         <button id="clear-logs-btn" class="btn btn-sm btn-outline" style="font-size: 11px; padding: 4px 8px; height: auto;">지우기</button>
-                        <button id="copy-ko-logs-btn" class="btn btn-sm btn-primary" style="font-size: 11px; padding: 4px 8px; height: auto;">한글</button>
+                        <button id="copy-ko-logs-btn" class="btn btn-sm btn-outline" style="font-size: 11px; padding: 4px 8px; height: auto;">한글</button>
                         <button id="copy-raw-logs-btn" class="btn btn-sm btn-outline" style="font-size: 11px; padding: 4px 8px; height: auto;">압축</button>
                     </div>
                 </h2>
@@ -618,6 +619,26 @@
         <!-- 문제 번호 버튼들이 JS로 렌더링됨 -->
         </div>
     </div>
+    </div>
+
+    <!-- 시스템 로그 전체 조회 모달 -->
+    <div id="system-logs-modal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 600px; padding: 24px; width: 90%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 18px; color: var(--text-primary);"><i class="fa-solid fa-terminal"></i> 전체 시스템 로그 조회</h3>
+                <button id="system-logs-close-btn" style="background: none; border: none; color: var(--danger); font-size: 20px; cursor: pointer;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="modal-system-logs-container" style="max-height: 50vh; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: var(--border-radius-sm); padding: 16px; font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.6; color: var(--text-secondary); margin-bottom: 16px;">
+                <div style="color: var(--text-muted); text-align: center; padding: 20px;">로그 내역이 없습니다.</div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button id="modal-clear-logs-btn" class="btn btn-sm btn-outline">로그 삭제</button>
+                <button id="modal-copy-ko-btn" class="btn btn-sm btn-primary">한글 복사</button>
+                <button id="modal-copy-raw-btn" class="btn btn-sm btn-outline">압축 복사</button>
+            </div>
+        </div>
     </div>
 
   

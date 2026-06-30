@@ -1043,11 +1043,37 @@ function registerEventListeners() {
                         case 'N01':
                             actionName = '문제 이동';
                             const nMatch = stateInfo.match(/^Q(\d+)$/);
+                            const routeMatch = stateInfo.match(/^Route:(.*)$/);
+                            const navToMatch = stateInfo.match(/^NavTo:(.*)$/);
+                            const switchTabMatch = stateInfo.match(/^SwitchTab:(.*)$/);
                             if (nMatch) {
                                 detailParsed = `${nMatch[1]}번 문제로 화면 이동`;
+                            } else if (routeMatch) {
+                                detailParsed = `라우터 이동 (경로: ${routeMatch[1]})`;
+                            } else if (navToMatch) {
+                                detailParsed = `SPA 네비게이션 이동 (과목: ${navToMatch[1]})`;
+                            } else if (switchTabMatch) {
+                                detailParsed = `화면 탭 전환 (탭: ${switchTabMatch[1]})`;
                             } else {
-                                detailParsed = `이동 문제: ${stateInfo}`;
+                                detailParsed = `이동 정보: ${stateInfo}`;
                             }
+                            break;
+                        case 'J01':
+                            actionName = '문제 점프';
+                            const jMatch = stateInfo.match(/^JumpQ:(\d+)(.*)$/);
+                            if (jMatch) {
+                                detailParsed = `OMR 마킹판 또는 점프 모달에서 ${jMatch[1]}번 문제로 즉시 점프${jMatch[2] ? ' ' + jMatch[2] : ''}`;
+                            } else {
+                                detailParsed = `점프 대상: ${stateInfo}`;
+                            }
+                            break;
+                        case 'M01':
+                            actionName = '복습 진입';
+                            detailParsed = '시험 복습(Review) 모드로 상태 강제 변경';
+                            break;
+                        case 'M02':
+                            actionName = '오답 복습';
+                            detailParsed = `오답 복습 세션 시작 - ${stateInfo}`;
                             break;
                         case 'E01':
                             actionName = '시스템 오류';
@@ -1102,6 +1128,55 @@ function registerEventListeners() {
             navigator.clipboard.writeText(text)
                 .then(() => alert('압축된 원본 로그가 클립보드에 복사되었습니다.'))
                 .catch(err => alert('복사 실패: ' + err));
+        });
+    }
+    
+    // 시스템 로그 크게보기 모달 관련 리스너
+    const viewLogsBtn = document.getElementById('view-logs-btn');
+    const systemLogsModal = document.getElementById('system-logs-modal');
+    const systemLogsCloseBtn = document.getElementById('system-logs-close-btn');
+    
+    if (viewLogsBtn && systemLogsModal) {
+        viewLogsBtn.addEventListener('click', () => {
+            systemLogsModal.classList.add('active');
+            renderSystemLogs();
+        });
+    }
+    
+    if (systemLogsCloseBtn && systemLogsModal) {
+        systemLogsCloseBtn.addEventListener('click', () => {
+            systemLogsModal.classList.remove('active');
+        });
+        
+        systemLogsModal.addEventListener('click', (e) => {
+            if (e.target === systemLogsModal) {
+                systemLogsModal.classList.remove('active');
+            }
+        });
+    }
+    
+    // 모달 내 기능 버튼들의 동작을 기존 설정화면의 버튼에 위임(클릭 트리거)
+    const modalClearBtn = document.getElementById('modal-clear-logs-btn');
+    if (modalClearBtn) {
+        modalClearBtn.addEventListener('click', () => {
+            const btn = document.getElementById('clear-logs-btn');
+            if (btn) btn.click();
+        });
+    }
+    
+    const modalCopyKoBtn = document.getElementById('modal-copy-ko-btn');
+    if (modalCopyKoBtn) {
+        modalCopyKoBtn.addEventListener('click', () => {
+            const btn = document.getElementById('copy-ko-logs-btn');
+            if (btn) btn.click();
+        });
+    }
+    
+    const modalCopyRawBtn = document.getElementById('modal-copy-raw-btn');
+    if (modalCopyRawBtn) {
+        modalCopyRawBtn.addEventListener('click', () => {
+            const btn = document.getElementById('copy-raw-logs-btn');
+            if (btn) btn.click();
         });
     }
 
@@ -2348,7 +2423,33 @@ function logSystem(actionCode, status, details = '') {
     
     if (!Array.isArray(logs)) logs = [];
     
-    logs.unshift(newLogStr);
+    // 중복 제거 및 압축 필터 (Deduping)
+    let isDup = false;
+    if (logs.length > 0) {
+        const lastLog = logs[0];
+        const lastParts = lastLog.split('|');
+        const lastCode = lastParts[1];
+        const lastDet = lastParts.slice(3).join('|') || '';
+        
+        const dupMatch = lastDet.match(/^(.*) \(x(\d+)\)$/);
+        let cleanLastDet = lastDet;
+        let dupCount = 1;
+        if (dupMatch) {
+            cleanLastDet = dupMatch[1];
+            dupCount = parseInt(dupMatch[2], 10);
+        }
+        
+        if (lastCode === code && cleanLastDet === stateSnapshot) {
+            dupCount++;
+            logs[0] = `${offsetStr}|${code}|${stat}|${stateSnapshot} (x${dupCount})`;
+            isDup = true;
+        }
+    }
+    
+    if (!isDup) {
+        logs.unshift(newLogStr);
+    }
+    
     if (logs.length > 300) {
         logs.length = 300;
     }
@@ -2365,9 +2466,47 @@ function logSystem(actionCode, status, details = '') {
 }
 
 // 시스템 로그 렌더링
+function createLogItemNode(idx, fontSize, levelColor, message, timestamp, details) {
+    const item = document.createElement('div');
+    item.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
+    item.style.padding = '8px 4px';
+    item.style.cursor = 'pointer';
+    item.style.transition = 'background-color 0.2s';
+    
+    const level = (levelColor === '#ff4444') ? 'ERROR' : (levelColor === '#fbbf24' ? 'WARNING' : 'INFO');
+    
+    item.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; font-size: ${fontSize}px;">
+            <span style="color: ${levelColor}; font-weight: bold; min-width: 60px;">[${level}]</span>
+            <span style="flex: 1; word-break: break-all; color: var(--text-primary);">${message}</span>
+            <span style="color: var(--text-muted); font-size: 10px; white-space: nowrap;">${timestamp}</span>
+        </div>
+        <div id="log-detail-${idx}" style="display: none; background: rgba(0, 0, 0, 0.25); border-left: 2px solid ${levelColor}; padding: 8px; margin-top: 6px; white-space: pre-wrap; word-break: break-all; font-size: ${fontSize}px; color: var(--text-secondary);">
+            ${details ? details : '상세 정보가 없습니다.'}
+        </div>
+    `;
+    
+    item.addEventListener('mouseover', () => {
+        item.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+    });
+    item.addEventListener('mouseout', () => {
+        item.style.backgroundColor = 'transparent';
+    });
+    item.addEventListener('click', () => {
+        const detail = item.querySelector(`#log-detail-${idx}`);
+        if (detail) {
+            const isHidden = detail.style.display === 'none';
+            detail.style.display = isHidden ? 'block' : 'none';
+        }
+    });
+    
+    return item;
+}
+
+// 시스템 로그 렌더링
 function renderSystemLogs() {
     const container = document.getElementById('system-logs-container');
-    if (!container) return;
+    const modalContainer = document.getElementById('modal-system-logs-container');
     
     const user = state.currentUser || 'GUEST';
     let logs = [];
@@ -2377,19 +2516,18 @@ function renderSystemLogs() {
         logs = [];
     }
     
+    const noLogsHtml = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">로그 내역이 없습니다.</div>';
+    
+    if (container) container.innerHTML = '';
+    if (modalContainer) modalContainer.innerHTML = '';
+    
     if (!Array.isArray(logs) || logs.length === 0) {
-        container.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">로그 내역이 없습니다.</div>';
+        if (container) container.innerHTML = noLogsHtml;
+        if (modalContainer) modalContainer.innerHTML = noLogsHtml;
         return;
     }
     
-    container.innerHTML = '';
     logs.forEach((log, idx) => {
-        const item = document.createElement('div');
-        item.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
-        item.style.padding = '8px 4px';
-        item.style.cursor = 'pointer';
-        item.style.transition = 'background-color 0.2s';
-        
         let level = 'INFO';
         let message = '';
         let timestamp = '';
@@ -2425,7 +2563,7 @@ function renderSystemLogs() {
                     break;
                 case 'L02':
                     actionName = '로그아웃 완료';
-                    detailParsed = stateInfo; // Contains timestamp inside details
+                    detailParsed = stateInfo;
                     break;
                 case 'S01':
                     actionName = '시험 시작';
@@ -2459,11 +2597,37 @@ function renderSystemLogs() {
                 case 'N01':
                     actionName = '문제 이동';
                     const nMatch = stateInfo.match(/^Q(\d+)$/);
+                    const routeMatch = stateInfo.match(/^Route:(.*)$/);
+                    const navToMatch = stateInfo.match(/^NavTo:(.*)$/);
+                    const switchTabMatch = stateInfo.match(/^SwitchTab:(.*)$/);
                     if (nMatch) {
                         detailParsed = `${nMatch[1]}번 문제로 화면 이동`;
+                    } else if (routeMatch) {
+                        detailParsed = `라우터 이동 (경로: ${routeMatch[1]})`;
+                    } else if (navToMatch) {
+                        detailParsed = `SPA 네비게이션 이동 (과목: ${navToMatch[1]})`;
+                    } else if (switchTabMatch) {
+                        detailParsed = `화면 탭 전환 (탭: ${switchTabMatch[1]})`;
                     } else {
-                        detailParsed = `이동 문제: ${stateInfo}`;
+                        detailParsed = `이동 정보: ${stateInfo}`;
                     }
+                    break;
+                case 'J01':
+                    actionName = '문제 점프';
+                    const jMatch = stateInfo.match(/^JumpQ:(\d+)(.*)$/);
+                    if (jMatch) {
+                        detailParsed = `OMR 마킹판 또는 점프 모달에서 ${jMatch[1]}번 문제로 즉시 점프${jMatch[2] ? ' ' + jMatch[2] : ''}`;
+                    } else {
+                        detailParsed = `점프 대상: ${stateInfo}`;
+                    }
+                    break;
+                case 'M01':
+                    actionName = '복습 진입';
+                    detailParsed = '시험 복습(Review) 모드로 상태 강제 변경';
+                    break;
+                case 'M02':
+                    actionName = '오답 복습';
+                    detailParsed = `오답 복습 세션 시작 - ${stateInfo}`;
                     break;
                 case 'E01':
                     actionName = '시스템 오류';
@@ -2493,32 +2657,14 @@ function renderSystemLogs() {
         if (level === 'ERROR') levelColor = '#ff4444';
         if (level === 'WARNING') levelColor = '#fbbf24';
         
-        item.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-                <span style="color: ${levelColor}; font-weight: bold; min-width: 60px;">[${level}]</span>
-                <span style="flex: 1; word-break: break-all; color: var(--text-primary);">${message}</span>
-                <span style="color: var(--text-muted); font-size: 10px; white-space: nowrap;">${timestamp}</span>
-            </div>
-            <div id="log-detail-${idx}" style="display: none; background: rgba(0, 0, 0, 0.25); border-left: 2px solid ${levelColor}; padding: 8px; margin-top: 6px; white-space: pre-wrap; word-break: break-all; font-size: 11px; color: var(--text-secondary);">
-                ${details ? details : '상세 정보가 없습니다.'}
-            </div>
-        `;
-        
-        item.addEventListener('mouseover', () => {
-            item.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
-        });
-        item.addEventListener('mouseout', () => {
-            item.style.backgroundColor = 'transparent';
-        });
-        item.addEventListener('click', () => {
-            const detail = item.querySelector(`#log-detail-${idx}`);
-            if (detail) {
-                const isHidden = detail.style.display === 'none';
-                detail.style.display = isHidden ? 'block' : 'none';
-            }
-        });
-        
-        container.appendChild(item);
+        if (container) {
+            const item = createLogItemNode(`mini-${idx}`, 11, levelColor, message, timestamp, details);
+            container.appendChild(item);
+        }
+        if (modalContainer) {
+            const item = createLogItemNode(`modal-${idx}`, 12, levelColor, message, timestamp, details);
+            modalContainer.appendChild(item);
+        }
     });
 }
 
