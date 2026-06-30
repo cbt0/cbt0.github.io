@@ -353,7 +353,7 @@ function updateHomeResumeButton() {
                     : (session.activeQuestionIndex + 1);
                 
                 if (dom.homeResumeBtn) {
-                    dom.homeResumeBtn.innerText = `▶ : ${subjectName} ${roundName} (Q. ${questionNum})`;
+                    dom.homeResumeBtn.innerText = `▶ ${subjectName} ${roundName}`;
                     dom.homeResumeBtn.classList.remove('hidden');
                 }
                 if (dom.welcomeContainer) {
@@ -1300,6 +1300,17 @@ function renderRoundsList(subject) {
             resumeBtn.style.opacity = '0.5';
             resumeBtn.style.cursor = 'not-allowed';
         } else {
+            try {
+                const session = JSON.parse(sessionStr);
+                if (session && session.activeRound) {
+                    const r = session.activeRound;
+                    const roundName = r.year ? `${r.year}년 ${r.round}` : r.round;
+                    resumeBtn.innerText = `▶ ${roundName}`;
+                }
+            } catch (e) {
+                console.error('Error parsing resume button session:', e);
+            }
+            
             resumeBtn.addEventListener('click', () => {
                 try {
                     const session = JSON.parse(sessionStr);
