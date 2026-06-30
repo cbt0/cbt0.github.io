@@ -8,6 +8,36 @@ let idleTimer;
 // Base Time for Delta-encoding log system
 let sessionBaseTime = parseInt(localStorage.getItem('session_base_time')) || null;
 
+// --- [추가] 앱 버전 관리 (업데이트 시 이 숫자를 올려주세요!) ---
+const APP_VERSION = "1.9907"; 
+
+function checkAppUpdate() {
+    const storedVersion = localStorage.getItem('cbt_app_version');
+
+    // 저장된 버전과 현재 버전이 다르면 (최초 접속이거나 업데이트가 발생했을 때)
+    if (storedVersion !== APP_VERSION) {
+        // 사용자에게 알림창 띄우기
+        const doUpdate = confirm("🎉 CBT 웹앱이 새롭게 업데이트 되었습니다!\n원활한 환경을 위해 최신 버전으로 갱신하시겠습니까?\n(※ 이어하기 데이터 및 성적은 안전하게 보존됩니다.)");
+
+        if (doUpdate) {
+            // 새 버전을 로컬 스토리지에 저장
+            localStorage.setItem('cbt_app_version', APP_VERSION);
+            
+            // 캐시를 무시하고 최신 파일을 강제 다운로드하도록 주소 뒤에 ?v=버전 파라미터를 붙여서 새로고침
+            try {
+                const url = new URL(window.location.href);
+                url.searchParams.set('v', APP_VERSION);
+                window.location.href = url.toString();
+            } catch (e) {
+                window.location.reload();
+            }
+        } else {
+            // 나중에 하기로 한 경우, 일단 버전만 갱신해두어 다음 접속 시 귀찮게 묻지 않음
+            localStorage.setItem('cbt_app_version', APP_VERSION);
+        }
+    }
+}
+
 // ==========================================
 // 🚨 글로벌 에러 및 통신 끊김 추적 로거
 // ==========================================
@@ -284,6 +314,7 @@ const subjectDetails = {
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
+    checkAppUpdate(); // 🔥 화면이 켜지자마자 가장 먼저 업데이트 확인
     initTheme();
     initAutoLogoutSettings();
     checkLoginState();
