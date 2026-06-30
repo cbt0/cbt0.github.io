@@ -1,5 +1,5 @@
 /**
- * Antigravity CBT - Core Application Script V1.9915
+ * Antigravity CBT - Core Application Script V1.9916
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
 
@@ -9,7 +9,7 @@ let idleTimer;
 let sessionBaseTime = parseInt(localStorage.getItem('session_base_time')) || null;
 
 // --- [추가] 앱 버전 관리 (업데이트 시 이 숫자를 올려주세요!) ---
-const APP_VERSION = "1.9915"; 
+const APP_VERSION = "1.9916"; 
 
 function checkAppUpdate() {
     const storedVersion = localStorage.getItem('cbt_app_version');
@@ -1813,8 +1813,14 @@ function renderActiveQuestion() {
     if (!q) return;
     
     // 개별 문제 풀이 타이머 시작 지점 기록
-    if (state.quizMode === 'solving' && state.questionTimeSpent[state.activeQuestionIndex] === undefined) {
-        state.questionStartTime = Date.now();
+    if (state.quizMode === 'solving') {
+        const activeIdx = state.activeQuestionIndex;
+        const hasJudgment = state.permanentlyCorrect[activeIdx] === true || state.permanentlyWrong[activeIdx] === true;
+        if (!hasJudgment) {
+            state.questionStartTime = Date.now();
+        } else {
+            state.questionStartTime = null; // 계측 정지
+        }
     }
     
     // Save last solved question info for resume
@@ -1942,7 +1948,6 @@ function handleSelectAnswer(choiceNum, isCheckMode = false) {
                 // 이미 체크 상태이면 토글하여 마킹 전체 해제
                 delete state.userAnswers[activeIdx];
                 delete state.checkedQuestions[activeIdx];
-                delete state.questionTimeSpent[activeIdx];
             } else {
                 // 일반 마킹 상태였다면 체크 상태로 전이
                 state.checkedQuestions[activeIdx] = true;
@@ -1962,7 +1967,6 @@ function handleSelectAnswer(choiceNum, isCheckMode = false) {
                 // 이미 확신 상태라면 토글하여 마킹 전체 해제
                 delete state.userAnswers[activeIdx];
                 delete state.checkedQuestions[activeIdx];
-                delete state.questionTimeSpent[activeIdx];
             } else {
                 // 체크 상태였다면 확신(일반) 마킹 상태로 전이 (체크 해제)
                 state.checkedQuestions[activeIdx] = false;
