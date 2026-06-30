@@ -315,6 +315,13 @@ const subjectDetails = {
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
     checkAppUpdate(); // 🔥 화면이 켜지자마자 가장 먼저 업데이트 확인
+    
+    // 홈페이지 타이틀 버전 동적 반영
+    const heroTitle = document.querySelector('.hero-title .gradient-text');
+    if (heroTitle) {
+        heroTitle.innerText = `CBT V${APP_VERSION}`;
+    }
+    
     initTheme();
     initAutoLogoutSettings();
     checkLoginState();
