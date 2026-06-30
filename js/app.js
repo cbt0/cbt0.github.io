@@ -899,6 +899,11 @@ function registerEventListeners() {
             applyQuestionFilter();
             renderMarkingSheet();
             renderActiveQuestion();
+            
+            // 문제 이동 모달창이 열려있다면 모달 내부 그리드 필터링 갱신
+            if (dom.questionJumpModal && dom.questionJumpModal.classList.contains('active')) {
+                openQuestionJumpModal();
+            }
         });
     });
 

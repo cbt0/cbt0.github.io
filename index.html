@@ -610,7 +610,11 @@
     <div id="question-jump-modal" class="modal-overlay">
     <div class="modal-card" style="max-width: 400px; padding: 24px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 20px;">
-        <h3 style="margin: 0; font-size: 18px; color: var(--text-primary);">문제 이동</h3>
+        <div class="marking-filter-group" style="flex: 1; margin-right: 15px; margin-bottom: 0; border: none; padding-bottom: 0;">
+            <button class="marking-filter-btn active" data-filter="all">전체</button>
+            <button class="marking-filter-btn" data-filter="wrong">오답</button>
+            <button class="marking-filter-btn" data-filter="checked">체크</button>
+        </div>
         <button id="question-jump-close-btn" style="background: none; border: none; color: var(--danger); font-size: 20px; cursor: pointer;">
             <i class="fa-solid fa-xmark"></i>
         </button>
