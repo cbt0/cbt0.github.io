@@ -1,5 +1,5 @@
 /**
- * Antigravity CBT - Core Application Script V1.9920
+ * Antigravity CBT - Core Application Script V1.9921
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
 
@@ -1421,8 +1421,6 @@ function router() {
     }
 }
 
-// Render available rounds grid
-// Render available rounds grid (V1.961 다중 시리즈 그룹핑 적용)
 // Render available rounds grid (V1.961 다중 시리즈 그룹핑 및 기존 디자인 완벽 복원)
 function renderRoundsList(subject) {
     const seriesContainer = document.getElementById('series-container');
