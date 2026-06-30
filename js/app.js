@@ -2906,32 +2906,38 @@ function logSystem(actionCode, status, details = '') {
 }
 
 // 시스템 로그 렌더링
-function createLogItemNode(idx, fontSize, levelColor, message, timestamp, details) {
+function createLogItemNode(idx, fontSize, levelColor, timestamp, details, message, status) {
     const item = document.createElement('div');
     item.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
-    item.style.padding = '8px 4px';
+    item.style.padding = '3px 4px';
     item.style.transition = 'background-color 0.2s';
     
-    const level = (levelColor === '#ff4444') ? 'ERROR' : (levelColor === '#fbbf24' ? 'WARNING' : 'INFO');
-    
-    // [INFO]는 표시하지 않고 ERROR, WARNING만 표시
-    const levelSpan = level !== 'INFO' 
-        ? `<span style="color: ${levelColor}; font-weight: bold; margin-right: 4px;">[${level}]</span>` 
-        : '';
-        
-    // 시간은 맨 앞에 흰색으로 표시
+    // 시간 표시 (맨 앞 흰색)
     const timeSpan = timestamp 
         ? `<span style="color: #ffffff; font-size: ${fontSize}px; margin-right: 8px; white-space: nowrap;">[${timestamp}]</span>` 
         : '';
 
-    // 분류(message) 대신 상세 정보(details)를 바로 노출
+    // 본문 내용 (상세가 없으면 분류를 노출)
     const displayText = details || message;
+    
+    // 상태값(OK, ERR, WARN 등)의 색상 매핑
+    let statusColor = 'var(--text-secondary)';
+    if (status.includes('ERR') || status.includes('ERROR')) {
+        statusColor = '#ff4444'; // 에러: 빨간색
+    } else if (status.includes('WARN') || status.includes('WARNING')) {
+        statusColor = '#fbbf24'; // 경고: 노란색
+    } else if (status === 'OK') {
+        statusColor = '#10b981'; // 성공: 녹색 (Emerald)
+    }
+    
+    const statusSpan = status 
+        ? `<span style="color: ${statusColor}; font-weight: bold; margin-left: 4px; white-space: nowrap;">(${status})</span>` 
+        : '';
     
     item.innerHTML = `
         <div style="display: flex; align-items: flex-start; gap: 4px; font-size: ${fontSize}px; line-height: 1.4;">
             ${timeSpan}
-            ${levelSpan}
-            <span style="flex: 1; word-break: break-all; color: var(--text-primary);">${displayText}</span>
+            <span style="flex: 1; word-break: break-all; color: var(--text-primary);">${displayText}${statusSpan}</span>
         </div>
     `;
     
@@ -2974,12 +2980,13 @@ function renderSystemLogs() {
         let message = '';
         let timestamp = '';
         let details = '';
+        let status = 'OK';
         
         if (typeof log === 'string') {
             const parts = log.split('|');
             const offset = parts[0] || '+0';
             const actionCode = parts[1] || '???';
-            const status = parts[2] || 'OK';
+            status = parts[2] || 'OK';
             const stateInfo = parts.slice(3).join('|') || '';
             
             // 1. 오프셋을 절대 시간으로 복원 계산 (날짜와 초 정보를 제외하고 시간만 추출)
@@ -3092,6 +3099,7 @@ function renderSystemLogs() {
             message = log.message || '';
             timestamp = log.timestamp || '';
             details = log.details || '';
+            status = log.level || 'INFO';
         }
         
         let levelColor = '#94a3b8';
@@ -3099,11 +3107,11 @@ function renderSystemLogs() {
         if (level === 'WARNING') levelColor = '#fbbf24';
         
         if (container) {
-            const item = createLogItemNode(`mini-${idx}`, 11, levelColor, message, timestamp, details);
+            const item = createLogItemNode(`mini-${idx}`, 13, levelColor, timestamp, details, message, status);
             container.appendChild(item);
         }
         if (modalContainer) {
-            const item = createLogItemNode(`modal-${idx}`, 12, levelColor, message, timestamp, details);
+            const item = createLogItemNode(`modal-${idx}`, 13, levelColor, timestamp, details, message, status);
             modalContainer.appendChild(item);
         }
     });
