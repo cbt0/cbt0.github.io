@@ -1,4 +1,4 @@
-/* Antigravity CBT CSS Design System - Premium Dark Theme & Glassmorphism V1.9911 */
+/* Antigravity CBT CSS Design System - Premium Dark Theme & Glassmorphism V1.9912 */
 
 :root {
     /* Color Palette */
@@ -990,8 +990,8 @@ body {
 /* 6. 제출 후 채점 스타일 (리뷰 모드) */
 /* 6-1) 맞춘 문항 (.correct) -> 녹색 */
 .choice-item.correct .choice-num-btn {
-    background: var(--success) !important;
-    color: #ffffff !important;
+    background: var(--success-bg) !important;
+    color: var(--success) !important;
     border-color: var(--success) !important;
 }
 .choice-item.correct .choice-text-btn {
@@ -1001,8 +1001,8 @@ body {
 }
 /* 6-2) 내가 쓴 오답 (.wrong) -> 빨간색 */
 .choice-item.wrong .choice-num-btn {
-    background: var(--danger) !important;
-    color: #ffffff !important;
+    background: var(--danger-bg) !important;
+    color: var(--danger) !important;
     border-color: var(--danger) !important;
 }
 .choice-item.wrong .choice-text-btn {
