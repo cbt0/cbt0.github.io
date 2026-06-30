@@ -1,5 +1,5 @@
 /**
- * Antigravity CBT - Core Application Script V1.9913
+ * Antigravity CBT - Core Application Script V1.9914
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
 
@@ -9,7 +9,7 @@ let idleTimer;
 let sessionBaseTime = parseInt(localStorage.getItem('session_base_time')) || null;
 
 // --- [추가] 앱 버전 관리 (업데이트 시 이 숫자를 올려주세요!) ---
-const APP_VERSION = "1.9913"; 
+const APP_VERSION = "1.9914"; 
 
 function checkAppUpdate() {
     const storedVersion = localStorage.getItem('cbt_app_version');
@@ -67,6 +67,8 @@ const state = {
     userAnswers: {},        // {questionIndex: selectedOption}
     checkedQuestions: {},   // {questionIndex: true/false} (체크 마킹 여부)
     permanentlyWrong: {},   // {questionIndex: true} (한 번이라도 오답 선택 및 힌트 사용 영구 낙인 기록)
+    questionTimeSpent: {},  // {questionIndex: seconds} (각 문항 최초 풀이 소요 시간)
+    questionStartTime: null, // (현재 문항 진입 시점 타임스탬프)
     quizMode: 'solving',    // 'solving' (active test), 'review' (checking answers after submission)
     timerInterval: null,
     timeSpentSeconds: 0,
@@ -260,6 +262,8 @@ const dom = {
     quizSubjectName: document.getElementById('quiz-subject-name'),
     quizRoundName: document.getElementById('quiz-round-name'),
     timerText: document.getElementById('timer-text'),
+    scoreText: document.getElementById('score-text'),
+    scoreContainer: document.getElementById('quiz-score-container'),
     markingSheet: document.getElementById('marking-sheet'),
     quizProgressText: document.getElementById('quiz-progress-text'),
     quizSubmitBtn: document.getElementById('quiz-submit-btn'),
@@ -425,6 +429,7 @@ function autoSaveSession() {
         userAnswers: state.userAnswers,
         checkedQuestions: state.checkedQuestions,
         permanentlyWrong: state.permanentlyWrong,
+        questionTimeSpent: state.questionTimeSpent,
         timeSpentSeconds: state.timeSpentSeconds,
         timestamp: Date.now()
     };
@@ -843,6 +848,7 @@ function registerEventListeners() {
                     state.userAnswers = session.userAnswers || {};
                     state.checkedQuestions = session.checkedQuestions || {};
                     state.permanentlyWrong = session.permanentlyWrong || {};
+                    state.questionTimeSpent = session.questionTimeSpent || {};
                     state.timeSpentSeconds = session.timeSpentSeconds || 0;
                     
                     // Call startQuiz with isResume = true
@@ -1481,6 +1487,7 @@ function renderRoundsList(subject) {
                         state.userAnswers = session.userAnswers || {};
                         state.checkedQuestions = session.checkedQuestions || {};
                         state.permanentlyWrong = session.permanentlyWrong || {};
+                        state.questionTimeSpent = session.questionTimeSpent || {};
                         state.timeSpentSeconds = session.timeSpentSeconds || 0;
                         
                         startQuiz(session.activeRound, true);
@@ -1757,6 +1764,33 @@ function updateMarkingStatus() {
     // Progress counter
     const answeredCount = Object.keys(state.userAnswers).length;
     dom.quizProgressText.innerText = `${answeredCount} / ${state.currentQuestions.length}`;
+    
+    // 실시간 스코어판 갱신
+    updateRealtimeScore();
+}
+
+function updateRealtimeScore() {
+    if (!dom.scoreText) return;
+    
+    let totalScore = 0;
+    state.currentQuestions.forEach((q, idx) => {
+        const userAnswer = state.userAnswers[idx];
+        const isPermanentlyWrong = state.permanentlyWrong[idx] === true;
+        
+        if (userAnswer !== undefined && userAnswer !== null) {
+            const isCorrect = Number(userAnswer) === Number(q.answer);
+            if (isCorrect && !isPermanentlyWrong) {
+                const timeSpent = state.questionTimeSpent[idx];
+                let speedBonus = 0;
+                if (timeSpent !== undefined && timeSpent !== null && timeSpent < 100) {
+                    speedBonus = 100 - timeSpent;
+                }
+                totalScore += (100 + speedBonus);
+            }
+        }
+    });
+    
+    dom.scoreText.innerText = totalScore;
 }
 
 function initializeQuestionFilter() {
@@ -1771,6 +1805,11 @@ function renderActiveQuestion() {
     //         인덱스 변경은 nextQuestion/prevQuestion/filter 핸들러에서만 수행되어야 합니다.
     const q = state.currentQuestions[state.activeQuestionIndex];
     if (!q) return;
+    
+    // 개별 문제 풀이 타이머 시작 지점 기록
+    if (state.quizMode === 'solving' && state.questionTimeSpent[state.activeQuestionIndex] === undefined) {
+        state.questionStartTime = Date.now();
+    }
     
     // Save last solved question info for resume
     if (state.currentUser && state.activeRound && state.quizMode === 'solving') {
@@ -1902,6 +1941,7 @@ function handleSelectAnswer(choiceNum, isCheckMode = false) {
                 // 이미 체크 상태이면 토글하여 마킹 전체 해제
                 delete state.userAnswers[activeIdx];
                 delete state.checkedQuestions[activeIdx];
+                delete state.questionTimeSpent[activeIdx];
             } else {
                 // 일반 마킹 상태였다면 체크 상태로 전이
                 state.checkedQuestions[activeIdx] = true;
@@ -1919,6 +1959,7 @@ function handleSelectAnswer(choiceNum, isCheckMode = false) {
                 // 이미 확신 상태라면 토글하여 마킹 전체 해제
                 delete state.userAnswers[activeIdx];
                 delete state.checkedQuestions[activeIdx];
+                delete state.questionTimeSpent[activeIdx];
             } else {
                 // 체크 상태였다면 확신(일반) 마킹 상태로 전이 (체크 해제)
                 state.checkedQuestions[activeIdx] = false;
@@ -1933,6 +1974,14 @@ function handleSelectAnswer(choiceNum, isCheckMode = false) {
             if (q && Number(choiceNum) !== Number(q.answer)) {
                 state.permanentlyWrong[activeIdx] = true;
             }
+        }
+    }
+    
+    // 최초 답변 마킹 시 걸린 시간 기록
+    if (state.userAnswers[activeIdx] !== undefined && state.userAnswers[activeIdx] !== null) {
+        if (state.questionTimeSpent[activeIdx] === undefined) {
+            const elapsed = Math.floor((Date.now() - (state.questionStartTime || Date.now())) / 1000);
+            state.questionTimeSpent[activeIdx] = Math.max(1, elapsed);
         }
     }
     
@@ -1998,25 +2047,29 @@ function submitExam() {
     const total = state.currentQuestions.length;
     let correct = 0;
     
+    let totalSpeedBonus = 0;
     state.currentQuestions.forEach((q, idx) => {
         const isUserCorrect = state.userAnswers[idx] === q.answer;
         const isPermanentlyWrong = state.permanentlyWrong[idx] === true;
         if (isUserCorrect && !isPermanentlyWrong) {
             correct++;
+            const timeSpent = state.questionTimeSpent[idx];
+            if (timeSpent !== undefined && timeSpent !== null && timeSpent < 100) {
+                totalSpeedBonus += (100 - timeSpent);
+            }
         }
     });
     
     const scoreVal = Math.round((correct / total) * 100);
     const passScore = 60; // Standard qualification pass limit is 60 points
     const isPass = scoreVal >= passScore;
-    const timeMinutes = state.timeSpentSeconds / 60;
     const baseScore = (correct / total) * 100;
-    const timeBonus = Math.max(0, (1 - (timeMinutes / 100)) * 100);
-    const gameScore = Math.round(baseScore + timeBonus);
+    const averageSpeedBonus = totalSpeedBonus / total;
+    const gameScore = Math.round(baseScore + averageSpeedBonus);
     
     // Bind stats to modal
-    dom.resultScore.innerText = `${correct} / ${total}`;
-    dom.resultPercent.innerText = `${scoreVal}점`;
+    dom.resultScore.innerText = `${correct} / ${total} (스피드보너스: +${Math.round(averageSpeedBonus)}점)`;
+    dom.resultPercent.innerText = `${scoreVal}점 (랭킹스코어: ${gameScore}점)`;
     
     if (isPass) {
         dom.resultStatusBadge.className = 'result-status-badge pass';

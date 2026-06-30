@@ -1,12 +1,12 @@
 <!-- ======================================================= -->
-<!-- CBT 웹 앱 Version: V1.9913                            -->
+<!-- CBT 웹 앱 Version: V1.9914                            -->
 <!-- ======================================================= -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CBT V1.9913 - 최강 CBT 스타일 문제풀이</title>
+    <title>CBT V1.9914 - 최강 CBT 스타일 문제풀이</title>
     <meta name="description" content="에너지기능사, 에너지산업관리기사, 에너지기능장, 가스기능사, 공조기능사 기출문제 무료 CBT 풀이 사이트. 실시간 채점 및 자동 힌트 제공.">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,7 +15,7 @@
     <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css?v=1.9913">
+    <link rel="stylesheet" href="css/style.css?v=1.9914">
 </head>
 <body>
     <!-- Premium Header -->
@@ -42,7 +42,7 @@
         <!-- 1. Home / Introduction Screen -->
         <section id="home-screen" class="view-section active-view">
             <div class="hero-section">
-                <h1 class="hero-title"><span class="gradient-text">CBT V1.9913</span></h1>
+                <h1 class="hero-title"><span class="gradient-text">CBT V1.9914</span></h1>
                 
                 <!-- Login Box -->
                 <div class="login-box" id="login-form-container">
@@ -171,10 +171,14 @@
                         </div>
                         <div class="quiz-header-right">
                             <span id="filter-status-badge" class="filter-badge badge-all" style="margin-right: 12px;">전체</span>
-                            <div class="quiz-timer">
+                            <div class="quiz-timer" style="margin-right: 10px;">
                                 <i class="fa-regular fa-clock"></i> <span id="timer-text">00:00</span>
                             </div>
-                            <button class="btn btn-outline btn-sm" id="calculator-btn" aria-label="계산기" style="display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; padding: 0; border-radius: 50%;"><i class="fa-solid fa-calculator" style="font-size: 1.5em;"></i></button>
+                            <!-- 🏆 실시간 누적 스코어 표시 영역 -->
+                            <div class="quiz-score" id="quiz-score-container" style="background: rgba(16, 185, 129, 0.12); border: 1px solid var(--success-border); padding: 6px 12px; border-radius: 8px; font-size: 15px; font-weight: 700; color: var(--success); display: inline-flex; align-items: center; gap: 6px; min-width: 110px; justify-content: center; margin-right: 10px; font-family: 'Outfit', sans-serif;">
+                                <i class="fa-solid fa-trophy"></i> SCORE: <span id="score-text">0</span>
+                            </div>
+                            <button class="btn btn-outline btn-sm" id="calculator-btn" aria-label="계산기" style="display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; padding: 0; border-radius: 50%; margin-right: 10px;"><i class="fa-solid fa-calculator" style="font-size: 1.5em;"></i></button>
                             <button class="btn btn-danger btn-sm" id="quiz-top-submit-btn">제출</button>
                         </div>
                     </div>
@@ -649,6 +653,6 @@
   
 
     <!-- Custom JavaScript -->
-    <script src="js/app.js?v=1.9913"></script>
+    <script src="js/app.js?v=1.9914"></script>
 </body>
 </html>
