@@ -77,7 +77,8 @@ const state = {
     questionFilter: 'all', // 'all', 'wrong', 'unanswered'
     currentUser: null,      // Logged in user ID
     autoLogoutMinutes: 30,  // Auto-logout idle timeout minutes
-    lastActiveQuestionIndex: null
+    lastActiveQuestionIndex: null,
+    hasSuggestedSubmit: false // 모든 문제 완료 후 최초 1회만 제출 안내 제안을 띄우기 위한 플래그
 };
 
 // Mock Exam Database for other subjects
@@ -1593,12 +1594,24 @@ function startQuiz(round, isResume = false) {
         state.activeQuestionIndex = 0;
         state.userAnswers = {};
         state.checkedQuestions = {};
-        state.permanentlyWrong = {};
-        state.permanentlyCorrect = {};
         state.questionTimeSpent = {};
         state.timeSpentSeconds = 0;
         state.questionFilter = 'all';
         state.lastActiveQuestionIndex = null;
+        state.hasSuggestedSubmit = false;
+
+        if (round.sessionType === 'wrong-review') {
+            // 오답 복습 모드인 경우: 모든 문제를 최초 오답(빨간색)으로 세팅하여 사이드바 결과 동기화
+            state.permanentlyWrong = {};
+            state.permanentlyCorrect = {};
+            round.questions.forEach((_, idx) => {
+                state.permanentlyWrong[idx] = true;
+            });
+        } else {
+            state.permanentlyWrong = {};
+            state.permanentlyCorrect = {};
+        }
+
         if (dom.explanationBox) {
             dom.explanationBox.classList.add('collapsed');
         }
@@ -1679,11 +1692,16 @@ function doesQuestionMatchFilter(index) {
     if (!q) return false;
 
     const userAnswer = state.userAnswers[index];
+    const isPermanentlyCorrect = state.permanentlyCorrect[index] === true;
+    const isPermanentlyWrong = state.permanentlyWrong[index] === true;
+
     if (state.questionFilter === 'wrong') {
-        return userAnswer !== undefined && userAnswer !== q.answer;
+        // 최초 오답 판정을 받았거나, 아직 판정이 안 났는데 임시 답안이 오답인 경우
+        return isPermanentlyWrong || (!isPermanentlyCorrect && userAnswer !== undefined && userAnswer !== q.answer);
     }
     if (state.questionFilter === 'unanswered') {
-        return userAnswer === undefined;
+        // 최초 판정이 전혀 없고, 현재 임시 답안도 없는 미풀이 상태
+        return !isPermanentlyCorrect && !isPermanentlyWrong && userAnswer === undefined;
     }
     if (state.questionFilter === 'checked') {
         return state.checkedQuestions[index] === true;
@@ -1785,7 +1803,11 @@ function updateMarkingStatus() {
     });
     
     // Progress counter
-    const answeredCount = Object.keys(state.userAnswers).length;
+    const answeredCount = state.currentQuestions.filter((_, idx) => {
+        return state.permanentlyCorrect[idx] === true || 
+               state.permanentlyWrong[idx] === true || 
+               (state.userAnswers[idx] !== undefined && state.userAnswers[idx] !== null);
+    }).length;
     dom.quizProgressText.innerText = `${answeredCount} / ${state.currentQuestions.length}`;
     
     // 실시간 스코어판 갱신
@@ -1959,75 +1981,112 @@ function handleSelectAnswer(choiceNum, isCheckMode = false) {
     const isCurrentlyChecked = state.checkedQuestions[activeIdx] === true;
     
     const q = state.currentQuestions[activeIdx];
-    const hasJudgment = state.permanentlyCorrect[activeIdx] === true || state.permanentlyWrong[activeIdx] === true;
+    // 오답 복습 모드에서는 고정 채점이 아닌 실시간 재채점이 허용되어야 합니다.
+    const isWrongReview = state.activeRound && state.activeRound.sessionType === 'wrong-review';
+    const hasJudgment = !isWrongReview && (state.permanentlyCorrect[activeIdx] === true || state.permanentlyWrong[activeIdx] === true);
     
-    if (isCheckMode) {
-        // [번호 버튼 클릭 시 -> 체크 검토 정답 상태로]
-        if (currentAnswer === choiceNum) {
-            if (isCurrentlyChecked) {
-                // 이미 체크 상태이면 토글하여 마킹 전체 해제
-                delete state.userAnswers[activeIdx];
-                delete state.checkedQuestions[activeIdx];
-            } else {
-                // 일반 마킹 상태였다면 체크 상태로 전이
-                state.checkedQuestions[activeIdx] = true;
-                if (!hasJudgment && q) {
-                    if (Number(choiceNum) === Number(q.answer)) {
-                        state.permanentlyCorrect[activeIdx] = true;
-                    } else {
-                        state.permanentlyWrong[activeIdx] = true;
-                    }
+    if (hasJudgment) {
+        // 1) 이미 최초 채점이 끝난 문항: 단순 답안 선택 변경만 허용 (추가 판정이나 경과 시간 계산 안 함)
+        if (isCheckMode) {
+            if (currentAnswer === choiceNum) {
+                if (isCurrentlyChecked) {
+                    delete state.userAnswers[activeIdx];
+                    delete state.checkedQuestions[activeIdx];
+                } else {
+                    state.checkedQuestions[activeIdx] = true;
                 }
+            } else {
+                state.userAnswers[activeIdx] = choiceNum;
+                state.checkedQuestions[activeIdx] = true;
             }
         } else {
-            // 아직 아무 마킹도 없었거나 다른 번호가 마킹된 상태라면
-            state.userAnswers[activeIdx] = choiceNum;
-            state.checkedQuestions[activeIdx] = true;
-            if (!hasJudgment && q) {
-                if (Number(choiceNum) === Number(q.answer)) {
-                    state.permanentlyCorrect[activeIdx] = true;
+            if (currentAnswer === choiceNum) {
+                if (!isCurrentlyChecked) {
+                    delete state.userAnswers[activeIdx];
+                    delete state.checkedQuestions[activeIdx];
                 } else {
-                    state.permanentlyWrong[activeIdx] = true;
+                    state.checkedQuestions[activeIdx] = false;
                 }
+            } else {
+                state.userAnswers[activeIdx] = choiceNum;
+                state.checkedQuestions[activeIdx] = false;
             }
         }
     } else {
-        // [지문(내용) 버튼 클릭 시 -> 확신 정답 마킹 상태로]
-        if (currentAnswer === choiceNum) {
-            if (!isCurrentlyChecked) {
-                // 이미 확신 상태라면 토글하여 마킹 전체 해제
-                delete state.userAnswers[activeIdx];
-                delete state.checkedQuestions[activeIdx];
+        // 2) 최초 풀이인 문항 (또는 오답 복습 중 재채점): 신규 채점 및 시간 기록 수행
+        if (isCheckMode) {
+            if (currentAnswer === choiceNum) {
+                if (isCurrentlyChecked) {
+                    delete state.userAnswers[activeIdx];
+                    delete state.checkedQuestions[activeIdx];
+                    // 마킹이 완전히 해제된 경우 정오답 상태 정보도 함께 완전히 제거
+                    delete state.permanentlyCorrect[activeIdx];
+                    delete state.permanentlyWrong[activeIdx];
+                } else {
+                    state.checkedQuestions[activeIdx] = true;
+                    if (q) {
+                        if (Number(choiceNum) === Number(q.answer)) {
+                            state.permanentlyCorrect[activeIdx] = true;
+                            delete state.permanentlyWrong[activeIdx];
+                        } else {
+                            state.permanentlyWrong[activeIdx] = true;
+                            delete state.permanentlyCorrect[activeIdx];
+                        }
+                    }
+                }
             } else {
-                // 체크 상태였다면 확신(일반) 마킹 상태로 전이 (체크 해제)
-                state.checkedQuestions[activeIdx] = false;
-                if (!hasJudgment && q) {
+                state.userAnswers[activeIdx] = choiceNum;
+                state.checkedQuestions[activeIdx] = true;
+                if (q) {
                     if (Number(choiceNum) === Number(q.answer)) {
                         state.permanentlyCorrect[activeIdx] = true;
+                        delete state.permanentlyWrong[activeIdx];
                     } else {
                         state.permanentlyWrong[activeIdx] = true;
+                        delete state.permanentlyCorrect[activeIdx];
                     }
                 }
             }
         } else {
-            // 아직 아무 마킹도 없었거나 다른 번호가 마킹된 상태라면
-            state.userAnswers[activeIdx] = choiceNum;
-            state.checkedQuestions[activeIdx] = false;
-            if (!hasJudgment && q) {
-                if (Number(choiceNum) === Number(q.answer)) {
-                    state.permanentlyCorrect[activeIdx] = true;
+            if (currentAnswer === choiceNum) {
+                if (!isCurrentlyChecked) {
+                    delete state.userAnswers[activeIdx];
+                    delete state.checkedQuestions[activeIdx];
+                    delete state.permanentlyCorrect[activeIdx];
+                    delete state.permanentlyWrong[activeIdx];
                 } else {
-                    state.permanentlyWrong[activeIdx] = true;
+                    state.checkedQuestions[activeIdx] = false;
+                    if (q) {
+                        if (Number(choiceNum) === Number(q.answer)) {
+                            state.permanentlyCorrect[activeIdx] = true;
+                            delete state.permanentlyWrong[activeIdx];
+                        } else {
+                            state.permanentlyWrong[activeIdx] = true;
+                            delete state.permanentlyCorrect[activeIdx];
+                        }
+                    }
+                }
+            } else {
+                state.userAnswers[activeIdx] = choiceNum;
+                state.checkedQuestions[activeIdx] = false;
+                if (q) {
+                    if (Number(choiceNum) === Number(q.answer)) {
+                        state.permanentlyCorrect[activeIdx] = true;
+                        delete state.permanentlyWrong[activeIdx];
+                    } else {
+                        state.permanentlyWrong[activeIdx] = true;
+                        delete state.permanentlyCorrect[activeIdx];
+                    }
                 }
             }
         }
-    }
-    
-    // 최초 답변 마킹 시 걸린 시간 기록
-    if (state.userAnswers[activeIdx] !== undefined && state.userAnswers[activeIdx] !== null) {
-        if (state.questionTimeSpent[activeIdx] === undefined) {
-            const elapsed = Math.floor((Date.now() - (state.questionStartTime || Date.now())) / 1000);
-            state.questionTimeSpent[activeIdx] = Math.max(1, elapsed);
+        
+        // 최초 답변 마킹 시 걸린 시간 기록
+        if (state.userAnswers[activeIdx] !== undefined && state.userAnswers[activeIdx] !== null) {
+            if (state.questionTimeSpent[activeIdx] === undefined) {
+                const elapsed = Math.floor((Date.now() - (state.questionStartTime || Date.now())) / 1000);
+                state.questionTimeSpent[activeIdx] = Math.max(1, elapsed);
+            }
         }
     }
     
@@ -2039,15 +2098,21 @@ function handleSelectAnswer(choiceNum, isCheckMode = false) {
     autoSaveSession();
     
     logSystem('A01', 'OK', 'Q' + (activeIdx + 1) + ':' + (state.userAnswers[activeIdx] || '_'));
-    
-    // Check if ALL questions solved (Auto-submit suggestion)
-    const answeredCount = Object.keys(state.userAnswers).length;
-    if (answeredCount === state.currentQuestions.length) {
-        setTimeout(() => {
-            if (confirm("마지막 문제까지 모두 풀었습니다!\n시험지를 제출하고 최종 결과를 확인하시겠습니까?")) {
-                submitExam();
-            }
-        }, 1000);
+
+    // 전체 최초 채점 완료 개수를 세어 제출 제안 팝업 노출 (세션 중 딱 1회만 노출)
+    const completedCount = state.currentQuestions.filter((_, idx) => {
+        return state.permanentlyCorrect[idx] === true || state.permanentlyWrong[idx] === true;
+    }).length;
+
+    if (completedCount === state.currentQuestions.length) {
+        if (!state.hasSuggestedSubmit) {
+            state.hasSuggestedSubmit = true;
+            setTimeout(() => {
+                if (confirm("마지막 문제까지 모두 풀었습니다!\n시험지를 제출하고 최종 결과를 확인하시겠습니까?")) {
+                    submitExam();
+                }
+            }, 1000);
+        }
     }
 }
 
@@ -2058,6 +2123,15 @@ function prevQuestion() {
         state.activeQuestionIndex = prevIndex;
         renderActiveQuestion();
         logSystem('N01', 'OK', 'Q' + (prevIndex + 1));
+    } else {
+        const isWrongFilter = state.questionFilter === 'wrong';
+        const isWrongReview = state.activeRound && state.activeRound.sessionType === 'wrong-review';
+        if (isWrongFilter || isWrongReview) {
+            const hasAnyRemaining = state.currentQuestions.some((_, idx) => doesQuestionMatchFilter(idx));
+            if (!hasAnyRemaining) {
+                alert('더 이상 풀 문제가 없습니다. 모든 오답을 해결하셨습니다!');
+            }
+        }
     }
 }
 
@@ -2067,6 +2141,15 @@ function nextQuestion() {
         state.activeQuestionIndex = nextIndex;
         renderActiveQuestion();
         logSystem('N01', 'OK', 'Q' + (nextIndex + 1));
+    } else {
+        const isWrongFilter = state.questionFilter === 'wrong';
+        const isWrongReview = state.activeRound && state.activeRound.sessionType === 'wrong-review';
+        if (isWrongFilter || isWrongReview) {
+            const hasAnyRemaining = state.currentQuestions.some((_, idx) => doesQuestionMatchFilter(idx));
+            if (!hasAnyRemaining) {
+                alert('더 이상 풀 문제가 없습니다. 모든 오답을 해결하셨습니다!');
+            }
+        }
     }
 }
 
