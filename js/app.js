@@ -1,5 +1,5 @@
 /**
- * Antigravity CBT - Core Application Script V1.9904
+ * Antigravity CBT - Core Application Script V1.9905
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
 
@@ -204,7 +204,6 @@ const dom = {
     logoutBtn: document.getElementById('logout-btn'),
     homeResumeBtn: document.getElementById('home-resume-btn'),
     saveIdCheck: document.getElementById('save-id-check'),
-    navSettingsText: document.querySelector('#nav-settings .nav-text'),
     autoLogoutSelect: document.getElementById('auto-logout-select'),
     subjectSelectionSection: document.getElementById('subject-selection-section'),
     
@@ -298,13 +297,14 @@ document.addEventListener('DOMContentLoaded', () => {
 // Check User Login State
 function checkLoginState() {
     const savedUser = localStorage.getItem('cbt_current_user');
+    const navSettingsText = dom.nav && dom.nav.settings ? dom.nav.settings.querySelector('.nav-text') : null;
     if (savedUser) {
         state.currentUser = savedUser;
         dom.loginFormContainer.classList.add('hidden');
         dom.subjectSelectionSection.classList.remove('hidden');
         if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
-        if (dom.navSettingsText) {
-            dom.navSettingsText.innerText = savedUser;
+        if (navSettingsText) {
+            navSettingsText.innerText = savedUser;
         }
         updateHomeResumeButton();
     } else {
@@ -313,8 +313,8 @@ function checkLoginState() {
         if (dom.welcomeContainer) dom.welcomeContainer.classList.add('hidden');
         dom.subjectSelectionSection.classList.add('hidden');
         if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.remove('hidden');
-        if (dom.navSettingsText) {
-            dom.navSettingsText.innerText = '설정';
+        if (navSettingsText) {
+            navSettingsText.innerText = '설정';
         }
         updateHomeResumeButton();
         
@@ -458,8 +458,10 @@ function login() {
     dom.loginFormContainer.classList.add('hidden');
     dom.subjectSelectionSection.classList.remove('hidden');
     if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
-    if (dom.navSettingsText) {
-        dom.navSettingsText.innerText = username;
+    
+    const navSettingsText = dom.nav && dom.nav.settings ? dom.nav.settings.querySelector('.nav-text') : null;
+    if (navSettingsText) {
+        navSettingsText.innerText = username;
     }
     
     updateHomeResumeButton();
