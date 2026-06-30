@@ -199,12 +199,12 @@ const dom = {
     // Login / Welcome widget elements
     loginFormContainer: document.getElementById('login-form-container'),
     welcomeContainer: document.getElementById('welcome-container'),
-    welcomeUsername: document.getElementById('welcome-username'),
     loginId: document.getElementById('login-id'),
     loginPw: document.getElementById('login-pw'),
     logoutBtn: document.getElementById('logout-btn'),
     homeResumeBtn: document.getElementById('home-resume-btn'),
     saveIdCheck: document.getElementById('save-id-check'),
+    navSettingsText: document.querySelector('#nav-settings .nav-text'),
     autoLogoutSelect: document.getElementById('auto-logout-select'),
     subjectSelectionSection: document.getElementById('subject-selection-section'),
     
@@ -301,17 +301,21 @@ function checkLoginState() {
     if (savedUser) {
         state.currentUser = savedUser;
         dom.loginFormContainer.classList.add('hidden');
-        dom.welcomeContainer.classList.remove('hidden');
-        dom.welcomeUsername.innerText = savedUser;
         dom.subjectSelectionSection.classList.remove('hidden');
         if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
+        if (dom.navSettingsText) {
+            dom.navSettingsText.innerText = savedUser;
+        }
         updateHomeResumeButton();
     } else {
         state.currentUser = null;
         dom.loginFormContainer.classList.remove('hidden');
-        dom.welcomeContainer.classList.add('hidden');
+        if (dom.welcomeContainer) dom.welcomeContainer.classList.add('hidden');
         dom.subjectSelectionSection.classList.add('hidden');
         if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.remove('hidden');
+        if (dom.navSettingsText) {
+            dom.navSettingsText.innerText = '설정';
+        }
         updateHomeResumeButton();
         
         // Load saved ID if present
@@ -327,6 +331,7 @@ function checkLoginState() {
 function updateHomeResumeButton() {
     if (!state.currentUser) {
         if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
+        if (dom.welcomeContainer) dom.welcomeContainer.classList.add('hidden');
         return;
     }
     
@@ -348,15 +353,21 @@ function updateHomeResumeButton() {
                     dom.homeResumeBtn.innerText = `▶ : ${subjectName} ${roundName} (Q. ${questionNum})`;
                     dom.homeResumeBtn.classList.remove('hidden');
                 }
+                if (dom.welcomeContainer) {
+                    dom.welcomeContainer.classList.remove('hidden');
+                }
             } else {
                 if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
+                if (dom.welcomeContainer) dom.welcomeContainer.classList.add('hidden');
             }
         } catch (e) {
             console.error('Error parsing session data:', e);
             if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
+            if (dom.welcomeContainer) dom.welcomeContainer.classList.add('hidden');
         }
     } else {
         if (dom.homeResumeBtn) dom.homeResumeBtn.classList.add('hidden');
+        if (dom.welcomeContainer) dom.welcomeContainer.classList.add('hidden');
     }
 }
 
@@ -445,10 +456,11 @@ function login() {
     
     // UI transition
     dom.loginFormContainer.classList.add('hidden');
-    dom.welcomeContainer.classList.remove('hidden');
-    dom.welcomeUsername.innerText = username;
     dom.subjectSelectionSection.classList.remove('hidden');
     if (dom.loginSubmitBtn) dom.loginSubmitBtn.classList.add('hidden');
+    if (dom.navSettingsText) {
+        dom.navSettingsText.innerText = username;
+    }
     
     updateHomeResumeButton();
     logUserActivity('로그인 성공');
