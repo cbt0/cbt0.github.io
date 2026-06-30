@@ -890,6 +890,35 @@ function registerEventListeners() {
         });
     }
     
+    // 키보드로 계산기 입력 지원 (계산기가 활성화된 상태에서만 작동)
+    document.addEventListener('keydown', (e) => {
+        if (!dom.calculatorModal || !dom.calculatorModal.classList.contains('active')) return;
+        
+        const key = e.key;
+        if (/^[0-9\+\-\.\(\)]$/.test(key)) {
+            e.preventDefault();
+            handleCalculatorInput(key);
+        } else if (key === '*') {
+            e.preventDefault();
+            handleCalculatorInput('×'); // * 누르면 화면에는 곱하기 기호(×) 입력
+        } else if (key === '/') {
+            e.preventDefault();
+            handleCalculatorInput('÷'); // / 누르면 화면에는 나누기 기호(÷) 입력
+        } else if (key === '^') {
+            e.preventDefault();
+            handleCalculatorInput('^');
+        } else if (key === 'Enter' || key === '=') {
+            e.preventDefault();
+            handleCalculatorInput('=');
+        } else if (key === 'Backspace') {
+            e.preventDefault();
+            handleCalculatorInput('backspace');
+        } else if (key === 'Escape' || key === 'c' || key === 'C') {
+            e.preventDefault();
+            handleCalculatorInput('C');
+        }
+    });
+    
     // Manual Toggle Hint
     //dom.hintBtn.addEventListener('click', toggleHintBox);
     // Manual Toggle Hint (화면 튕김 방지 적용)
@@ -2074,49 +2103,77 @@ function saveWrongHistory() {
 }
 
 function handleCalculatorInput(value) {
-    if (!dom.calculatorDisplay) return;
-    let current = dom.calculatorDisplay.value || '';
+    const formulaEl = document.getElementById('calculator-formula');
+    const resultEl = document.getElementById('calculator-result');
+    if (!formulaEl || !resultEl) return;
+    
+    let currentFormula = formulaEl.innerText || '0';
+    let currentResult = resultEl.innerText || '';
+    
     if (value === 'C') {
-        dom.calculatorDisplay.value = '0';
+        formulaEl.innerText = '0';
+        resultEl.innerHTML = '&nbsp;';
         return;
     }
-    // 👇 백스페이스 기능 추가 👇
+    
     if (value === 'backspace') {
-        // 에러 상태이거나 글자가 1개만 남았을 때는 0으로 초기화
-        if (current === 'Error' || current.length === 1) {
-            dom.calculatorDisplay.value = '0';
+        if (currentFormula === 'Error' || currentFormula.length <= 1) {
+            formulaEl.innerText = '0';
         } else {
-            // 맨 마지막 글자 하나만 잘라내기
-            dom.calculatorDisplay.value = current.slice(0, -1);
+            formulaEl.innerText = currentFormula.slice(0, -1);
         }
+        resultEl.innerHTML = '&nbsp;';
         return;
     }
+    
     if (value === '=') {
-        // 🔥 [추가] 열린 괄호만큼 닫는 괄호 자동 완성 로직
-        const openParens = (current.match(/\(/g) || []).length;
-        const closeParens = (current.match(/\)/g) || []).length;
+        let expr = currentFormula;
+        if (expr === 'Error' || expr === '') return;
+        
+        // [괄호 자동 완성]
+        const openParens = (expr.match(/\(/g) || []).length;
+        const closeParens = (expr.match(/\)/g) || []).length;
         if (openParens > closeParens) {
-            current += ')'.repeat(openParens - closeParens); // 부족한 만큼 ')' 추가
+            expr += ')'.repeat(openParens - closeParens);
+            formulaEl.innerText = expr;
         }
+        
         try {
-            const sanitized = current
+            const sanitized = expr
                 .replace(/÷/g, '/')
                 .replace(/×/g, '*')
                 .replace(/\^2/g, '**2')
                 .replace(/\^3/g, '**3');
             const result = evaluateCalculatorExpression(sanitized);
-            dom.calculatorDisplay.value = String(result);
+            resultEl.innerText = '= ' + String(result);
         } catch (e) {
-            dom.calculatorDisplay.value = 'Error';
+            resultEl.innerText = 'Error';
         }
         return;
     }
-
-    if (current === '0' && !/[\+\-\*\/\^\.]/.test(value)) {
-        current = '';
+    
+    // 결과값이 존재하는 상태에서 입력 분기 처리
+    if (currentResult !== '' && currentResult !== ' ' && resultEl.innerHTML !== '&nbsp;') {
+        const lastResultValue = currentResult.replace(/^=\s*/, '');
+        if (/^[\+\-\×\÷\^]/.test(value)) {
+            // 연산자를 누른 경우: 이전 결과값을 공식창으로 가져와 연산
+            if (lastResultValue !== 'Error') {
+                formulaEl.innerText = lastResultValue + value;
+                resultEl.innerHTML = '&nbsp;';
+                return;
+            }
+        }
+        // 숫자나 다른 함수를 누른 경우: 초기화 후 새 공식 시작
+        formulaEl.innerText = '0';
+        resultEl.innerHTML = '&nbsp;';
+        currentFormula = '0';
     }
-
-    dom.calculatorDisplay.value = current + value;
+    
+    if (currentFormula === '0' && !/[\+\-\×\÷\^\.]/.test(value) && !value.includes('(')) {
+        currentFormula = '';
+    }
+    
+    formulaEl.innerText = currentFormula + value;
 }
 
 function evaluateCalculatorExpression(expr) {

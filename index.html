@@ -445,13 +445,16 @@
             </div>
 
             <div class="modal-body calculator-body">
-                <input type="text" id="calculator-display" class="calculator-display" readonly value="0">
+                <div id="calculator-display" class="calculator-display">
+                    <div id="calculator-formula" class="calculator-formula-line">0</div>
+                    <div id="calculator-result" class="calculator-result-line">&nbsp;</div>
+                </div>
                 <div class="calculator-grid">
                     <!-- 1행 -->
                     <button class="calculator-btn btn" data-value="sqrt(">√</button>
                     <button class="calculator-btn btn" data-value="ln(">ln</button>
                     <button class="calculator-btn btn" data-value="log(">log</button>
-                    <button class="calculator-btn btn" data-value="^">x^y</button>
+                    <button class="calculator-btn btn" data-value="^">x<sup>y</sup></button>
                     <button class="btn" id="calc-constant-btn">π</button>
                     
                     <!-- 2행 -->
