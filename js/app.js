@@ -1,5 +1,5 @@
 /**
- * Antigravity CBT - Core Application Script V1.9916
+ * Antigravity CBT - Core Application Script V1.9917
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
 
@@ -9,7 +9,7 @@ let idleTimer;
 let sessionBaseTime = parseInt(localStorage.getItem('session_base_time')) || null;
 
 // --- [추가] 앱 버전 관리 (업데이트 시 이 숫자를 올려주세요!) ---
-const APP_VERSION = "1.9916"; 
+const APP_VERSION = "1.9917"; 
 
 function checkAppUpdate() {
     const storedVersion = localStorage.getItem('cbt_app_version');
@@ -76,7 +76,8 @@ const state = {
     currentQuestions: [],   // Active question list (usually 60)
     questionFilter: 'all', // 'all', 'wrong', 'unanswered'
     currentUser: null,      // Logged in user ID
-    autoLogoutMinutes: 30   // Auto-logout idle timeout minutes
+    autoLogoutMinutes: 30,  // Auto-logout idle timeout minutes
+    lastActiveQuestionIndex: null
 };
 
 // Mock Exam Database for other subjects
@@ -853,6 +854,10 @@ function registerEventListeners() {
                     state.permanentlyCorrect = session.permanentlyCorrect || {};
                     state.questionTimeSpent = session.questionTimeSpent || {};
                     state.timeSpentSeconds = session.timeSpentSeconds || 0;
+                    state.lastActiveQuestionIndex = null;
+                    if (dom.explanationBox) {
+                        dom.explanationBox.classList.add('collapsed');
+                    }
                     
                     // Call startQuiz with isResume = true
                     startQuiz(session.activeRound, true);
@@ -1493,6 +1498,10 @@ function renderRoundsList(subject) {
                         state.permanentlyCorrect = session.permanentlyCorrect || {};
                         state.questionTimeSpent = session.questionTimeSpent || {};
                         state.timeSpentSeconds = session.timeSpentSeconds || 0;
+                        state.lastActiveQuestionIndex = null;
+                        if (dom.explanationBox) {
+                            dom.explanationBox.classList.add('collapsed');
+                        }
                         
                         startQuiz(session.activeRound, true);
                     } else {
@@ -1589,6 +1598,10 @@ function startQuiz(round, isResume = false) {
         state.questionTimeSpent = {};
         state.timeSpentSeconds = 0;
         state.questionFilter = 'all';
+        state.lastActiveQuestionIndex = null;
+        if (dom.explanationBox) {
+            dom.explanationBox.classList.add('collapsed');
+        }
         if (dom.questionFilter) {
             dom.questionFilter.value = 'all';
         }
@@ -1806,11 +1819,15 @@ function initializeQuestionFilter() {
 }
 
 // Render active question to view pane
-function renderActiveQuestion() {
+function renderActiveQuestion(keepExplanationOpen = false) {
     // ⚠️ 주의: 이 함수는 state를 변경하지 않습니다 (Read-Only View).
     //         인덱스 변경은 nextQuestion/prevQuestion/filter 핸들러에서만 수행되어야 합니다.
     const q = state.currentQuestions[state.activeQuestionIndex];
     if (!q) return;
+    
+    // 문제 변경 감지
+    const isQuestionChanged = state.lastActiveQuestionIndex !== state.activeQuestionIndex;
+    state.lastActiveQuestionIndex = state.activeQuestionIndex;
     
     // 개별 문제 풀이 타이머 시작 지점 기록
     if (state.quizMode === 'solving') {
@@ -1918,7 +1935,7 @@ function renderActiveQuestion() {
     // 리뷰 모드일 때만 이미 푼 문제의 해설 박스를 자동으로 열어줌! (풀이 중엔 닫음)
     if (userAnswer !== undefined && state.quizMode === 'review') {
         dom.explanationBox.classList.remove('collapsed');
-    } else {
+    } else if (isQuestionChanged && !keepExplanationOpen) {
         dom.explanationBox.classList.add('collapsed');
     }
     
@@ -2050,7 +2067,7 @@ function toggleHintBox() {
         const hasJudgment = state.permanentlyCorrect[activeIdx] === true || state.permanentlyWrong[activeIdx] === true;
         if (!hasJudgment) {
             state.permanentlyWrong[activeIdx] = true;
-            renderActiveQuestion();
+            renderActiveQuestion(true);
             updateMarkingStatus();
             autoSaveSession();
         }
