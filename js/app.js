@@ -1,5 +1,5 @@
 /**
- * Antigravity CBT - Core Application Script V1.9917
+ * Antigravity CBT - Core Application Script V1.9918
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
 
@@ -9,7 +9,7 @@ let idleTimer;
 let sessionBaseTime = parseInt(localStorage.getItem('session_base_time')) || null;
 
 // --- [추가] 앱 버전 관리 (업데이트 시 이 숫자를 올려주세요!) ---
-const APP_VERSION = "1.9917"; 
+const APP_VERSION = "1.9918"; 
 
 function checkAppUpdate() {
     const storedVersion = localStorage.getItem('cbt_app_version');
@@ -2061,11 +2061,10 @@ function toggleHintBox() {
     dom.explanationBox.classList.toggle('collapsed');
     const isCollapsed = dom.explanationBox.classList.contains('collapsed');
     
-    // 힌트를 켜면 즉시 영구 오답으로 등록 (단, 이미 최초 정식 판정이 고정된 경우는 제외)
+    // 힌트를 켜면 즉시 영구 오답으로 등록 (단, 이미 최초 정답 처리가 완료된 경우는 제외)
     if (!isCollapsed && state.quizMode === 'solving') {
         const activeIdx = state.activeQuestionIndex;
-        const hasJudgment = state.permanentlyCorrect[activeIdx] === true || state.permanentlyWrong[activeIdx] === true;
-        if (!hasJudgment) {
+        if (state.permanentlyCorrect[activeIdx] !== true) {
             state.permanentlyWrong[activeIdx] = true;
             renderActiveQuestion(true);
             updateMarkingStatus();
