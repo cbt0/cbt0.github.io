@@ -1708,13 +1708,25 @@ function renderActiveQuestion() {
         
         if (userAnswer !== undefined && userAnswer !== null) {
             if (state.quizMode === 'solving') {
-                // 1) 풀이 모드: 정오답 유출 방지 및 selected/checked 표시
+                // 1) 풀이 모드: 선택한 보기가 정답이면 녹색(correct), 오답이면 빨간색(wrong)으로 보기 번호와 보기 지문 모두 처리
                 if (choiceNum === userAnswer) {
-                    const isChecked = state.checkedQuestions[state.activeQuestionIndex] === true;
-                    if (isChecked) {
-                        item.classList.add('checked');
+                    const isCorrect = Number(userAnswer) === Number(correctAnswer);
+                    if (isCorrect) {
+                        item.classList.add('correct');
+                        
+                        // 만약 번호를 클릭해 체크 마킹한 상태라면 주황색 체크 아이콘 오버레이도 함께 띄워줌
+                        const isChecked = state.checkedQuestions[state.activeQuestionIndex] === true;
+                        if (isChecked) {
+                            item.classList.add('checked');
+                        }
                     } else {
-                        item.classList.add('selected');
+                        item.classList.add('wrong');
+                        
+                        // 만약 번호를 클릭해 체크 마킹한 상태라면 주황색 체크 아이콘 오버레이도 함께 띄워줌
+                        const isChecked = state.checkedQuestions[state.activeQuestionIndex] === true;
+                        if (isChecked) {
+                            item.classList.add('checked');
+                        }
                     }
                 }
             } else if (state.quizMode === 'review') {
