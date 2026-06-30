@@ -1,4 +1,4 @@
-/* Antigravity CBT CSS Design System - Premium Dark Theme & Glassmorphism V1.9909 */
+/* Antigravity CBT CSS Design System - Premium Dark Theme & Glassmorphism V1.9910 */
 
 :root {
     /* Color Palette */
@@ -865,9 +865,8 @@ body {
 }
 
 .choice-item.wrong .choice-text-btn:hover {
-    background: var(--danger) !important;
+    background: rgba(255, 68, 68, 0.3) !important;
     border-color: var(--danger) !important;
-    color: #ffffff !important;
 }
 
 .question-text {
@@ -991,25 +990,25 @@ body {
 /* 6. 제출 후 채점 스타일 (리뷰 모드) */
 /* 6-1) 맞춘 문항 (.correct) -> 녹색 */
 .choice-item.correct .choice-num-btn {
-    background: var(--success) !important;
-    color: #ffffff !important;
+    background: var(--success-bg) !important;
+    color: var(--success) !important;
     border-color: var(--success) !important;
 }
 .choice-item.correct .choice-text-btn {
     background: var(--success-bg) !important;
     border-color: var(--success) !important;
-    color: var(--success) !important;
+    color: var(--text-primary) !important;
 }
 /* 6-2) 내가 쓴 오답 (.wrong) -> 빨간색 */
 .choice-item.wrong .choice-num-btn {
-    background: var(--danger) !important;
-    color: #ffffff !important;
+    background: var(--danger-bg) !important;
+    color: var(--danger) !important;
     border-color: var(--danger) !important;
 }
 .choice-item.wrong .choice-text-btn {
-    background: rgba(239, 68, 68, 0.12) !important;
+    background: var(--danger-bg) !important;
     border-color: var(--danger) !important;
-    color: var(--danger) !important;
+    color: var(--text-primary) !important;
 }
 /* 6-3) 실제 정답 미선택 문항 (.reveal-correct) -> 테두리 녹색 */
 .choice-item.reveal-correct .choice-num-btn {
@@ -1020,6 +1019,7 @@ body {
 .choice-item.reveal-correct .choice-text-btn {
     border-color: var(--success) !important;
     background: rgba(16, 185, 129, 0.1) !important;
+    color: var(--text-primary) !important;
 }
 
 /* Action block below choices */
