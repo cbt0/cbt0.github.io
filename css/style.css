@@ -2284,6 +2284,12 @@ transform: scale(1.2);             /* 살짝 커지는 효과 */
     border-color: var(--primary) !important;
 }
 
+.marking-filter-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 /* --- 상단 헤더 필터 상태 표시 배지 --- */
 .filter-badge {
     font-size: 12px;

@@ -1,5 +1,5 @@
 /**
- * Antigravity CBT - Core Application Script V1.9910
+ * Antigravity CBT - Core Application Script V1.9920
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
 
@@ -9,7 +9,7 @@ let idleTimer;
 let sessionBaseTime = parseInt(localStorage.getItem('session_base_time')) || null;
 
 // --- [추가] 앱 버전 관리 (업데이트 시 이 숫자를 올려주세요!) ---
-const APP_VERSION = "1.9919"; 
+const APP_VERSION = "1.9920"; 
 
 function checkAppUpdate() {
     const storedVersion = localStorage.getItem('cbt_app_version');
@@ -1760,10 +1760,42 @@ function getAdjacentFilteredIndex(direction) {
     return null;
 }
 
+// 특정 필터명에 대응하는 질문들이 존재하는지 판단하는 헬퍼 함수
+function hasQuestionsForFilter(filterName) {
+    if (!state.currentQuestions || state.currentQuestions.length === 0) return false;
+    return state.currentQuestions.some((q, index) => {
+        const userAnswer = state.userAnswers[index];
+        const isPermanentlyCorrect = state.permanentlyCorrect[index] === true;
+        const isPermanentlyWrong = state.permanentlyWrong[index] === true;
+
+        if (filterName === 'wrong') {
+            return isPermanentlyWrong || (!isPermanentlyCorrect && userAnswer !== undefined && userAnswer !== q.answer);
+        }
+        if (filterName === 'checked') {
+            return state.checkedQuestions[index] === true;
+        }
+        if (filterName === 'unanswered') {
+            return !isPermanentlyCorrect && !isPermanentlyWrong && userAnswer === undefined;
+        }
+        return true; // 'all' (전체)은 항상 참
+    });
+}
+
 function syncFilterButtonsUI() {
+    // 1. 현재 선택된 필터에 해당하는 문제가 없다면 자동으로 'all'로 리셋
+    if (state.questionFilter !== 'all' && !hasQuestionsForFilter(state.questionFilter)) {
+        state.questionFilter = 'all';
+    }
+
     const filterBtns = document.querySelectorAll('.marking-filter-btn');
     filterBtns.forEach(btn => {
-        if (btn.getAttribute('data-filter') === state.questionFilter) {
+        const filterVal = btn.getAttribute('data-filter');
+        const hasData = hasQuestionsForFilter(filterVal);
+        
+        // 데이터가 없으면 버튼을 비활성화
+        btn.disabled = !hasData;
+        
+        if (filterVal === state.questionFilter) {
             btn.classList.add('active');
         } else {
             btn.classList.remove('active');
@@ -1788,15 +1820,7 @@ function syncFilterButtonsUI() {
 }
 
 function applyQuestionFilter() {
-    if (!doesQuestionMatchFilter(state.activeQuestionIndex)) {
-        const firstMatch = state.currentQuestions.findIndex((_, idx) => doesQuestionMatchFilter(idx));
-        if (firstMatch !== -1) {
-            state.activeQuestionIndex = firstMatch;
-        } else {
-            state.questionFilter = 'all';
-            alert('조건에 맞는 문제가 없습니다. 전체 문제 보기로 되돌립니다.');
-        }
-    }
+    // 강제 문제 점프 및 Alert 경고창 제거하여 오직 UI만 동기화하도록 함
     syncFilterButtonsUI();
 }
 
