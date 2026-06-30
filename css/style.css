@@ -1,4 +1,4 @@
-/* Antigravity CBT CSS Design System - Premium Dark Theme & Glassmorphism V1.9912 */
+/* Antigravity CBT CSS Design System - Premium Dark Theme & Glassmorphism V1.9913 */
 
 :root {
     /* Color Palette */
@@ -994,7 +994,7 @@ body {
     color: var(--success) !important;
     border-color: var(--success) !important;
 }
-.choice-item.correct .choice-text-btn {
+.choice-item.correct:not(.checked) .choice-text-btn {
     background: var(--success-bg) !important;
     border-color: var(--success) !important;
     color: var(--text-primary) !important;
@@ -1005,7 +1005,7 @@ body {
     color: var(--danger) !important;
     border-color: var(--danger) !important;
 }
-.choice-item.wrong .choice-text-btn {
+.choice-item.wrong:not(.checked) .choice-text-btn {
     background: var(--danger-bg) !important;
     border-color: var(--danger) !important;
     color: var(--text-primary) !important;

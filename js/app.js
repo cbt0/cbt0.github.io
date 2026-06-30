@@ -1,5 +1,5 @@
 /**
- * Antigravity CBT - Core Application Script V1.9912
+ * Antigravity CBT - Core Application Script V1.9913
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
 
@@ -9,7 +9,7 @@ let idleTimer;
 let sessionBaseTime = parseInt(localStorage.getItem('session_base_time')) || null;
 
 // --- [추가] 앱 버전 관리 (업데이트 시 이 숫자를 올려주세요!) ---
-const APP_VERSION = "1.9912"; 
+const APP_VERSION = "1.9913"; 
 
 function checkAppUpdate() {
     const storedVersion = localStorage.getItem('cbt_app_version');
@@ -66,6 +66,7 @@ const state = {
     activeQuestionIndex: 0, // 0 to 59
     userAnswers: {},        // {questionIndex: selectedOption}
     checkedQuestions: {},   // {questionIndex: true/false} (체크 마킹 여부)
+    permanentlyWrong: {},   // {questionIndex: true} (한 번이라도 오답 선택 및 힌트 사용 영구 낙인 기록)
     quizMode: 'solving',    // 'solving' (active test), 'review' (checking answers after submission)
     timerInterval: null,
     timeSpentSeconds: 0,
@@ -423,6 +424,7 @@ function autoSaveSession() {
         activeQuestionIndex: state.activeQuestionIndex,
         userAnswers: state.userAnswers,
         checkedQuestions: state.checkedQuestions,
+        permanentlyWrong: state.permanentlyWrong,
         timeSpentSeconds: state.timeSpentSeconds,
         timestamp: Date.now()
     };
@@ -840,6 +842,7 @@ function registerEventListeners() {
                     state.activeQuestionIndex = session.activeQuestionIndex;
                     state.userAnswers = session.userAnswers || {};
                     state.checkedQuestions = session.checkedQuestions || {};
+                    state.permanentlyWrong = session.permanentlyWrong || {};
                     state.timeSpentSeconds = session.timeSpentSeconds || 0;
                     
                     // Call startQuiz with isResume = true
@@ -1477,6 +1480,7 @@ function renderRoundsList(subject) {
                         state.activeQuestionIndex = session.activeQuestionIndex;
                         state.userAnswers = session.userAnswers || {};
                         state.checkedQuestions = session.checkedQuestions || {};
+                        state.permanentlyWrong = session.permanentlyWrong || {};
                         state.timeSpentSeconds = session.timeSpentSeconds || 0;
                         
                         startQuiz(session.activeRound, true);
@@ -1569,6 +1573,7 @@ function startQuiz(round, isResume = false) {
         state.activeQuestionIndex = 0;
         state.userAnswers = {};
         state.checkedQuestions = {};
+        state.permanentlyWrong = {};
         state.timeSpentSeconds = 0;
         state.questionFilter = 'all';
         if (dom.questionFilter) {
@@ -1720,7 +1725,10 @@ function updateMarkingStatus() {
         btn.style.display = doesQuestionMatchFilter(idx) ? 'inline-flex' : 'none';
         
         const userAnswer = state.userAnswers[idx];
-        if (userAnswer !== undefined && userAnswer !== null) {
+        const isPermanentlyWrong = state.permanentlyWrong[idx] === true;
+        if (isPermanentlyWrong) {
+            btn.classList.add('wrong'); // 오답 낙인 찍힌 문항은 실시간 풀이 중에도 OMR 판에 빨간색(wrong)으로 고정 표시!
+        } else if (userAnswer !== undefined && userAnswer !== null) {
             if (state.quizMode === 'solving') {
                 // 풀이 도중에는 정답/오답 유출 없이, 일반 마킹(solved=녹색) vs 체크 마킹(checked=주황색) 구분
                 const isChecked = state.checkedQuestions[idx] === true;
@@ -1788,7 +1796,10 @@ function renderActiveQuestion() {
     if (dom.questionNum) {
         dom.questionNum.className = 'question-num-badge'; // 기본화
         const userAnswer = state.userAnswers[state.activeQuestionIndex];
-        if (userAnswer !== undefined && userAnswer !== null) {
+        const isPermanentlyWrong = state.permanentlyWrong[state.activeQuestionIndex] === true;
+        if (isPermanentlyWrong) {
+            dom.questionNum.classList.add('wrong');
+        } else if (userAnswer !== undefined && userAnswer !== null) {
             const isCorrect = Number(userAnswer) === Number(q.answer);
             if (isCorrect) {
                 dom.questionNum.classList.add('correct');
@@ -1902,6 +1913,7 @@ function handleSelectAnswer(choiceNum, isCheckMode = false) {
         }
     } else {
         // [지문(내용) 버튼 클릭 시 -> 확신 정답 마킹 상태로]
+        const q = state.currentQuestions[activeIdx];
         if (currentAnswer === choiceNum) {
             if (!isCurrentlyChecked) {
                 // 이미 확신 상태라면 토글하여 마킹 전체 해제
@@ -1910,11 +1922,17 @@ function handleSelectAnswer(choiceNum, isCheckMode = false) {
             } else {
                 // 체크 상태였다면 확신(일반) 마킹 상태로 전이 (체크 해제)
                 state.checkedQuestions[activeIdx] = false;
+                if (q && Number(choiceNum) !== Number(q.answer)) {
+                    state.permanentlyWrong[activeIdx] = true;
+                }
             }
         } else {
             // 아직 아무 마킹도 없었거나 다른 번호가 마킹된 상태라면
             state.userAnswers[activeIdx] = choiceNum;
             state.checkedQuestions[activeIdx] = false;
+            if (q && Number(choiceNum) !== Number(q.answer)) {
+                state.permanentlyWrong[activeIdx] = true;
+            }
         }
     }
     
@@ -1961,6 +1979,15 @@ function nextQuestion() {
 function toggleHintBox() {
     dom.explanationBox.classList.toggle('collapsed');
     const isCollapsed = dom.explanationBox.classList.contains('collapsed');
+    
+    // 힌트를 켜면 즉시 영구 오답으로 등록
+    if (!isCollapsed && state.quizMode === 'solving') {
+        state.permanentlyWrong[state.activeQuestionIndex] = true;
+        renderActiveQuestion();
+        updateMarkingStatus();
+        autoSaveSession();
+    }
+    
     logSystem('H01', 'OK', 'Q' + (state.activeQuestionIndex + 1) + ':' + (isCollapsed ? 'COLLAPSED' : 'EXPANDED'));
 }
 
@@ -1972,7 +1999,9 @@ function submitExam() {
     let correct = 0;
     
     state.currentQuestions.forEach((q, idx) => {
-        if (state.userAnswers[idx] === q.answer) {
+        const isUserCorrect = state.userAnswers[idx] === q.answer;
+        const isPermanentlyWrong = state.permanentlyWrong[idx] === true;
+        if (isUserCorrect && !isPermanentlyWrong) {
             correct++;
         }
     });
@@ -2147,7 +2176,8 @@ function saveWrongHistory() {
         
         if (isAnswered) {
             const isCorrect = Number(selected) === Number(q.answer);
-            if (!isCorrect) {
+            const isPermanentlyWrong = state.permanentlyWrong[idx] === true;
+            if (!isCorrect || isPermanentlyWrong) {
                 // Save/update wrong question with minimal fields
                 const prev = wrongDb[q.sourceQuestionKey];
                 wrongDb[q.sourceQuestionKey] = {
