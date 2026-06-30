@@ -2329,7 +2329,7 @@ function logSystem(actionCode, status, details = '') {
     const offset = getLogOffsetSeconds();
     const offsetStr = `+${offset}`;
     
-    const stateSnapshot = getAppStateDetails(code === 'E01' ? det : '');
+    const stateSnapshot = code === 'E01' ? getAppStateDetails(det) : det;
     const newLogStr = `${offsetStr}|${code}|${stat}|${stateSnapshot}`;
     
     let logs = [];

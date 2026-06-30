@@ -1083,13 +1083,20 @@ body {
     justify-content: center;
     z-index: 1000;
     opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--transition-normal);
+    pointer-events: none !important;
+    visibility: hidden !important;
+    transition: opacity var(--transition-normal), visibility var(--transition-normal);
 }
 
 .modal-overlay.active {
     opacity: 1;
-    pointer-events: auto;
+    pointer-events: auto !important;
+    visibility: visible !important;
+}
+
+/* 모달이 비활성화 상태일 때는 내부 모든 요소의 클릭을 확실하게 차단 */
+.modal-overlay:not(.active) * {
+    pointer-events: none !important;
 }
 
 .modal-card {
@@ -2117,14 +2124,16 @@ transform: scale(1.2);             /* 살짝 커지는 효과 */
     display: flex;
     flex-direction: column;
     box-shadow: var(--shadow-lg);
-    opacity: 0;
-    pointer-events: none;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
     transform: scale(0.95);
     transition: all 0.2s ease;
 }
 #constant-modal.active {
     opacity: 1 !important;
     pointer-events: auto !important;
+    visibility: visible !important;
     transform: scale(1) !important;
 }
 .constant-header {
