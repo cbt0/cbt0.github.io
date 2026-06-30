@@ -237,7 +237,7 @@ body {
 /* 1. Hero and Home Dashboard */
 .hero-section {
     text-align: center;
-    padding: 40px 20px 60px 20px;
+    padding: 20px 20px 20px 20px; /* 데스크탑 위/아래 패딩 모두 축소 */
     max-width: 800px;
     margin: 0 auto;
 }
@@ -245,7 +245,7 @@ body {
 .hero-title {
     font-family: 'Outfit', sans-serif;
     font-weight: 800;
-    font-size: 48px;
+    font-size: 32px; /* 데스크탑 한줄 타이틀 크기 최적화 */
     line-height: 1.25;
     margin-bottom: 20px;
     letter-spacing: -0.5px;
@@ -409,7 +409,7 @@ body {
 
 /* Subjects Section */
 .features-section {
-    margin-top: 20px;
+    margin-top: 10px; /* 데스크탑 상단 마진 축소 */
 }
 
 .section-title {
@@ -1443,7 +1443,7 @@ body {
     }
     
     .hero-section {
-        padding: 20px 16px 20px 16px; /* 모바일에서 위아래 패딩 축소 */
+        padding: 5px 16px 20px 16px; /* 모바일에서 위쪽 패딩을 5px로 대폭 축소 */
     }
     
     .welcome-box {
@@ -1456,7 +1456,7 @@ body {
     }
     
     .hero-title {
-        font-size: 28px;
+        font-size: 22px; /* 모바일 한줄 타이틀 크기 축소 */
     }
     
     .question-card {
@@ -1514,7 +1514,7 @@ body {
     }
     
     .hero-title {
-        font-size: 24px;
+        font-size: 18px; /* 극소형 모바일 한줄 타이틀 크기 축소 */
     }
 }
 
@@ -1660,8 +1660,7 @@ body {
 
 /* Welcome profile box */
 .welcome-box {
-    margin: 20px auto;   /* 추가: 위아래 20px, 좌우 자동(가운데 정렬) */
-    /* margin-bottom: 20px; */
+    margin: 15px auto 10px auto;   /* 위 15px, 아래 10px로 축소 */
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--glass-border);
     border-radius: var(--border-radius-md);

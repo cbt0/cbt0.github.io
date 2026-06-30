@@ -1,5 +1,5 @@
 /**
- * Antigravity CBT - Core Application Script V1.9901
+ * Antigravity CBT - Core Application Script V1.9903
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
 
@@ -345,7 +345,7 @@ function updateHomeResumeButton() {
                     : (session.activeQuestionIndex + 1);
                 
                 if (dom.homeResumeBtn) {
-                    dom.homeResumeBtn.innerText = `▶ 이어하기 : ${subjectName} ${roundName} (Q. ${questionNum})`;
+                    dom.homeResumeBtn.innerText = `▶ : ${subjectName} ${roundName} (Q. ${questionNum})`;
                     dom.homeResumeBtn.classList.remove('hidden');
                 }
             } else {
