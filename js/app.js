@@ -77,6 +77,7 @@ const state = {
     questionFilter: 'all', // 'all', 'wrong', 'unanswered'
     currentUser: null,      // Logged in user ID
     autoLogoutMinutes: 30,  // Auto-logout idle timeout minutes
+    maxSystemLogs: 100,     // 최대 시스템 로그 보관 개수 (디폴트 100)
     lastActiveQuestionIndex: null,
     hasSuggestedSubmit: false // 모든 문제 완료 후 최초 1회만 제출 안내 제안을 띄우기 위한 플래그
 };
@@ -244,6 +245,7 @@ const dom = {
     homeResumeBtn: document.getElementById('home-resume-btn'),
     saveIdCheck: document.getElementById('save-id-check'),
     autoLogoutSelect: document.getElementById('auto-logout-select'),
+    maxLogsSelect: document.getElementById('max-logs-select'),
     subjectSelectionSection: document.getElementById('subject-selection-section'),
     
     // Grading dashboard elements
@@ -332,6 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     initTheme();
     initAutoLogoutSettings();
+    initMaxSystemLogsSettings();
     checkLoginState();
     loadQuestions();
     registerEventListeners();
@@ -473,6 +476,20 @@ function initAutoLogoutSettings() {
     
     if (dom.autoLogoutSelect) {
         dom.autoLogoutSelect.value = String(state.autoLogoutMinutes);
+    }
+}
+
+// Initialize Max System Logs settings from localStorage
+function initMaxSystemLogsSettings() {
+    const savedMaxLogs = localStorage.getItem('cbt_max_system_logs');
+    if (savedMaxLogs) {
+        state.maxSystemLogs = parseInt(savedMaxLogs, 10);
+    } else {
+        state.maxSystemLogs = 100; // default
+    }
+    
+    if (dom.maxLogsSelect) {
+        dom.maxLogsSelect.value = String(state.maxSystemLogs);
     }
 }
 
@@ -821,6 +838,29 @@ function registerEventListeners() {
             state.autoLogoutMinutes = minutes;
             localStorage.setItem('cbt_auto_logout_minutes', minutes);
             resetIdleTimer();
+        });
+    }
+    
+    // System logs max count select change
+    if (dom.maxLogsSelect) {
+        dom.maxLogsSelect.addEventListener('change', (e) => {
+            const maxLogs = parseInt(e.target.value, 10);
+            state.maxSystemLogs = maxLogs;
+            localStorage.setItem('cbt_max_system_logs', maxLogs);
+            
+            // 설정 범위 초과 로그 잘라내기
+            const user = state.currentUser || 'GUEST';
+            let logs = [];
+            try {
+                logs = JSON.parse(localStorage.getItem(`cbt_${user}_system_logs`)) || [];
+            } catch (err) {
+                logs = [];
+            }
+            if (Array.isArray(logs) && logs.length > maxLogs) {
+                logs.length = maxLogs;
+                localStorage.setItem(`cbt_${user}_system_logs`, JSON.stringify(logs));
+                renderSystemLogs();
+            }
         });
     }
     
@@ -2825,8 +2865,9 @@ function logSystem(actionCode, status, details = '') {
         logs.unshift(newLogStr);
     }
     
-    if (logs.length > 300) {
-        logs.length = 300;
+    const maxLogs = state.maxSystemLogs || 100;
+    if (logs.length > maxLogs) {
+        logs.length = maxLogs;
     }
     
     try {
@@ -2845,19 +2886,28 @@ function createLogItemNode(idx, fontSize, levelColor, message, timestamp, detail
     const item = document.createElement('div');
     item.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
     item.style.padding = '8px 4px';
-    item.style.cursor = 'pointer';
     item.style.transition = 'background-color 0.2s';
     
     const level = (levelColor === '#ff4444') ? 'ERROR' : (levelColor === '#fbbf24' ? 'WARNING' : 'INFO');
     
+    // [INFO]는 표시하지 않고 ERROR, WARNING만 표시
+    const levelSpan = level !== 'INFO' 
+        ? `<span style="color: ${levelColor}; font-weight: bold; margin-right: 4px;">[${level}]</span>` 
+        : '';
+        
+    // 시간은 맨 앞에 흰색으로 표시
+    const timeSpan = timestamp 
+        ? `<span style="color: #ffffff; font-size: ${fontSize}px; margin-right: 8px; white-space: nowrap;">[${timestamp}]</span>` 
+        : '';
+
+    // 분류(message) 대신 상세 정보(details)를 바로 노출
+    const displayText = details || message;
+    
     item.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; font-size: ${fontSize}px;">
-            <span style="color: ${levelColor}; font-weight: bold; min-width: 60px;">[${level}]</span>
-            <span style="flex: 1; word-break: break-all; color: var(--text-primary);">${message}</span>
-            <span style="color: var(--text-muted); font-size: 10px; white-space: nowrap;">${timestamp}</span>
-        </div>
-        <div id="log-detail-${idx}" style="display: none; background: rgba(0, 0, 0, 0.25); border-left: 2px solid ${levelColor}; padding: 8px; margin-top: 6px; white-space: pre-wrap; word-break: break-all; font-size: ${fontSize}px; color: var(--text-secondary);">
-            ${details ? details : '상세 정보가 없습니다.'}
+        <div style="display: flex; align-items: flex-start; gap: 4px; font-size: ${fontSize}px; line-height: 1.4;">
+            ${timeSpan}
+            ${levelSpan}
+            <span style="flex: 1; word-break: break-all; color: var(--text-primary);">${displayText}</span>
         </div>
     `;
     
@@ -2866,13 +2916,6 @@ function createLogItemNode(idx, fontSize, levelColor, message, timestamp, detail
     });
     item.addEventListener('mouseout', () => {
         item.style.backgroundColor = 'transparent';
-    });
-    item.addEventListener('click', () => {
-        const detail = item.querySelector(`#log-detail-${idx}`);
-        if (detail) {
-            const isHidden = detail.style.display === 'none';
-            detail.style.display = isHidden ? 'block' : 'none';
-        }
     });
     
     return item;
@@ -2915,17 +2958,16 @@ function renderSystemLogs() {
             const status = parts[2] || 'OK';
             const stateInfo = parts.slice(3).join('|') || '';
             
-            // 1. 오프셋을 절대 시간으로 복원 계산
-            let absoluteTimeStr = '';
+            // 1. 오프셋을 절대 시간으로 복원 계산 (날짜와 초 정보를 제외하고 시간만 추출)
+            let timeStr = '';
             if (sessionBaseTime) {
                 const offsetSecs = parseInt(offset.replace('+', ''));
                 if (!isNaN(offsetSecs)) {
                     const absTime = new Date(sessionBaseTime + offsetSecs * 1000);
-                    absoluteTimeStr = `${absTime.getFullYear()}-${String(absTime.getMonth() + 1).padStart(2, '0')}-${String(absTime.getDate()).padStart(2, '0')} ` +
-                                      `${String(absTime.getHours()).padStart(2, '0')}:${String(absTime.getMinutes()).padStart(2, '0')}:${String(absTime.getSeconds()).padStart(2, '0')}`;
+                    timeStr = `${String(absTime.getHours()).padStart(2, '0')}:${String(absTime.getMinutes()).padStart(2, '0')}:${String(absTime.getSeconds()).padStart(2, '0')}`;
                 }
             }
-            timestamp = absoluteTimeStr ? `${absoluteTimeStr} (${offset}초)` : `${offset}초`;
+            timestamp = timeStr || '';
             
             // 2. 액션 코드 해석 (사람이 읽을 수 있게 상세히 표기)
             let actionName = actionCode;
