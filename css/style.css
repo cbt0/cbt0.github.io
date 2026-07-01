@@ -879,6 +879,7 @@ body {
     font-weight: 500;
     line-height: 1.6;
     white-space: pre-line; /* preserves formatting of questions */
+    margin: 0;             /* 브라우저 기본 h3 마진 제거 */
 }
 
 /* Choices list layout */
@@ -1544,7 +1545,7 @@ body {
 .nested-table {
     width: 100%;
     border-collapse: collapse;
-    margin: 14px 0;
+    margin: 4px 0 14px 0; /* 위쪽 마진 최소화하여 텍스트와의 간격 축소 */
     font-size: 14px;
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--glass-border);
