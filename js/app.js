@@ -1650,17 +1650,8 @@ function startQuiz(round, isResume = false) {
         state.lastActiveQuestionIndex = null;
         state.hasSuggestedSubmit = false;
 
-        if (round.sessionType === 'wrong-review') {
-            // 오답 복습 모드인 경우: 모든 문제를 최초 오답(빨간색)으로 세팅하여 사이드바 결과 동기화
-            state.permanentlyWrong = {};
-            state.permanentlyCorrect = {};
-            round.questions.forEach((_, idx) => {
-                state.permanentlyWrong[idx] = true;
-            });
-        } else {
-            state.permanentlyWrong = {};
-            state.permanentlyCorrect = {};
-        }
+        state.permanentlyWrong = {};
+        state.permanentlyCorrect = {};
 
         if (dom.explanationBox) {
             dom.explanationBox.classList.add('collapsed');
@@ -2173,21 +2164,7 @@ function handleSelectAnswer(choiceNum, isCheckMode = false) {
     
     logSystem('A01', 'OK', 'Q' + (activeIdx + 1) + ':' + (state.userAnswers[activeIdx] || '_'));
 
-    // 전체 최초 채점 완료 개수를 세어 제출 제안 팝업 노출 (세션 중 딱 1회만 노출)
-    const completedCount = state.currentQuestions.filter((_, idx) => {
-        return state.permanentlyCorrect[idx] === true || state.permanentlyWrong[idx] === true;
-    }).length;
-
-    if (completedCount === state.currentQuestions.length) {
-        if (!state.hasSuggestedSubmit) {
-            state.hasSuggestedSubmit = true;
-            setTimeout(() => {
-                if (confirm("마지막 문제까지 모두 풀었습니다!\n시험지를 제출하고 최종 결과를 확인하시겠습니까?")) {
-                    submitExam();
-                }
-            }, 1000);
-        }
-    }
+    // 다 풀었을 때 자동 제출 제안 팝업 제거 (직접 제출 버튼을 눌러 제출하도록 변경)
 }
 
 // Navigation between questions
