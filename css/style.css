@@ -2091,8 +2091,9 @@ body {
 }
 /* 1-2. x^y 위첨자(sup) 스타일 정의 */
 #calculator-modal .calculator-btn sup {
-    font-size: 0.75em;
-    vertical-align: super;
+    font-size: 0.65em;
+    position: relative;
+    top: -0.5em;
     line-height: 0;
 }
 #calculator-modal .calculator-btn:hover {

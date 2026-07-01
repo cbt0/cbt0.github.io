@@ -2586,12 +2586,14 @@ function formatCalculatorResult(val) {
     if (typeof val !== 'number' || isNaN(val) || !isFinite(val)) {
         return String(val);
     }
-    
+
+    const MAX_LEN = 15; // 양수 15자, 음수 - 포함 15자
+
     // 1. 소수점 이하가 있는 실수인 경우
     if (!Number.isInteger(val)) {
         let strVal = String(val);
-        if (strVal.includes('.') && strVal.length > 17) {
-            strVal = strVal.slice(0, 17);
+        if (strVal.includes('.') && strVal.length > MAX_LEN) {
+            strVal = strVal.slice(0, MAX_LEN);
             // 잘린 끝자리가 소수점('.')이면 제거
             if (strVal.endsWith('.')) {
                 strVal = strVal.slice(0, -1);
@@ -2599,27 +2601,25 @@ function formatCalculatorResult(val) {
         }
         return strVal;
     }
-    
+
     // 2. 정수인 경우
     let strVal = String(val);
-    if (strVal.length > 17) {
-        // 정수가 17자를 초과하면 값의 왜곡을 방지하기 위해 지수 표기법(E) 사용
+    if (strVal.length > MAX_LEN) {
+        // 정수가 15자를 초과하면 값의 왜곡을 방지하기 위해 지수 표기법(E) 사용
         const expStr = val.toExponential();
         const parts = expStr.split('e');
         const exponent = parts[1];
         const expPartLen = 1 + exponent.length; // 'e' + 지수부 길이
         const signLen = val < 0 ? 1 : 0; // 음수 부호 길이
-        
-        // 전체 17자에서 지수부, 정수 1글자, 소수점(.), 부호가 차지하는 공간 제외
-        const availableFractionDigits = 17 - expPartLen - 2 - signLen;
-        
-        if (availableFractionDigits >= 0) {
-            return val.toExponential(availableFractionDigits);
-        } else {
-            return val.toExponential(2);
-        }
+
+        // 전체 15자에서 지수부, 정수 1글자, 소수점(.), 부호가 차지하는 공간 제외
+        const availableFractionDigits = MAX_LEN - expPartLen - 2 - signLen;
+
+        return availableFractionDigits >= 0
+            ? val.toExponential(availableFractionDigits)
+            : val.toExponential(2);
     }
-    
+
     return strVal;
 }
 
