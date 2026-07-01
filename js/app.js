@@ -1,5 +1,5 @@
 /**
- * Antigravity CBT - Core Application Script V1.9924
+ * Antigravity CBT - Core Application Script V1.9925
  * Handled features: SPA routing, JSON loading, Quiz state, grading engine, and localStorage stats.
  */
 
@@ -9,7 +9,7 @@ let idleTimer;
 let sessionBaseTime = parseInt(localStorage.getItem('session_base_time')) || null;
 
 // --- [추가] 앱 버전 관리 (업데이트 시 이 숫자를 올려주세요!) ---
-const APP_VERSION = "1.9924"; 
+const APP_VERSION = "1.9925"; 
 
 function checkAppUpdate() {
     const storedVersion = localStorage.getItem('cbt_app_version');
