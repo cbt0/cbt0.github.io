@@ -977,9 +977,14 @@ function registerEventListeners() {
         });
     }
     if (dom.calculatorCloseBtn) {
-        dom.calculatorCloseBtn.addEventListener('click', () => {
+        const closeCalc = () => {
             if (dom.calculatorModal) dom.calculatorModal.classList.remove('active');
-        });
+        };
+        dom.calculatorCloseBtn.addEventListener('click', closeCalc);
+        dom.calculatorCloseBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            closeCalc();
+        }, { passive: false });
     }
     if (dom.calculatorButtons) {
         dom.calculatorButtons.forEach(btn => {
@@ -2670,6 +2675,10 @@ if (dom.calculatorHeader && dom.calculatorModal) {
 
   // 공통 드래그 시작 함수
   const dragStart = (e) => {
+    // 닫기 버튼(X)을 누른 경우에는 드래그 동작을 취소하고 이벤트가 정상 처리되도록 반환
+    if (e.target.closest('#calculator-close-btn')) {
+      return;
+    }
     // 모바일: touchstart에서 preventDefault 해야 이후 touchmove에서도 스크롤 방지가 적용됨
     if (e.type.includes('touch')) e.preventDefault();
     isDragging = true;
