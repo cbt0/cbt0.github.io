@@ -1,4 +1,4 @@
-/* Antigravity CBT CSS Design System - Premium Dark Theme & Glassmorphism V1.9922 */
+/* Antigravity CBT CSS Design System - Premium Dark Theme & Glassmorphism V1.9923 */
 
 :root {
     /* Color Palette */
@@ -824,8 +824,13 @@ body {
   color: white;
   font-family: 'Outfit', sans-serif;
   font-weight: 800;
-  font-size: 15px;
-  padding: 6px 12px;
+  font-size: 20px;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   border-radius: 8px;
   flex-shrink: 0;
   cursor: pointer; /* 👈 마우스를 올렸을 때 클릭 가능한 손가락 모양으로 변경 */
@@ -894,15 +899,15 @@ body {
 
 /* 1. 번호 버튼 (.choice-num-btn) */
 .choice-num-btn {
-    width: 42px;
-    height: 42px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     background: rgba(56, 189, 248, 0.12); /* 미선택: 연한 하늘색 */
     border: 1px solid rgba(56, 189, 248, 0.25);
     color: #38bdf8; /* 하늘색 */
     font-family: 'Outfit', sans-serif;
     font-weight: 800;
-    font-size: 24px;
+    font-size: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1476,11 +1481,7 @@ body {
         margin-bottom: 20px;
     }
     
-    .question-num-badge {
-        padding: 6px 6px;
-        font-size: 16px;
-    }
-    
+
     .question-text {
         font-size: 18px; /* 폰트 최대화 */
         line-height: 1.6;
