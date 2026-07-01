@@ -304,6 +304,7 @@ const dom = {
     resultWrongCount: document.getElementById('result-wrong-count'),
     resultMsgText: document.getElementById('result-msg-text'),
     resultReviewBtn: document.getElementById('result-review-btn'),
+    resultCheckBtn: document.getElementById('result-check-btn'),
     resultCloseBtn: document.getElementById('result-close-btn'),
     scoreRingBar: document.getElementById('score-ring-bar'),
     // (기존 코드) Modal Result elements 부근 아래에 추가
@@ -1076,6 +1077,13 @@ function registerEventListeners() {
         dom.resultModal.classList.remove('active');
         enterReviewMode();
     });
+    
+    if (dom.resultCheckBtn) {
+        dom.resultCheckBtn.addEventListener('click', () => {
+            dom.resultModal.classList.remove('active');
+            enterCheckMode();
+        });
+    }
     
     dom.resultCloseBtn.addEventListener('click', () => {
         dom.resultModal.classList.remove('active');
@@ -2344,6 +2352,15 @@ function enterReviewMode() {
     state.questionFilter = 'all';
     if (dom.questionFilter) dom.questionFilter.value = 'all';
     startQuiz(customRound);
+}
+
+// Enter post-submission check mode (읽기 전용으로 오답/정답 대조하며 복기하는 모드)
+function enterCheckMode() {
+    logSystem('M01', 'OK', 'CheckMode');
+    state.quizMode = 'review';
+    state.activeQuestionIndex = 0;
+    renderMarkingSheet();
+    renderActiveQuestion();
 }
 
 // LocalStorage User Stats Tracker
