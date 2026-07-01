@@ -2517,7 +2517,8 @@ function handleCalculatorInput(value) {
                 .replace(/\^2/g, '**2')
                 .replace(/\^3/g, '**3');
             const result = evaluateCalculatorExpression(sanitized);
-            resultEl.innerText = '= ' + String(result);
+            formulaEl.innerHTML = formulaToHTML(expr) + '='; // 공식 오른쪽에 = 붙임
+            resultEl.innerText = String(result);             // 결과는 숫자만
         } catch (e) {
             resultEl.innerText = 'Error';
         }
