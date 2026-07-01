@@ -989,11 +989,18 @@ function registerEventListeners() {
         });
     }
     if (dom.calculatorModal) {
+        // 데스크톱: 외부 클릭 시 닫기
         dom.calculatorModal.addEventListener('click', (e) => {
             if (e.target === dom.calculatorModal) {
                 dom.calculatorModal.classList.remove('active');
             }
         });
+        // 모바일: 외부 터치 시 닫기
+        dom.calculatorModal.addEventListener('touchend', (e) => {
+            if (e.target === dom.calculatorModal) {
+                dom.calculatorModal.classList.remove('active');
+            }
+        }, { passive: true });
     }
     
     // 키보드로 계산기 입력 지원 (계산기가 활성화된 상태에서만 작동)
@@ -2663,6 +2670,8 @@ if (dom.calculatorHeader && dom.calculatorModal) {
 
   // 공통 드래그 시작 함수
   const dragStart = (e) => {
+    // 모바일: touchstart에서 preventDefault 해야 이후 touchmove에서도 스크롤 방지가 적용됨
+    if (e.type.includes('touch')) e.preventDefault();
     isDragging = true;
     // 🐛 버그 수정: e.touches[0]을 사용하여 첫 번째 손가락의 좌표를 정확히 추출
     const clientX = e.type.includes('touch') ? (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX) : e.clientX;
