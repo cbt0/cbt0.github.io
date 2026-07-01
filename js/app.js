@@ -2315,13 +2315,35 @@ function submitExam() {
     dom.resultModal.classList.add('active');
 }
 
-// Enter post-submission review mode
+// Enter post-submission review mode (해당 회차 틀린 문제들만 추려서 즉석 오답 풀기 세션 시작)
 function enterReviewMode() {
     logSystem('M01', 'OK', 'ReviewMode');
-    state.quizMode = 'review';
-    state.activeQuestionIndex = 0;
-    renderMarkingSheet();
-    renderActiveQuestion();
+    
+    // 1) 방금 푼 시험 문제들 중 틀린 문항들을 필터링
+    const wrongQuestions = state.currentQuestions.filter((q, idx) => {
+        return state.permanentlyWrong[idx] === true;
+    });
+    
+    if (wrongQuestions.length === 0) {
+        alert('틀린 문제가 없습니다! 모든 문제를 맞추셨습니다. 👏');
+        navigateTo(state.activeSubject);
+        return;
+    }
+    
+    // 2) 해당 회차 전용 오답 풀기용 가상 라운드 데이터 구성
+    const currentRoundInfo = state.activeRound ? `${state.activeRound.year}년 ${state.activeRound.round}` : '기출문제';
+    const customRound = {
+        subject: state.activeSubject,
+        year: state.activeRound ? state.activeRound.year : new Date().getFullYear(),
+        round: `${currentRoundInfo} (오답 복습)`,
+        sessionType: 'wrong-review',
+        questions: JSON.parse(JSON.stringify(wrongQuestions)) // 데이터 딥카피
+    };
+    
+    // 3) 오답 복습 퀴즈 세션 시작
+    state.questionFilter = 'all';
+    if (dom.questionFilter) dom.questionFilter.value = 'all';
+    startQuiz(customRound);
 }
 
 // LocalStorage User Stats Tracker
