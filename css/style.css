@@ -894,8 +894,8 @@ body {
 
 /* 1. 번호 버튼 (.choice-num-btn) */
 .choice-num-btn {
-    width: 48px;
-    height: 48px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     background: rgba(56, 189, 248, 0.12); /* 미선택: 연한 하늘색 */
     border: 1px solid rgba(56, 189, 248, 0.25);
@@ -1054,7 +1054,7 @@ body {
 
 .explanation-header {
     font-weight: 700;
-    font-size: 15px;
+    font-size: 18px;
     color: var(--warning);
     display: flex;
     align-items: center;
@@ -1064,7 +1064,7 @@ body {
 
 .explanation-content {
     color: var(--text-primary);
-    font-size: 15px;
+    font-size: 18px;
     line-height: 1.6;
     white-space: pre-line;
 }
