@@ -2546,7 +2546,7 @@ function handleCalculatorInput(value) {
                 .replace(/\^3/g, '**3');
             const result = evaluateCalculatorExpression(sanitized);
             formulaEl.innerHTML = formulaToHTML(expr) + '='; // 공식 오른쪽에 = 붙임
-            resultEl.innerText = String(result);             // 결과는 숫자만
+            resultEl.innerText = formatCalculatorResult(result);             // 결과는 숫자만
         } catch (e) {
             resultEl.innerText = 'Error';
         }
@@ -2580,6 +2580,34 @@ function handleCalculatorInput(value) {
     formulaEl.innerHTML = formulaToHTML(calcRawFormula);
 }
 
+
+// 계산기 결과값을 최대 14자리로 제한하는 헬퍼 함수 (넘어가면 유효숫자 E지수 형태로 표기)
+function formatCalculatorResult(val) {
+    if (typeof val !== 'number' || isNaN(val) || !isFinite(val)) {
+        return String(val);
+    }
+    
+    const strVal = String(val);
+    if (strVal.length <= 14) {
+        return strVal;
+    }
+    
+    const expStr = val.toExponential();
+    const parts = expStr.split('e');
+    const exponent = parts[1]; // e.g. "+25", "-7"
+    
+    const expPartLen = 1 + exponent.length; // 'e' + 지수부 길이
+    const signLen = val < 0 ? 1 : 0; // 음수 부호 길이
+    
+    // 전체 14자에서 지수부, 정수 1글자, 소수점(.), 부호가 차지하는 공간 제외
+    const availableFractionDigits = 14 - expPartLen - 2 - signLen;
+    
+    if (availableFractionDigits >= 0) {
+        return val.toExponential(availableFractionDigits);
+    } else {
+        return val.toExponential(2);
+    }
+}
 
 function evaluateCalculatorExpression(expr) {
     const cleaned = expr
