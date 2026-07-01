@@ -2454,26 +2454,45 @@ function saveWrongHistory() {
     }
 }
 
+// 계산기 raw 수식 상태 (innerText 대신 이 변수로 관리)
+let calcRawFormula = '0';
+
+// ^ 지수 부분을 <sup> 태그로 변환하여 위첨자로 표시
+function formulaToHTML(raw) {
+    let safe = raw
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    // ^뒤에 오는 숫자(소수/음수 포함)를 <sup>로 감싸기
+    // e.g. "2^3" → "2<sup>3</sup>",  "10^-2" → "10<sup>-2</sup>"
+    safe = safe.replace(/\^(-?[0-9.]*)/g, (match, exp) => {
+        return exp ? '<sup>' + exp + '</sup>' : '^';
+    });
+    return safe || '0';
+}
+
 function handleCalculatorInput(value) {
     const formulaEl = document.getElementById('calculator-formula');
     const resultEl = document.getElementById('calculator-result');
     if (!formulaEl || !resultEl) return;
     
-    let currentFormula = formulaEl.innerText || '0';
+    let currentFormula = calcRawFormula;
     let currentResult = resultEl.innerText || '';
     
     if (value === 'C') {
-        formulaEl.innerText = '0';
+        calcRawFormula = '0';
+        formulaEl.innerHTML = formulaToHTML('0');
         resultEl.innerHTML = '&nbsp;';
         return;
     }
     
     if (value === 'backspace') {
         if (currentFormula === 'Error' || currentFormula.length <= 1) {
-            formulaEl.innerText = '0';
+            calcRawFormula = '0';
         } else {
-            formulaEl.innerText = currentFormula.slice(0, -1);
+            calcRawFormula = currentFormula.slice(0, -1);
         }
+        formulaEl.innerHTML = formulaToHTML(calcRawFormula);
         resultEl.innerHTML = '&nbsp;';
         return;
     }
@@ -2487,7 +2506,8 @@ function handleCalculatorInput(value) {
         const closeParens = (expr.match(/\)/g) || []).length;
         if (openParens > closeParens) {
             expr += ')'.repeat(openParens - closeParens);
-            formulaEl.innerText = expr;
+            calcRawFormula = expr;
+            formulaEl.innerHTML = formulaToHTML(expr);
         }
         
         try {
@@ -2510,13 +2530,15 @@ function handleCalculatorInput(value) {
         if (/^[\+\-\×\÷\^]/.test(value)) {
             // 연산자를 누른 경우: 이전 결과값을 공식창으로 가져와 연산
             if (lastResultValue !== 'Error') {
-                formulaEl.innerText = lastResultValue + value;
+                calcRawFormula = lastResultValue + value;
+                formulaEl.innerHTML = formulaToHTML(calcRawFormula);
                 resultEl.innerHTML = '&nbsp;';
                 return;
             }
         }
         // 숫자나 다른 함수를 누른 경우: 초기화 후 새 공식 시작
-        formulaEl.innerText = '0';
+        calcRawFormula = '0';
+        formulaEl.innerHTML = formulaToHTML('0');
         resultEl.innerHTML = '&nbsp;';
         currentFormula = '0';
     }
@@ -2525,8 +2547,10 @@ function handleCalculatorInput(value) {
         currentFormula = '';
     }
     
-    formulaEl.innerText = currentFormula + value;
+    calcRawFormula = currentFormula + value;
+    formulaEl.innerHTML = formulaToHTML(calcRawFormula);
 }
+
 
 function evaluateCalculatorExpression(expr) {
     const cleaned = expr
