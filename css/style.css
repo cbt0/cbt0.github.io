@@ -1544,7 +1544,7 @@ body {
 .nested-table {
     width: 100%;
     border-collapse: collapse;
-    margin: 16px 0;
+    margin: 14px 0;
     font-size: 14px;
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--glass-border);
