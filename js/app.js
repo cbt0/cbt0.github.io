@@ -2738,15 +2738,24 @@ document.addEventListener('click', (e) => {
     const constantItem = e.target.closest('.constant-item');
     if (constantItem) {
         const val = constantItem.getAttribute('data-val');
-        const display = document.getElementById('calculator-display');
+        const formulaEl = document.getElementById('calculator-formula');
+        const resultEl = document.getElementById('calculator-result');
         
-        if (val && display) {
-            let current = display.value || '';
-            // 에러 상태이거나 숫자 0만 있을 때는 화면을 지우고 깔끔하게 새 숫자 입력
-            if (current === '0' || current === 'Error') {
-                current = '';
+        if (val && formulaEl && resultEl) {
+            // 에러 상태이거나 수식이 '0'일 때는 새 상수로 대체
+            if (calcRawFormula === '0' || calcRawFormula === 'Error') {
+                calcRawFormula = '';
             }
-            display.value = current + val;
+            
+            // 이미 결과값이 나온 상태에서 상수를 누르면 수식창 초기화 후 입력
+            let currentResult = resultEl.innerText || '';
+            if (currentResult !== '' && currentResult !== ' ' && resultEl.innerHTML !== '&nbsp;') {
+                calcRawFormula = '';
+                resultEl.innerHTML = '&nbsp;';
+            }
+            
+            calcRawFormula = calcRawFormula + val;
+            formulaEl.innerHTML = formulaToHTML(calcRawFormula);
         }
         
         // 입력이 끝난 후 상수 창은 자동으로 닫기
